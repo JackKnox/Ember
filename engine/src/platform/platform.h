@@ -2,13 +2,15 @@
 
 #include "defines.h"
 
+#include <vulkan/vulkan.h>
+
 // Opaque structure holding platform-specific state (windowing, input, memory, timing, etc.).
 typedef struct box_platform {
 	// Internal implementation details (do not access directly).
 	void* internal_state;
 
     u32 (*get_required_vulkan_extensions)(struct box_platform* plat_state, const char*** out_array);
-    int (*create_vulkan_surface)(struct box_platform* plat_state, void* instance, const void** allocator, void** surface);
+    VkResult (*create_vulkan_surface)(struct box_platform* plat_state, VkInstance instance, const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface);
 } box_platform;
 
 // Window modes supported by the platform.

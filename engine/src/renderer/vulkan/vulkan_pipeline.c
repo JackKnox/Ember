@@ -176,13 +176,13 @@ VkResult vulkan_graphics_pipeline_create(
 
 	// Attributes
 	VkVertexInputAttributeDescription* attributes = darray_create(VkVertexInputAttributeDescription, MEMORY_TAG_RENDERER);
-	VkVertexInputBindingDescription binding_desc = { 0 };
+	VkVertexInputBindingDescription binding_desc = {};
 
-	if (renderstage->vertex_attribute_count > 0) {
+	if (renderstage->graphics.vertex_attribute_count > 0) {
 		u32 stride = 0;
 
-		for (u32 i = 0; i < renderstage->vertex_attribute_count; ++i) {
-			box_render_format attribute = renderstage->vertex_attributes[i];
+		for (u32 i = 0; i < renderstage->graphics.vertex_attribute_count; ++i) {
+			box_render_format attribute = renderstage->graphics.vertex_attributes[i];
 
 			VkVertexInputAttributeDescription* descriptor = darray_push_empty(attributes);
 			descriptor->binding = 0;

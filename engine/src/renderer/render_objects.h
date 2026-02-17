@@ -64,15 +64,9 @@ typedef struct {
 typedef struct box_renderstage {
     /** @brief Shader stages indexed by box_shader_stage_type. */
     shader_stage stages[BOX_SHADER_STAGE_TYPE_MAX];
-
-    /** @brief Vertex attribute formats in binding order. */
-	box_render_format vertex_attributes[BOX_MAX_VERTEX_ATTRIBS];
-
+    
 	/** @brief Descriptor binding descriptions used by the pipeline. */
 	box_descriptor_desc descriptors[BOX_MAX_DESCRIPTORS];
-    
-	/** @brief Number of active vertex attributes. */
-	u8 vertex_attribute_count;
 
     /** @brief Number of active descriptor bindings. */
 	u8 descriptor_count;
@@ -85,6 +79,12 @@ typedef struct box_renderstage {
          * @brief Graphics pipeline configuration.
          */
         struct {
+            /** @brief Vertex attribute formats in binding order. */
+            box_render_format vertex_attributes[BOX_MAX_VERTEX_ATTRIBS];
+
+            /** @brief Number of active vertex attributes. */
+            u8 vertex_attribute_count;
+
             /** @brief Optional vertex buffer bound to this render stage. */
             box_renderbuffer* vertex_buffer;
 
@@ -109,7 +109,7 @@ typedef struct box_renderstage {
 } box_renderstage;
 
 /**
- * @brief Creates a default graphics render stage configuration.
+ * @brief Creates a default render stage with graphics configuration.
  *
  * @param shader_stages Array of shader file paths or stage identifiers.
  * @param shader_stage_count Number of shader stages provided.
@@ -137,10 +137,11 @@ typedef struct box_texture {
     /** @brief Texture address (wrap) mode. */
     box_address_mode address_mode;
 
+    /** @brief Max anisotropy of attached sampler in backend, ignored if sampled is set to false. */
+    f32 max_anisotropy;
+
     /** @brief Backend-specific image and sampler state. */
     void* internal_data;
-
-    f32 max_anisotropy;
 } box_texture;
 
 /**

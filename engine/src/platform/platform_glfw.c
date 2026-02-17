@@ -85,7 +85,7 @@ VkResult platform_create_vulkan_surface(box_platform* plat_state, VkInstance ins
 	return glfwCreateWindowSurface(instance, state->window, allocator, surface);
 }
 
-u32 platform_get_vulkan_extensions(const char*** out_array) {
+u32 platform_get_vulkan_extensions(box_platform* platform, const char*** out_array) {
 	BX_ASSERT(out_array != NULL && "Invalid arguments passed to platform_get_vulkan_extensions");
 	uint32_t count;
 	const char** extensions = glfwGetRequiredInstanceExtensions(&count);

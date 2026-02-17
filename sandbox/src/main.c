@@ -72,14 +72,14 @@ int main(int argc, char** argv) {
 	}
 
     box_renderstage renderstage =  box_renderstage_graphics_default(shaders, BX_ARRAYSIZE(shaders));
+    renderstage.graphics.vertex_attributes[0] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 2 }; // Position (X, Y)
+    renderstage.graphics.vertex_attributes[1] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 3 }; // Colour   (R, G, B)
+    renderstage.graphics.vertex_attributes[2] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 2 }; // Texcoord (tX, tY)
+    renderstage.graphics.vertex_attribute_count = 3;
+
+	renderstage.graphics.topology_type = BOX_VERTEX_TOPOLOGY_TRIANGLES;
 	renderstage.graphics.vertex_buffer = &vert_buffer;
 	renderstage.graphics.index_buffer = &index_buffer;
-	renderstage.graphics.topology_type = BOX_VERTEX_TOPOLOGY_TRIANGLES;
-
-    renderstage.vertex_attributes[0] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 2 }; // Position (X, Y)
-    renderstage.vertex_attributes[1] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 3 }; // Colour   (R, G, B)
-    renderstage.vertex_attributes[2] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 2 }; // Texcoord (tX, tY)
-    renderstage.vertex_attribute_count = 3;
 
     renderstage.descriptors[0] = (box_descriptor_desc) {
         // Texture Sampler
