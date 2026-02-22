@@ -81,6 +81,7 @@ VkShaderStageFlags box_shader_type_to_vulkan_type(box_shader_stage_type type) {
 VkDescriptorType box_descriptor_type_to_vulkan_type(box_descriptor_type descriptor_type) {
     switch (descriptor_type) {
     case BOX_DESCRIPTOR_TYPE_STORAGE_BUFFER: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case BOX_DESCRIPTOR_TYPE_STORAGE_IMAGE:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     case BOX_DESCRIPTOR_TYPE_IMAGE_SAMPLER:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 

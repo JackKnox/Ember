@@ -8,7 +8,9 @@ VkImageUsageFlags get_vulkan_texture_usage(
     vulkan_context* context, 
     box_texture* texture) {
 
-	VkImageUsageFlags image_usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+	VkImageUsageFlags image_usage = 0;
+    if (texture->usage & BOX_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (texture->usage & BOX_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 	if (context->config.modes & RENDERER_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     return image_usage;
@@ -118,6 +120,17 @@ b8 vulkan_texture_create(
             &internal_texture->sampler),
         "Failed to create internal Vulkan sampler");
     
+    vulkan_queue* selected_mode = &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER];
+	vulkan_command_buffer command_buffer;
+	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode, &command_buffer);
+
+	vulkan_texture_transition_layout(backend, &command_buffer, out_texture, VK_IMAGE_LAYOUT_GENERAL);
+
+	CHECK_VKRESULT(
+		vulkan_command_buffer_end_single_use(
+			context,
+			&command_buffer),
+		"Failed to transfer Vulkan renderbuffer to GPU");
     return TRUE;
 }
 
@@ -138,7 +151,7 @@ b8 vulkan_texture_upload_data(
 
     internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)texture->internal_data;
 
-    box_renderbuffer staging_buffer = {};
+    box_renderbuffer staging_buffer = box_renderbuffer_default();
     staging_buffer.buffer_size = box_texture_get_size_in_bytes(texture);
     if (!create_staging_buffer(context, data, &staging_buffer)) {
         BX_ERROR("Failed to create staging buffer for uploading data.");
@@ -147,8 +160,9 @@ b8 vulkan_texture_upload_data(
 
     vulkan_queue* selected_mode = &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER];
 	vulkan_command_buffer command_buffer;
-	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode->pool, &command_buffer);
+	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode, &command_buffer);
 
+    VkImageLayout old_layout = internal_texture->layout;
 	vulkan_texture_transition_layout(backend, &command_buffer, texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     internal_vulkan_renderbuffer* internal_staging_buffer = (internal_vulkan_renderbuffer*)staging_buffer.internal_data;
@@ -161,13 +175,12 @@ b8 vulkan_texture_upload_data(
 	vkCmdCopyBufferToImage(command_buffer.handle, internal_staging_buffer->handle, internal_texture->handle, internal_texture->layout, 1, &copy_info);
 
     // TODO: Implicit image transitions.
-	vulkan_texture_transition_layout(backend, &command_buffer, texture, VK_IMAGE_LAYOUT_GENERAL);
+	vulkan_texture_transition_layout(backend, &command_buffer, texture, old_layout);
 
 	CHECK_VKRESULT(
 		vulkan_command_buffer_end_single_use(
 			context,
-			&command_buffer,
-			selected_mode->handle),
+			&command_buffer),
 		"Failed to transfer Vulkan renderbuffer to GPU");
 
     vulkan_renderbuffer_destroy(backend, &staging_buffer);

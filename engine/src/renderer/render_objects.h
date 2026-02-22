@@ -90,9 +90,6 @@ typedef struct box_renderstage {
 
             /** @brief Optional index buffer bound to this render stage. */
             box_renderbuffer* index_buffer;
-
-            /** @brief Primitive topology used for rendering. */
-            box_vertex_topology_type topology_type;
         } graphics;
 
         /**
@@ -117,6 +114,8 @@ typedef struct box_renderstage {
  * @return A default-initialized graphics render stage.
  */
 box_renderstage box_renderstage_graphics_default(const char** shader_stages, u8 shader_stage_count);
+
+box_renderstage box_renderstage_compute_default(const char** shader_stages, u8 shader_stage_count);
 
 /**
  * @brief Represents a render target used by the renderer backend.
@@ -164,8 +163,10 @@ typedef struct box_texture {
     /** @brief Texture address (wrap) mode. */
     box_address_mode address_mode;
 
-    /** @brief Max anisotropy of attached sampler in backend, ignored if sampled is set to false. */
+    /** @brief Max anisotropy of attached sampler in backend, ignored if texture is not sampled. */
     f32 max_anisotropy;
+
+    box_texture_usage usage;
 } box_texture;
 
 /**
@@ -245,7 +246,7 @@ void box_rendercmd_destroy(box_rendercmd* cmd);
  * This function sets the specified render target as the current target
  * for subsequent rendering operations associated with the given render command.
  *
- * @param cmd Pointer to the render command to bind the render target to.
+ * @param cmd Pointer to the command buffer.
  * @param rendertarget Pointer to the render target to bind.
  */
 void box_rendercmd_bind_rendertarget(box_rendercmd* cmd, box_rendertarget* rendertarget);
@@ -291,7 +292,7 @@ void box_rendercmd_dispatch(box_rendercmd* cmd, u32 group_size_x, u32 group_size
 /**
  * @brief Ends the current render stage.
  *
- * Finalizes state for the active stage.
+ * Finalizes state for the active renderstage.
  *
  * @param cmd Pointer to the command buffer.
  */

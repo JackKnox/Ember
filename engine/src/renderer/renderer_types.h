@@ -89,15 +89,6 @@ typedef struct box_render_format {
 u64 box_render_format_size(box_render_format format);
 
 /**
- * @brief Supported primitive topologies.
- */
-typedef enum box_vertex_topology_type {
-    BOX_VERTEX_TOPOLOGY_TRIANGLES, /**< Triangle primitives */
-    BOX_VERTEX_TOPOLOGY_POINTS,    /**< Point primitives */
-    BOX_VERTEX_TOPOLOGY_LINES,     /**< Line primitives */
-} box_vertex_topology_type;
-
-/**
  * @brief Intended usage of a render buffer.
  *
  * Usage flags may be combined.
@@ -108,11 +99,33 @@ typedef enum box_renderbuffer_usage {
     BOX_RENDERBUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
 } box_renderbuffer_usage;
 
+typedef enum box_texture_usage {
+    BOX_TEXTURE_USAGE_STORAGE = 1 << 0, /**< Storage image */
+    BOX_TEXTURE_USAGE_SAMPLED = 1 << 1, /**< Texture created with sampler */
+} box_texture_usage;
+
+/**
+ * @brief Describes memory access types used for synchronization between render stages.
+ *
+ * These flags represent how a resource is accessed within a render stage.
+ * They are used to establish proper memory visibility and ordering guarantees 
+ * between GPU operations.
+ * 
+ * Usage flags may be combined.
+ */
+typedef enum box_access_flags {
+    BOX_ACCESS_FLAGS_SHADER_WRITE            = 1 << 0, /**< Written by a shader */
+    BOX_ACCESS_FLAGS_SHADER_READ             = 1 << 1, /**< Resource read by a shader */
+    BOX_ACCESS_FLAGS_VERTEX_ATTRIBUTE_READ   = 1 << 2, /**< Read as a vertex attribute during vertex input */
+    BOX_ACCESS_FLAGS_COLOUR_ATTACHMENT_WRITE = 1 << 3  /**< Written as a colour attachment during rendering */
+} box_access_flags;
+
 /**
  * @brief Descriptor types supported by shaders.
  */
 typedef enum box_descriptor_type {
     BOX_DESCRIPTOR_TYPE_STORAGE_BUFFER, /**< Storage buffer (SSBO) */
+    BOX_DESCRIPTOR_TYPE_STORAGE_IMAGE,  /**< Storage image, no sampler */
     BOX_DESCRIPTOR_TYPE_IMAGE_SAMPLER,  /**< Combined image + sampler */
 } box_descriptor_type;
 

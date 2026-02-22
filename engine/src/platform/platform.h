@@ -25,16 +25,42 @@ typedef enum box_window_mode {
     BOX_WINDOW_MODE_FULLSCREEN
 } box_window_mode;
 
-struct box_config;
+// Application configuration used to initialize a Boxel engine instance.
+typedef struct box_window_config {
+	// Window starting position.
+	// Either absolute coordinates or centered on screen.
+	union {
+		// Position in pixels from top-left corner.
+		uvec2 window_absolute;
+			
+		// True to center window automatically.
+		b8 window_centered;
+	};
+
+	// Initial window mode (e.g., windowed, fullscreen, borderless).
+	box_window_mode window_mode;
+
+	// Initial window size in pixels.
+	uvec2 window_size;
+
+	// Application title used for windowing and OS integration.
+	const char* title;
+} box_window_config;
+
+// Returns a default configuration for initializing Boxel.
+box_window_config box_window_default_config();
 
 // Initializes the platform and starts the window based on the provided configuration.
-b8 platform_start(box_platform* state, struct box_config* app_config);
+b8 platform_start(box_platform* state, box_window_config* app_config);
 
 // Shuts down the platform, closes windows, and frees all internal state.
 void platform_shutdown(box_platform* plat_state);
 
 // Processes platform messages (input, window events, etc.) and dispatches them to the engine.
 b8 platform_pump_messages(box_platform* plat_state);
+
+// This function queries the platform-specific window state and returns the platform window should close.
+b8 platform_should_close_window(box_platform* plat_state);
 
 // Platform-level memory allocation.
 void* platform_allocate(u64 size, b8 aligned);

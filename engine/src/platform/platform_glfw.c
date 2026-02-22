@@ -1,7 +1,6 @@
 #include "defines.h"
 #include "platform/platform.h"
 
-#include "engine.h"
 #include "utils/darray.h"
 
 #define GLFW_INCLUDE_VULKAN
@@ -12,6 +11,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "platform.h"
 
 typedef struct internal_state {
 	GLFWwindow* window;
@@ -79,7 +79,7 @@ void on_window_resize(GLFWwindow* window, int width, int height) {
 }
 
 VkResult platform_create_vulkan_surface(box_platform* plat_state, VkInstance instance, const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface) {
-	BX_ASSERT(plat_state != NULL && instance != 0 && allocator != NULL && surface != NULL && "Invalid arguments passed to platform_create_vulkan_surface");
+	BX_ASSERT(plat_state != NULL && instance != 0 && surface != NULL && "Invalid arguments passed to platform_create_vulkan_surface");
 
 	internal_state* state = (internal_state*)plat_state->internal_state;
 	return glfwCreateWindowSurface(instance, state->window, allocator, surface);
@@ -94,8 +94,15 @@ u32 platform_get_vulkan_extensions(box_platform* platform, const char*** out_arr
 	return count;
 }
 
-b8 platform_start(box_platform* plat_state, box_config* app_config) {
-	BX_ASSERT(plat_state != NULL && app_config != NULL && "Invalid arguments passed to platform_start");
+box_window_config box_window_default_config() {
+	box_window_config config = {};
+	config.window_mode = BOX_WINDOW_MODE_WINDOWED;
+	config.window_size = (uvec2) { 640, 360 };
+	config.window_centered = TRUE;
+}
+
+b8 platform_start(box_platform *plat_state, box_window_config *app_config) {
+    BX_ASSERT(plat_state != NULL && app_config != NULL && "Invalid arguments passed to platform_start");
 	plat_state->internal_state = ballocate(sizeof(internal_state), MEMORY_TAG_PLATFORM);
 	internal_state* state = (internal_state*)plat_state->internal_state;
 
@@ -127,10 +134,10 @@ b8 platform_start(box_platform* plat_state, box_config* app_config) {
 		return FALSE;
 	}
 
-	glfwWindowHint(GLFW_CLIENT_API, app_config->render_config.api_type == RENDERER_BACKEND_TYPE_OPENGL ? GLFW_OPENGL_API : GLFW_NO_API);
 	glfwWindowHint(GLFW_MAXIMIZED, app_config->window_mode == BOX_WINDOW_MODE_MAXIMIZED);
 	glfwWindowHint(GLFW_POSITION_X, window_pos.x);
 	glfwWindowHint(GLFW_POSITION_Y, window_pos.y);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	state->window = glfwCreateWindow(app_config->window_size.width, app_config->window_size.height, app_config->title, app_config->window_mode == BOX_WINDOW_MODE_FULLSCREEN ? monitor : NULL, NULL);
 	if (!state->window) {
@@ -165,6 +172,12 @@ b8 platform_pump_messages(box_platform* plat_state) {
 	return TRUE;
 }
 
+b8 platform_should_close_window(box_platform *plat_state) {
+	BX_ASSERT(plat_state != NULL && "Invalid arguments passed to platform_should_close_window");
+	internal_state* state = (internal_state*)plat_state->internal_state;
+    return glfwWindowShouldClose(state->window);
+}
+
 f64 platform_get_absolute_time() {
-	return 1000.0f * glfwGetTime();
+    return 1000.0f * glfwGetTime();
 }

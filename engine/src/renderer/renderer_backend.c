@@ -118,7 +118,7 @@ b8 box_renderer_backend_submit_rendercmd(box_renderer_backend* renderer_backend,
 		switch (hdr->type) {
 		case RENDERCMD_BIND_RENDERTARGET:
 #if BOX_ENABLE_VALIDATION
-			if (playback_context->current_shader != NULL) {
+			if (playback_context->current_target != NULL) {
 				BX_ERROR("Tried to bind rendertarget twice in box_rendercmd.");
 				return FALSE;
 			}
@@ -146,6 +146,7 @@ b8 box_renderer_backend_submit_rendercmd(box_renderer_backend* renderer_backend,
 			}
 #endif
 
+			playback_context->current_shader = NULL;
 			break;
 
 		case RENDERCMD_DRAW:

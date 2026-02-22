@@ -339,6 +339,7 @@ b8 vulkan_renderstage_update_descriptors(
                     descriptor_write->pBufferInfo = buffer_info;
 					break;
 
+                case BOX_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                 case BOX_DESCRIPTOR_TYPE_IMAGE_SAMPLER:
                     internal_vulkan_texture* texture = (internal_vulkan_texture*)write->texture->internal_data;
 
@@ -388,9 +389,9 @@ void vulkan_renderstage_bind(
 	if (internal_renderstage->descriptor_sets)
 		vkCmdBindDescriptorSets(command_buffer->handle, bind_point, internal_renderstage->layout, 0, 1, &internal_renderstage->descriptor_sets[context->image_index], 0, 0);
 
-    if (renderstage->mode == RENDERER_MODE_GRAPHICS) {
+    if (renderstage->mode == RENDERER_MODE_GRAPHICS && renderstage->graphics.vertex_buffer != NULL) {
         VkDeviceSize offset = 0;
-
+        
         internal_vulkan_renderbuffer* vertex_buffer = (internal_vulkan_renderbuffer*)renderstage->graphics.vertex_buffer->internal_data;
         vkCmdBindVertexBuffers(command_buffer->handle, 0, 1, &vertex_buffer->handle, &offset);
 

@@ -169,8 +169,8 @@ typedef struct vulkan_command_buffer {
     /** @brief Command buffer handle. */
     VkCommandBuffer handle;
 
-    /** @brief Owning command pool. */
-    VkCommandPool owner;
+    /** @brief Owning queue + command pool. */
+    vulkan_queue* owner;
 
     /** @brief Current command buffer state. */
     vulkan_command_buffer_state state;

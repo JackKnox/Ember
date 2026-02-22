@@ -1,7 +1,6 @@
 #include "defines.h"
 #include "renderer_backend.h"
 
-#include "engine.h"
 #include "render_objects.h"
 
 #if BOX_ENABLE_VALIDATION

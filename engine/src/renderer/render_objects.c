@@ -4,7 +4,6 @@
 #include "platform/filesystem.h"
 #include "utils/string_utils.h"
 
-#include "engine_private.h"
 #include "render_objects.h"
 
 box_shader_stage_type get_stage_type_from_filepath(const char* filepath) {
@@ -73,6 +72,17 @@ box_renderstage box_renderstage_graphics_default(const char **shader_stages, u8 
 	
     return stage;
 }
+
+box_renderstage box_renderstage_compute_default(const char **shader_stages, u8 shader_stage_count) {
+    box_renderstage stage = {};
+	stage.mode = RENDERER_MODE_COMPUTE;
+	
+	if (!collect_renderstage_shaders(&stage, shader_stage_count, shader_stages))
+		return stage;
+	
+    return stage;
+}
+
 
 box_texture box_texture_default() {
 	box_texture texture = {};

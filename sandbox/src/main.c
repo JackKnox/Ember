@@ -1,41 +1,26 @@
-#include "engine.h"
+#include "platform/platform.h"
 #include "renderer/renderer_backend.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-VkResult create_vulkan_surface(box_platform* plat_state, VkInstance instance, const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface) {
-	GLFWwindow* window = (GLFWwindow*)plat_state->internal_state;
-	return glfwCreateWindowSurface(instance, window, allocator, surface);
-}
-
-u32 get_vulkan_extensions(box_platform* plat_state, const char*** out_array) {
-	uint32_t count = 0;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&count);
-    *out_array = extensions;
-    return count;
-}
-
 int main(int argc, char** argv) {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	box_window_config window_config = box_window_default_config();
+	window_config.window_size = (uvec2) { 640, 640 };
+	window_config.title = "Test Window";
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello, World", NULL, NULL);
-
-    box_platform platform = {0};
-    platform.internal_state = window;
-    platform.get_required_vulkan_extensions = get_vulkan_extensions;
-    platform.create_vulkan_surface = create_vulkan_surface;
+	box_platform platform = {};
+	if (!platform_start(&platform, &window_config)) {
+        printf("Failed to open window / platform surface\n");
+        return 1;
+	}
 
     box_renderer_backend_config config = box_renderer_backend_default_config();
 	config.modes = RENDERER_MODE_GRAPHICS | RENDERER_MODE_TRANSFER;
 	config.sampler_anisotropy = TRUE;
 
     box_renderer_backend backend = {};
-    if (!box_renderer_backend_create(&config, (uvec2) { 640, 480 }, "Hello, World", &platform, &backend)) {
+    if (!box_renderer_backend_create(&config, window_config.window_size, window_config.title, &platform, &backend)) {
         printf("Failed to create renderer backend\n");
         return 1;
     }
@@ -77,7 +62,6 @@ int main(int argc, char** argv) {
     renderstage.graphics.vertex_attributes[2] = (box_render_format) { .type = BOX_FORMAT_TYPE_FLOAT32, .channel_count = 2 }; // Texcoord (tX, tY)
     renderstage.graphics.vertex_attribute_count = 3;
 
-	renderstage.graphics.topology_type = BOX_VERTEX_TOPOLOGY_TRIANGLES;
 	renderstage.graphics.vertex_buffer = &vert_buffer;
 	renderstage.graphics.index_buffer = &index_buffer;
 
@@ -170,7 +154,7 @@ int main(int argc, char** argv) {
     backend.destroy_renderstage(&backend, &renderstage);
     box_renderer_backend_destroy(&backend);
 
-    glfwTerminate();
+	platform_shutdown(&platform);
 	memory_shutdown();
     return 0;
 }

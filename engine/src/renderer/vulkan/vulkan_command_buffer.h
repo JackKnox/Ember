@@ -7,7 +7,7 @@
  * @brief Allocates one or more Vulkan command buffers from the given command pool.
  *
  * @param context Pointer to the Vulkan context.
- * @param pool The command pool to allocate from.
+ * @param owner The command pool to allocate from.
  * @param is_primary Indicates whether to allocate primary (true) or secondary (false) command buffers.
  * @param command_buffer Pointer that receives the allocated command buffer.
  *
@@ -15,7 +15,7 @@
  */
 VkResult vulkan_command_buffer_allocate(
     vulkan_context* context,
-    VkCommandPool pool,
+    vulkan_queue* owner,
     b8 is_primary,
     vulkan_command_buffer* command_buffer);
 
@@ -54,14 +54,24 @@ void vulkan_command_buffer_end(
     vulkan_command_buffer* command_buffer);
 
 /**
- * @brief Marks a command buffer as submitted.
+ * @brief Submits a command buffer to its associated queue for execution.
  *
- * Typically used to update internal state tracking after queue submission.
+ * Submits the provided @p command_buffer using the given @p submit_info
+ * structure. Optionally associates a @p fence with the submission to allow
+ * synchronization and completion tracking on the CPU side.
  *
- * @param command_buffer Pointer to the command buffer.
+ * @param command_buffer Pointer to the command buffer to submit.
+ * @param submit_info Pointer to a VkSubmitInfo describing command buffers and synchronization info.
+ * @param fence Optional fence used to track completion of the submission.
+ *
+ * @return VkResult indicating success or failure.
  */
-void vulkan_command_buffer_update_submitted(
-    vulkan_command_buffer* command_buffer);
+VkResult vulkan_command_buffer_submit(
+    vulkan_command_buffer* command_buffer,
+    u32 wait_semaphore_count, VkSemaphore* wait_semaphores,
+    u32 signal_semaphore_count, VkSemaphore* signal_semaphores,
+    VkPipelineStageFlags* wait_stages,
+    vulkan_fence* fence);
 
 /**
  * @brief Resets a command buffer to the initial state.
@@ -86,7 +96,7 @@ void vulkan_command_buffer_reset(
  */
 VkResult vulkan_command_buffer_allocate_and_begin_single_use(
     vulkan_context* context,
-    VkCommandPool pool,
+    vulkan_queue* owner,
     vulkan_command_buffer* out_command_buffer);
 
 /**
@@ -102,5 +112,4 @@ VkResult vulkan_command_buffer_allocate_and_begin_single_use(
  */
 VkResult vulkan_command_buffer_end_single_use(
     vulkan_context* context,
-    vulkan_command_buffer* command_buffer,
-    VkQueue queue);
+    vulkan_command_buffer* command_buffer);

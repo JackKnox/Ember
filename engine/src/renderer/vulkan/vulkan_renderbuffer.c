@@ -70,7 +70,7 @@ b8 vulkan_renderbuffer_upload_data(
 		return FALSE;
 	}
 
-    box_renderbuffer staging_buffer = {};
+    box_renderbuffer staging_buffer = box_renderbuffer_default();
 	staging_buffer.buffer_size = buffer->buffer_size;
     if (!create_staging_buffer(context, buf_data, &staging_buffer)) {
         BX_ERROR("Failed to create staging buffer for uploading data.");
@@ -79,7 +79,7 @@ b8 vulkan_renderbuffer_upload_data(
 
 	vulkan_queue* selected_mode = &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER];
 	vulkan_command_buffer command_buffer;
-	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode->pool, &command_buffer);
+	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode, &command_buffer);
 
     internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)buffer->internal_data;
     internal_vulkan_renderbuffer* internal_staging_buffer = (internal_vulkan_renderbuffer*)staging_buffer.internal_data;
@@ -92,8 +92,7 @@ b8 vulkan_renderbuffer_upload_data(
 	CHECK_VKRESULT(
 		vulkan_command_buffer_end_single_use(
 			context,
-			&command_buffer,
-			selected_mode->handle),
+			&command_buffer),
 		"Failed to transfer Vulkan renderbuffer to GPU");
         
 	vulkan_renderbuffer_destroy(backend, &staging_buffer);
