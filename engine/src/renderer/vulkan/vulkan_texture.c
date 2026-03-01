@@ -93,32 +93,34 @@ b8 vulkan_texture_create(
     result = vkCreateImageView(context->device.logical_device, &view_create_info, context->allocator, &internal_texture->view);
     if (!vulkan_result_is_success(result)) return FALSE;
 
-    VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-    sampler_info.magFilter = sampler_info.minFilter 
-        = box_filter_to_vulkan_type(out_texture->filter_type);
+    if (out_texture->usage & BOX_TEXTURE_USAGE_SAMPLED) {
+        VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+        sampler_info.magFilter = sampler_info.minFilter 
+            = box_filter_to_vulkan_type(out_texture->filter_type);
 
-    sampler_info.addressModeU = sampler_info.addressModeV = sampler_info.addressModeW 
-        = box_address_mode_to_vulkan_type(out_texture->address_mode);
+        sampler_info.addressModeU = sampler_info.addressModeV = sampler_info.addressModeW 
+            = box_address_mode_to_vulkan_type(out_texture->address_mode);
 
-    sampler_info.anisotropyEnable = (out_texture->max_anisotropy > 0.0f);
-    sampler_info.maxAnisotropy = out_texture->max_anisotropy;
-    
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_info.mipLodBias = 0.0f;
-    sampler_info.minLod = 0.0f;
-    sampler_info.maxLod = 0.0f;
+        sampler_info.anisotropyEnable = (out_texture->max_anisotropy > 0.0f);
+        sampler_info.maxAnisotropy = out_texture->max_anisotropy;
+        
+        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_info.compareEnable = VK_FALSE;
+        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        sampler_info.mipLodBias = 0.0f;
+        sampler_info.minLod = 0.0f;
+        sampler_info.maxLod = 0.0f;
 
-    CHECK_VKRESULT(
-        vkCreateSampler(
-            context->device.logical_device, 
-            &sampler_info,
-            context->allocator, 
-            &internal_texture->sampler),
-        "Failed to create internal Vulkan sampler");
+        CHECK_VKRESULT(
+            vkCreateSampler(
+                context->device.logical_device, 
+                &sampler_info,
+                context->allocator, 
+                &internal_texture->sampler),
+            "Failed to create internal Vulkan sampler");
+    }
     
     vulkan_queue* selected_mode = &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER];
 	vulkan_command_buffer command_buffer;
@@ -229,10 +231,18 @@ void vulkan_texture_destroy(
     vulkan_context* context = (vulkan_context*)backend->internal_context;
 
     internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)texture->internal_data;
+    
+    if (internal_texture != NULL) {
+        if (internal_texture->sampler)
+            vkDestroySampler(context->device.logical_device, internal_texture->sampler, context->allocator);
 
-    vkDestroySampler(context->device.logical_device, internal_texture->sampler, context->allocator);
-    vkDestroyImageView(context->device.logical_device, internal_texture->view, context->allocator);
-    vkFreeMemory(context->device.logical_device, internal_texture->memory, context->allocator);
-    vkDestroyImage(context->device.logical_device, internal_texture->handle, context->allocator);
-    bfree(internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
+        vkDestroyImageView(context->device.logical_device, internal_texture->view, context->allocator);
+
+        if (internal_texture->ownes_image) {
+            vkFreeMemory(context->device.logical_device, internal_texture->memory, context->allocator);
+            vkDestroyImage(context->device.logical_device, internal_texture->handle, context->allocator);
+        }
+
+        bfree(internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
+    }
 }

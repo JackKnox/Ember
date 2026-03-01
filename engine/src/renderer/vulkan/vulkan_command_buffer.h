@@ -71,7 +71,7 @@ VkResult vulkan_command_buffer_submit(
     u32 wait_semaphore_count, VkSemaphore* wait_semaphores,
     u32 signal_semaphore_count, VkSemaphore* signal_semaphores,
     VkPipelineStageFlags* wait_stages,
-    vulkan_fence* fence);
+    VkFence fence);
 
 /**
  * @brief Resets a command buffer to the initial state.

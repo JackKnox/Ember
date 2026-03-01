@@ -11,8 +11,8 @@ typedef enum {
 void log_output(log_level level, const char* message, ...);
 
 #if !BOX_ENABLE_LOGGING
-#   define BX_INFO()
-#   define BX_TRACE()
+#   define BX_INFO(...)
+#   define BX_TRACE(...)
 #endif
 
 #ifndef BX_FATAL

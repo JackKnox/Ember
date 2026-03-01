@@ -46,10 +46,10 @@ void* _darray_insert_at(void* array, u64 index, void* value_ptr);
 #define darray_destroy(array) _darray_destroy(array);
 
 #define darray_push(array, value)           \
-    {                                       \
+    do {                                    \
         void* temp = (void*)(value);        \
         array = _darray_push(array, &temp); \
-    }
+    } while(0)
 
 #define darray_push_empty(array) \
     _darray_push_empty((void**) &array)
@@ -58,10 +58,10 @@ void* _darray_insert_at(void* array, u64 index, void* value_ptr);
     _darray_pop(array, value_ptr)
 
 #define darray_insert_at(array, index, value)           \
-    {                                                   \
+    do {                                                \
         void* temp = (void*)(value);                    \
         array = _darray_insert_at(array, index, &temp); \
-    }
+    } while(0)
 
 #define darray_pop_at(array, index, value_ptr) \
     _darray_pop_at(array, index, value_ptr)

@@ -62,7 +62,7 @@ VkResult vulkan_command_buffer_submit(
     u32 wait_semaphore_count, VkSemaphore* wait_semaphores, 
     u32 signal_semaphore_count, VkSemaphore* signal_semaphores,
     VkPipelineStageFlags* wait_stages, 
-    vulkan_fence* fence) {
+    VkFence fence) {
         
 	VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
     submit_info.pCommandBuffers = &command_buffer->handle;
@@ -73,11 +73,7 @@ VkResult vulkan_command_buffer_submit(
     submit_info.pSignalSemaphores = signal_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
 
-    VkFence fence_handle = VK_NULL_HANDLE;
-    if (fence_handle != NULL)
-        fence_handle = fence->handle;
-
-    VkResult result = vkQueueSubmit(command_buffer->owner->handle, 1, &submit_info, fence_handle);
+    VkResult result = vkQueueSubmit(command_buffer->owner->handle, 1, &submit_info, fence);
     if (!vulkan_result_is_success(result)) return result;
 
     command_buffer->state = COMMAND_BUFFER_STATE_SUBMITTED;
