@@ -3,6 +3,8 @@
 
 #include "utils/darray.h"
 
+#include "vulkan_image.h"
+
 b8 vulkan_rendertarget_create(
     box_renderer_backend* backend,
     box_rendertarget* rendertarget) {
@@ -10,46 +12,68 @@ b8 vulkan_rendertarget_create(
     
     rendertarget->internal_data = ballocate(sizeof(internal_vulkan_rendertarget), MEMORY_TAG_RENDERER);
     internal_vulkan_rendertarget* internal_rendertarget = (internal_vulkan_rendertarget*)rendertarget->internal_data;
+
+    internal_rendertarget->attachments = (vulkan_image*)ballocate(sizeof(vulkan_image) * rendertarget->attachment_count * context->swapchain.image_count, MEMORY_TAG_RENDERER);
+	internal_rendertarget->framebuffers = darray_reserve(VkFramebuffer, context->swapchain.image_count, MEMORY_TAG_RENDERER);
     
+    VkAttachmentReference* colour_attachments = NULL;
+    VkAttachmentDescription* attachments = darray_reserve(VkAttachmentDescription, rendertarget->attachment_count, MEMORY_TAG_RENDERER);
+
     // Main subpass
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    
+    for (u32 i = 0; i < rendertarget->attachment_count; ++i) {
+        const box_rendertarget_attachment* attachment = &rendertarget->attachments[i];
 
-    // Attachments TODO: make this configurable.
+        VkAttachmentDescription* attachment_desc = darray_push_empty(attachments);
+        attachment_desc->format = box_format_to_vulkan_type(attachment->format);
+        attachment_desc->samples = VK_SAMPLE_COUNT_1_BIT;
+        attachment_desc->loadOp = box_load_op_to_vulkan_type(attachment->load_op);
+        attachment_desc->storeOp = box_store_op_to_vulkan_type(attachment->store_op);
+        attachment_desc->stencilLoadOp = box_load_op_to_vulkan_type(attachment->stencil_load_op);
+        attachment_desc->stencilStoreOp = box_store_op_to_vulkan_type(attachment->stencil_store_op);
+        attachment_desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachment_desc->finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    // Color attachment
-    VkAttachmentDescription color_attachment;
-    color_attachment.format = context->swapchain.image_format.format;  // TODO: configurable
-    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;      // Do not expect any particular layout before render pass starts.
-    color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;  // Transitioned to after the render pass
-    color_attachment.flags = 0;
+        switch (attachment->type) {
+            case BOX_ATTACHMENT_COLOR:
+            //case BOX_ATTACHMENT_DEPTH: 
+            //case BOX_ATTACHMENT_STENCIL:
+            //case BOX_ATTACHMENT_DEPTH_STENCIL:
+                if (!colour_attachments)
+                    colour_attachments = darray_create(VkAttachmentReference, MEMORY_TAG_RENDERER);
 
-    VkAttachmentReference color_attachment_reference;
-    color_attachment_reference.attachment = 0;  // Attachment description array index
-    color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                VkAttachmentReference* attachment_reference = darray_push_empty(colour_attachments);
+                attachment_reference->attachment = i;
+                attachment_reference->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                break;
 
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &color_attachment_reference;
+            default:
+                BX_ASSERT(FALSE && "Unsupported attachment type");
+                continue;
+        }
 
-    // TODO: other attachment types (input, resolve, preserve)
+        for (u32 j = 0; j < context->swapchain.image_count; ++j) {
+            vulkan_image* out_attachment = &internal_rendertarget->attachments[j + i * context->swapchain.image_count];
 
-    // Input from a shader
-    subpass.inputAttachmentCount = 0;
-    subpass.pInputAttachments = 0;
+            CHECK_VKRESULT(
+                vulkan_image_create(
+                    context, 
+                    rendertarget->size, 
+                    box_format_to_vulkan_type(attachment->format), 
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+                    TRUE, 
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    out_attachment), 
+                "Failed to create internal Vulkan rendertarget attachment");
+        }
+    }
 
-    // Attachments used for multisampling colour attachments
-    subpass.pResolveAttachments = 0;
+    subpass.colorAttachmentCount = colour_attachments ? darray_length(colour_attachments) : 0;
+    subpass.pColorAttachments = colour_attachments;
 
-    // Attachments not used in this subpass, but must be preserved for the next.
-    subpass.preserveAttachmentCount = 0;
-    subpass.pPreserveAttachments = 0;
-
-    // Render pass dependencies. TODO: make this configurable.
     VkSubpassDependency dependency;
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
@@ -61,8 +85,8 @@ b8 vulkan_rendertarget_create(
 
     // Render pass create.
     VkRenderPassCreateInfo render_pass_create_info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-    render_pass_create_info.attachmentCount = 1;
-    render_pass_create_info.pAttachments = &color_attachment;
+    render_pass_create_info.attachmentCount = darray_length(attachments);
+    render_pass_create_info.pAttachments = attachments;
     render_pass_create_info.subpassCount = 1;
     render_pass_create_info.pSubpasses = &subpass;
     render_pass_create_info.dependencyCount = 1;
@@ -75,39 +99,37 @@ b8 vulkan_rendertarget_create(
             context->allocator,
             &internal_rendertarget->handle),
         "Failed to create internal Vulkan renderpass");
-    
-	internal_rendertarget->framebuffers = darray_reserve(vulkan_framebuffer, context->swapchain.image_count, MEMORY_TAG_RENDERER);
 
-    // Create framebuffers.
-	for (u32 i = 0; i < context->swapchain.image_count; ++i) {
-        vulkan_framebuffer* framebuffer = &internal_rendertarget->framebuffers[i];
+    darray_destroy(attachments);
+    if (colour_attachments != NULL) darray_destroy(colour_attachments);
 
-		// TODO: make this dynamic based on the currently configured attachments
-		VkImageView attachments[] = { context->swapchain.views[i] };
-        framebuffer->attachment_count = BX_ARRAYSIZE(attachments);
+    for (u32 i = 0; i < context->swapchain.image_count; ++i) {
+        VkImageView* views = darray_reserve(VkImageView, rendertarget->attachment_count, MEMORY_TAG_RENDERER);
+        for (u32 j = 0; j < rendertarget->attachment_count; ++j)
+            darray_push(views, internal_rendertarget->attachments[j + i * context->swapchain.image_count].view);
 
-        framebuffer->attachments = ballocate(sizeof(VkImageView) * framebuffer->attachment_count, MEMORY_TAG_RENDERER);
-        bcopy_memory(framebuffer->attachments, attachments, sizeof(VkImageView) * framebuffer->attachment_count);
-
-        // Creation info
         VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
         framebuffer_create_info.renderPass = internal_rendertarget->handle;
-        framebuffer_create_info.attachmentCount = framebuffer->attachment_count;
-        framebuffer_create_info.pAttachments = framebuffer->attachments;
-        framebuffer_create_info.width = (u32)rendertarget->size.width;
-        framebuffer_create_info.height = (u32)rendertarget->size.height;
+        framebuffer_create_info.attachmentCount = rendertarget->attachment_count;
+        framebuffer_create_info.pAttachments = views;
+        framebuffer_create_info.width = rendertarget->size.width;
+        framebuffer_create_info.height = rendertarget->size.height;
         framebuffer_create_info.layers = 1;
+
+        VkFramebuffer framebuffer;
 
         CHECK_VKRESULT(
             vkCreateFramebuffer(
                 context->device.logical_device,
                 &framebuffer_create_info,
                 context->allocator,
-                &framebuffer->handle),
+                &framebuffer),
             "Failed to create internal Vulkan framebuffer");
+        
+        darray_push(internal_rendertarget->framebuffers, framebuffer);
+        darray_destroy(views);
     }
-    
-    darray_length_set(internal_rendertarget->framebuffers, context->swapchain.image_count);
+
     return TRUE;
 }
 
@@ -144,7 +166,7 @@ void vulkan_rendertarget_begin(
 
     VkRenderPassBeginInfo begin_info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     begin_info.renderPass = internal_rendertarget->handle;
-    begin_info.framebuffer = internal_rendertarget->framebuffers[context->image_index].handle;
+    begin_info.framebuffer = internal_rendertarget->framebuffers[context->image_index];
     begin_info.renderArea.offset.x = rendertarget->origin.x;
     begin_info.renderArea.offset.y = rendertarget->origin.y;
     begin_info.renderArea.extent.width = rendertarget->size.width;
@@ -182,15 +204,6 @@ void vulkan_rendertarget_destroy(
     vulkan_context* context = (vulkan_context*)backend->internal_context;
 
     internal_vulkan_rendertarget* internal_rendertarget = (internal_vulkan_rendertarget*)rendertarget->internal_data;
-
-    for (u32 i = 0; i < darray_length(internal_rendertarget->framebuffers); ++i) {
-        vulkan_framebuffer* framebuffer = &internal_rendertarget->framebuffers[i];
-
-        vkDestroyFramebuffer(context->device.logical_device, framebuffer->handle, context->allocator);
-        bfree(framebuffer->attachments, sizeof(VkImageView) * framebuffer->attachment_count, MEMORY_TAG_RENDERER);
-    }
-
-    darray_destroy(internal_rendertarget->framebuffers);
 
     vkDestroyRenderPass(context->device.logical_device, internal_rendertarget->handle, context->allocator);
     bfree(internal_rendertarget, sizeof(internal_vulkan_rendertarget), MEMORY_TAG_RENDERER);

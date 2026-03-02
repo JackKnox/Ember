@@ -21,23 +21,6 @@ VkResult vulkan_swapchain_create(
     vulkan_swapchain* out_swapchain);
 
 /**
- * @brief Recreates an existing Vulkan swapchain.
- *
- * Typically called when the window is resized or the swapchain becomes invalid.
- * Destroys and rebuilds swapchain-dependent resources.
- *
- * @param context Pointer to the Vulkan context.
- * @param size New width and height of the swapchain images.
- * @param swapchain Pointer to the swapchain to recreate.
- *
- * @return VkResult indicating success or failure.
- */
-VkResult vulkan_swapchain_recreate(
-    vulkan_context* context,
-    vec2 size,
-    vulkan_swapchain* swapchain);
-
-/**
  * @brief Destroys a Vulkan swapchain and its associated resources.
  *
  * Frees swapchain images, image views, and other dependent resources.

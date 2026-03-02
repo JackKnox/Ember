@@ -99,10 +99,50 @@ typedef enum box_renderbuffer_usage {
     BOX_RENDERBUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
 } box_renderbuffer_usage;
 
+/**
+ * @brief Intended usage of a texture.
+ *
+ * Usage flags may be combined.
+ */
 typedef enum box_texture_usage {
     BOX_TEXTURE_USAGE_STORAGE = 1 << 0, /**< Storage image */
     BOX_TEXTURE_USAGE_SAMPLED = 1 << 1, /**< Texture created with sampler */
 } box_texture_usage;
+
+/**
+ * @brief Type of render pass attachment.
+ *
+ * Defines the logical purpose of an attachment within a render pass.
+ */
+typedef enum box_attachment_type {
+    BOX_ATTACHMENT_COLOR,   /**< Color render target (RGBA output) */
+    BOX_ATTACHMENT_DEPTH,   /**< Depth-only attachment */
+    BOX_ATTACHMENT_STENCIL, /**< Stencil-only attachment */
+    BOX_ATTACHMENT_DEPTH_STENCIL, /**< Combined depth-stencil attachment */
+} box_attachment_type;
+
+/**
+ * @brief Attachment load operation at the start of a render pass.
+ *
+ * Determines how existing attachment contents are treated
+ * when the render pass begins.
+ */
+typedef enum box_load_op {
+    BOX_LOAD_OP_LOAD,     /**< Preserve existing contents of the attachment */
+    BOX_LOAD_OP_CLEAR,    /**< Clear the attachment at the start of the pass */
+    BOX_LOAD_OP_DONT_CARE, /**< Contents are undefined at the start of the pass */
+} box_load_op;
+
+/**
+ * @brief Attachment store operation at the end of a render pass.
+ *
+ * Determines whether attachment contents are preserved
+ * after the render pass completes.
+ */
+typedef enum box_store_op {
+    BOX_STORE_OP_STORE,     /**< Store the results for later use */
+    BOX_STORE_OP_DONT_CARE, /**< Contents become undefined after the pass completes */
+} box_store_op;
 
 /**
  * @brief Describes memory access types used for synchronization between render stages.

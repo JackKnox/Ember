@@ -64,11 +64,13 @@ b8 vulkan_renderbuffer_upload_data(
     u64 buf_offset, 
     u64 buf_size) {
     vulkan_context* context = (vulkan_context*)backend->internal_context;
-    
+
     if (!(context->config.modes & RENDERER_MODE_TRANSFER)) {
 		BX_ERROR("Attempting to upload to renderbuffer without enabling transfer mode.");
 		return FALSE;
 	}
+
+    internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)buffer->internal_data;
 
     box_renderbuffer staging_buffer = box_renderbuffer_default();
 	staging_buffer.buffer_size = buffer->buffer_size;
@@ -77,23 +79,22 @@ b8 vulkan_renderbuffer_upload_data(
         return FALSE;
     }
 
-	vulkan_queue* selected_mode = &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER];
 	vulkan_command_buffer command_buffer;
-	vulkan_command_buffer_allocate_and_begin_single_use(context, selected_mode, &command_buffer);
+	vulkan_command_buffer_allocate_and_begin_single_use(context, &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER], &command_buffer);
+	{
+		internal_vulkan_renderbuffer* internal_staging_buffer = (internal_vulkan_renderbuffer*)staging_buffer.internal_data;
 
-    internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)buffer->internal_data;
-    internal_vulkan_renderbuffer* internal_staging_buffer = (internal_vulkan_renderbuffer*)staging_buffer.internal_data;
-
-	VkBufferCopy copy_info = {};
-	copy_info.size = buf_size;
-	copy_info.dstOffset = buf_offset;
-	vkCmdCopyBuffer(command_buffer.handle, internal_staging_buffer->handle, internal_buffer->handle, 1, &copy_info);
-    
-	CHECK_VKRESULT(
-		vulkan_command_buffer_end_single_use(
-			context,
-			&command_buffer),
-		"Failed to transfer Vulkan renderbuffer to GPU");
+		VkBufferCopy copy_info = {};
+		copy_info.size = buf_size;
+		copy_info.dstOffset = buf_offset;
+		vkCmdCopyBuffer(command_buffer.handle, internal_staging_buffer->handle, internal_buffer->handle, 1, &copy_info);
+		
+		CHECK_VKRESULT(
+			vulkan_command_buffer_end_single_use(
+				context,
+				&command_buffer),
+			"Failed to transfer Vulkan renderbuffer to GPU");
+	}
         
 	vulkan_renderbuffer_destroy(backend, &staging_buffer);
     return TRUE;

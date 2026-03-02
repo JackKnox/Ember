@@ -77,7 +77,7 @@ b8 bcmp_memory(void* buf1, void* buf2, u64 size) {
 	return platform_compare_memory(buf1, buf2, size);
 }
 
-void print_memory_usage() {
+void show_memory_stats() {
 #if BOX_ENABLE_DIAGNOSTICS
 	u64 total = 0;
 

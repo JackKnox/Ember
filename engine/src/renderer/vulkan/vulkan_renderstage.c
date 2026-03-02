@@ -344,8 +344,8 @@ b8 vulkan_renderstage_update_descriptors(
 
                     VkDescriptorImageInfo* image_info = darray_push_empty(image_infos);
                     image_info->sampler     = texture->sampler;
-                    image_info->imageView   = texture->view;
-                    image_info->imageLayout = texture->layout;
+                    image_info->imageView   = texture->image.view;
+                    image_info->imageLayout = texture->image.layout;
                     descriptor_write->pImageInfo = image_info;
 					break;
 

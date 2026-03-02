@@ -6,8 +6,13 @@
 
 #include <vulkan/vulkan.h>
 
+#if BOX_BUILD_DIST
+#define VK_CHECK(expr) BX_ASSERT(FALSE && "VK_CHECK found in Dist build" #expr) 
+#endif
+
 // Checks the given Vulkan expression for success and fatally aborts on failure.
 // Intended for calls that must never fail in a valid engine state.
+#ifndef VK_CHECK
 #define VK_CHECK(expr)                                    \
     {                                                     \
         VkResult r = expr;                                \
@@ -15,6 +20,7 @@
             BX_FATAL("VK_CHECK failed: (Line = %i) " __FILE__ "  (Error code: %s) ", \
                      __LINE__, vulkan_result_string(r, 1)); \
     }
+#endif
 
 // Checks a Vulkan call and logs an error on failure.
 // Intended for recoverable errors during initialization or runtime.
@@ -89,6 +95,23 @@ typedef struct vulkan_queue {
 } vulkan_queue;
 
 /**
+ * @brief Low level implementation of a Vulkan image.
+ */
+typedef struct vulkan_image {
+    /** @brief Image handle. */
+    VkImage handle;
+
+    /** @brief Current image layout. */
+    VkImageLayout layout;
+
+    /** @brief Allocated device memory. */
+    VkDeviceMemory memory;
+
+    /** @brief Image view. */
+    VkImageView view;
+} vulkan_image;
+
+/**
  * @brief Lifecycle state of a Vulkan render pass instance.
  */
 typedef enum vulkan_render_pass_state {
@@ -104,20 +127,6 @@ typedef enum vulkan_render_pass_state {
     /** @brief Recording has ended. */
     RENDER_PASS_STATE_RECORDING_ENDED,
 } vulkan_render_pass_state;
-
-/**
- * @brief Wraps a VkFramebuffer and its attachments.
- */
-typedef struct vulkan_framebuffer {
-    /** @brief Framebuffer handle. */
-    VkFramebuffer handle;
-
-    /** @brief Image view attachments. */
-    VkImageView* attachments;
-
-    /** @brief Number of attachments. */
-    u32 attachment_count;
-} vulkan_framebuffer;
 
 /**
  * @brief Represents the Vulkan swapchain and its associated images.
@@ -180,17 +189,6 @@ typedef struct vulkan_command_buffer {
 } vulkan_command_buffer;
 
 /**
- * @brief Wraps a Vulkan fence used for GPU/CPU synchronization.
- */
-typedef struct vulkan_fence {
-    /** @brief Fence handle. */
-    VkFence handle;
-
-    /** @brief Cached signal state. */
-    b8 is_signaled;
-} vulkan_fence;
-
-/**
  * @brief Represents a logical Vulkan device and associated resources.
  */
 typedef struct vulkan_device {
@@ -251,17 +249,7 @@ typedef struct internal_vulkan_renderstage {
  * @brief Internal Vulkan implementation of a box_texture.
  */
 typedef struct internal_vulkan_texture {
-    /** @brief Image handle. */
-    VkImage handle;
-
-    /** @brief Current image layout. */
-    VkImageLayout layout;
-
-    /** @brief Allocated device memory. */
-    VkDeviceMemory memory;
-
-    /** @brief Image view. */
-    VkImageView view;
+    vulkan_image image;
 
     /** @brief Sampler object. */
     VkSampler sampler;
@@ -279,9 +267,25 @@ typedef struct internal_vulkan_rendertarget {
     /** @brief Current render pass state. */
     vulkan_render_pass_state state;
 
+    vulkan_image* attachments;
+
     /** @brief Associated framebuffers. */
-    vulkan_framebuffer* framebuffers;
+    VkFramebuffer* framebuffers;
 } internal_vulkan_rendertarget;
+
+typedef struct memory_barrier {
+    u64 created_on_submission;
+
+    box_renderstage* src_renderstage;
+    box_renderstage* dst_renderstage;
+    box_access_flags src_access, dst_access;
+} memory_barrier;
+
+typedef struct vulkan_queue_submission {
+    vulkan_command_buffer* command_buffer;
+    VkSemaphore signal_semaphore;
+    VkSemaphore* wait_semaphores;
+} vulkan_queue_submission;
 
 /**
  * @brief Global Vulkan backend context.
@@ -333,10 +337,16 @@ typedef struct vulkan_context {
     VkSemaphore* queue_complete_semaphores;
 
     /** @brief Per-frame fences. */
-    vulkan_fence* in_flight_fences;
+    VkFence* in_flight_fences;
 
     /** @brief Fence tracking per swapchain image. */
-    vulkan_fence** images_in_flight;
+    VkFence** images_in_flight;
+
+    VkSemaphore* semaphore_pool;
+    u64 semaphore_next_index;
+    memory_barrier* memory_barriers;
+    vulkan_queue_submission* queued_submissions;
+    box_renderer_mode last_mode;
 } vulkan_context;
 
 /**
@@ -403,6 +413,16 @@ VkSamplerAddressMode box_address_mode_to_vulkan_type(box_address_mode address);
  * @brief Converts engine render format to a Vulkan format.
  */
 VkFormat box_format_to_vulkan_type(box_render_format format);
+
+/**
+ * @brief Converts engine load op format to a Vulkan format.
+ */
+VkAttachmentLoadOp box_load_op_to_vulkan_type(box_load_op load_op);
+
+/**
+ * @brief Converts engine store op format to a Vulkan format.
+ */
+VkAttachmentStoreOp box_store_op_to_vulkan_type(box_store_op store_op);
 
 /**
  * @brief Returns a human-readable string for a Vulkan result code.

@@ -15,12 +15,6 @@ b8 vulkan_texture_upload_data(
     uvec2 offset, 
     uvec2 region);
 
-void vulkan_texture_transition_layout(
-	box_renderer_backend* backend,
-    vulkan_command_buffer* cmd, 
-    box_texture* texture,
-    VkImageLayout new_layout);
-
 void vulkan_texture_destroy(
 	box_renderer_backend* backend,
     box_texture* texture);

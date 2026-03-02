@@ -10,7 +10,7 @@ b8 create_staging_buffer(
 
     VkBufferCreateInfo create_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     create_info.size = out_buffer->buffer_size;
-    create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT; //! <--------
     create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: Make configurable.
     VkResult result = vkCreateBuffer(context->device.logical_device, &create_info, context->allocator, &internal_buffer->handle);
     if (!vulkan_result_is_success(result)) return FALSE;
@@ -33,7 +33,7 @@ b8 create_staging_buffer(
     result = vkBindBufferMemory(context->device.logical_device, internal_buffer->handle, internal_buffer->memory, 0);
     if (!vulkan_result_is_success(result)) return FALSE;
 
-    if (map_ptr != NULL) {
+    if (map_ptr != NULL) {  //! <--------
         void* mapped_ptr = NULL;
         CHECK_VKRESULT(
             vkMapMemory(
@@ -49,18 +49,14 @@ b8 create_staging_buffer(
     return TRUE;
 }
 
-i32 find_memory_index(vulkan_context *context, u32 type_filter, u32 property_flags)
-{
+i32 find_memory_index(vulkan_context *context, u32 type_filter, u32 property_flags) {
     VkPhysicalDeviceMemoryProperties memory_properties;
     vkGetPhysicalDeviceMemoryProperties(context->device.physical_device, &memory_properties);
 
-    for (u32 i = 0; i < memory_properties.memoryTypeCount; ++i)
-    {
+    for (u32 i = 0; i < memory_properties.memoryTypeCount; ++i) {
         // Check each memory type to see if its bit is set to 1.
         if (type_filter & (1 << i) && (memory_properties.memoryTypes[i].propertyFlags & property_flags) == property_flags)
-        {
             return i;
-        }
     }
 
     BX_WARN("Unable to find suitable memory type!");
@@ -188,6 +184,27 @@ VkFormat box_format_to_vulkan_type(box_render_format format) {
 
     BX_ASSERT(FALSE && "Unsupported render format!");
     return VK_FORMAT_UNDEFINED;
+}
+
+VkAttachmentLoadOp box_load_op_to_vulkan_type(box_load_op load_op) {
+    switch (load_op) {
+    case BOX_LOAD_OP_LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
+    case BOX_LOAD_OP_CLEAR: return VK_ATTACHMENT_LOAD_OP_CLEAR;
+    case BOX_LOAD_OP_DONT_CARE: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    }
+
+    BX_ASSERT(FALSE && "Unsupported load op!");
+    return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+}
+
+VkAttachmentStoreOp box_store_op_to_vulkan_type(box_store_op store_op) {
+    switch (store_op) {
+    case BOX_STORE_OP_STORE: return VK_ATTACHMENT_STORE_OP_STORE;
+    case BOX_STORE_OP_DONT_CARE: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    }
+
+    BX_ASSERT(FALSE && "Unsupported store op!");
+    return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 }
 
 const char* vulkan_result_string(VkResult result, b8 get_extended) {

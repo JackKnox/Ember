@@ -30,4 +30,4 @@ void* bset_memory(void* dest, i32 value, u64 size);
 
 b8 bcmp_memory(void* buf1, void* buf2, u64 size);
 
-void print_memory_usage();
+void show_memory_stats();

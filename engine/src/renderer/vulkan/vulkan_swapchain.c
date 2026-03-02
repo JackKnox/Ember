@@ -18,94 +18,86 @@ VkSurfaceFormatKHR find_swapchain_format(vulkan_swapchain_support_info* swapchai
     return swapchain_info->formats[0];
 }
 
-VkResult create(vulkan_context* context, VkExtent2D size, vulkan_swapchain* swapchain) {
-    // Choose a swap surface format.
-    swapchain->image_format = find_swapchain_format(&context->device.swapchain_support);
 
-    // Swapchain extent
-    if (context->device.swapchain_support.capabilities.currentExtent.width != UINT32_MAX) {
-        size = context->device.swapchain_support.capabilities.currentExtent;
-    }
-
-    // Clamp to the value allowed by the GPU.
-    VkExtent2D min = context->device.swapchain_support.capabilities.minImageExtent;
-    VkExtent2D max = context->device.swapchain_support.capabilities.maxImageExtent;
+VkResult vulkan_swapchain_create(
+    vulkan_context* context,
+    vec2 size,
+    vulkan_swapchain* out_swapchain) {
+    vulkan_swapchain_support_info* swapchain_info = &context->device.swapchain_support;
+    out_swapchain->image_format = find_swapchain_format(swapchain_info);
+    
+    VkExtent2D min = swapchain_info->capabilities.minImageExtent;
+    VkExtent2D max = swapchain_info->capabilities.maxImageExtent;
     size.width = BX_CLAMP(size.width, min.width, max.width);
     size.height = BX_CLAMP(size.height, min.height, max.height);
 
-    u32 image_count = context->device.swapchain_support.capabilities.minImageCount + 1;
-    if (context->device.swapchain_support.capabilities.maxImageCount > 0 && image_count > context->device.swapchain_support.capabilities.maxImageCount) {
-        image_count = context->device.swapchain_support.capabilities.maxImageCount;
-    }
+    u32 image_count = swapchain_info->capabilities.minImageCount + 1;
+    image_count = BX_CLAMP(image_count, 0, swapchain_info->capabilities.maxImageCount);
+    
+    u32 queueFamilyIndices[] = {
+        context->device.mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index,
+        context->device.mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index };
 
     // Swapchain create info
     VkSwapchainCreateInfoKHR swapchain_create_info = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
     swapchain_create_info.surface = context->surface;
     swapchain_create_info.minImageCount = image_count;
-    swapchain_create_info.imageFormat = swapchain->image_format.format;
-    swapchain_create_info.imageColorSpace = swapchain->image_format.colorSpace;
+    swapchain_create_info.imageFormat = out_swapchain->image_format.format;
+    swapchain_create_info.imageColorSpace = out_swapchain->image_format.colorSpace;
     swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    swapchain_create_info.imageExtent = size;
-    swapchain_create_info.imageArrayLayers = 1;
-
-    // Setup the queue family indices
-    u32 queueFamilyIndices[] = {
-        (u32)context->device.mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index,
-        (u32)context->device.mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index };
-
-    if (context->device.mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != context->device.mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index) {
-        swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchain_create_info.queueFamilyIndexCount = 2;
-        swapchain_create_info.pQueueFamilyIndices = queueFamilyIndices;
-    } 
-    else {
-        swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        swapchain_create_info.queueFamilyIndexCount = 0;
-        swapchain_create_info.pQueueFamilyIndices = 0;
-    }
-
+    swapchain_create_info.imageExtent = (VkExtent2D) { size.width, size.height };
     swapchain_create_info.preTransform = context->device.swapchain_support.capabilities.currentTransform;
     swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-    swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
+    swapchain_create_info.oldSwapchain = out_swapchain->handle;
+    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapchain_create_info.imageArrayLayers = 1;
     swapchain_create_info.clipped = TRUE;
 
-    VkResult result = vkCreateSwapchainKHR(context->device.logical_device, &swapchain_create_info, context->allocator, &swapchain->handle);
+    // Setup the queue family indices
+    if (context->device.mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != 
+        context->device.mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index) {
+        swapchain_create_info.pQueueFamilyIndices = queueFamilyIndices;
+        swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapchain_create_info.queueFamilyIndexCount = 2;
+    }
+    
+    VkResult result = vkCreateSwapchainKHR(context->device.logical_device, &swapchain_create_info, context->allocator, &out_swapchain->handle);
     if (!vulkan_result_is_success(result)) return result;
 
-    // Images
-    swapchain->image_count = 0;
-    VK_CHECK(vkGetSwapchainImagesKHR(context->device.logical_device, swapchain->handle, &swapchain->image_count, 0));
-    if (!swapchain->images) {
-        swapchain->images = (VkImage*)ballocate(sizeof(VkImage) * swapchain->image_count, MEMORY_TAG_RENDERER);
-    }
-    if (!swapchain->views) {
-        swapchain->views = (VkImageView*)ballocate(sizeof(VkImageView) * swapchain->image_count, MEMORY_TAG_RENDERER);
-    }
-    VK_CHECK(vkGetSwapchainImagesKHR(context->device.logical_device, swapchain->handle, &swapchain->image_count, swapchain->images));
+    result = vkGetSwapchainImagesKHR(context->device.logical_device, out_swapchain->handle, &out_swapchain->image_count, 0);
+    if (!vulkan_result_is_success(result)) return result;
+
+    if (!out_swapchain->images) out_swapchain->images = (VkImage*)ballocate(sizeof(VkImage) * out_swapchain->image_count, MEMORY_TAG_RENDERER);
+    result = vkGetSwapchainImagesKHR(context->device.logical_device, out_swapchain->handle, &out_swapchain->image_count, out_swapchain->images);
+    if (!vulkan_result_is_success(result)) return result;
+
+    if (!out_swapchain->views) 
+        out_swapchain->views = (VkImageView*)ballocate(sizeof(VkImageView) * out_swapchain->image_count, MEMORY_TAG_RENDERER);
 
     // Views
-    for (u32 i = 0; i < swapchain->image_count; ++i) {
-        VkImageViewCreateInfo view_info = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-        view_info.image = swapchain->images[i];
+    for (u32 i = 0; i < out_swapchain->image_count; ++i) {
+        VkImageViewCreateInfo view_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+        view_info.image = out_swapchain->images[i];
         view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        view_info.format = swapchain->image_format.format;
+        view_info.format = out_swapchain->image_format.format;
         view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         view_info.subresourceRange.baseMipLevel = 0;
         view_info.subresourceRange.levelCount = 1;
         view_info.subresourceRange.baseArrayLayer = 0;
         view_info.subresourceRange.layerCount = 1;
 
-        result = vkCreateImageView(context->device.logical_device, &view_info, context->allocator, &swapchain->views[i]);
+        result = vkCreateImageView(context->device.logical_device, &view_info, context->allocator, &out_swapchain->views[i]);
         if (!vulkan_result_is_success(result)) return result;
     }
 
-    BX_INFO("Swapchain created successfully.");
     return VK_SUCCESS;
 }
 
-void destroy(vulkan_context* context, vulkan_swapchain* swapchain) {
-    if (swapchain && swapchain->handle) {
+void vulkan_swapchain_destroy(
+    vulkan_context* context,
+    vulkan_swapchain* swapchain) {
+    if (swapchain->handle) {
         vkDeviceWaitIdle(context->device.logical_device);
 
         // Only destroy the views, not the images, since those are owned by the swapchain and are thus
@@ -122,29 +114,6 @@ void destroy(vulkan_context* context, vulkan_swapchain* swapchain) {
 
         vkDestroySwapchainKHR(context->device.logical_device, swapchain->handle, context->allocator);
     }
-}
-
-VkResult vulkan_swapchain_create(
-    vulkan_context* context,
-    vec2 size,
-    vulkan_swapchain* out_swapchain) {
-    // Simply create a new one.
-    return create(context, (VkExtent2D) { size.width, size.height }, out_swapchain);
-}
-
-VkResult vulkan_swapchain_recreate(
-    vulkan_context* context,
-    vec2 size,
-    vulkan_swapchain* swapchain) {
-    // Destroy the old and create a new one.
-    destroy(context, swapchain);
-    return create(context, (VkExtent2D) { size.width, size.height }, swapchain);
-}
-
-void vulkan_swapchain_destroy(
-    vulkan_context* context,
-    vulkan_swapchain* swapchain) {
-    destroy(context, swapchain);
 }
 
 VkResult vulkan_swapchain_acquire_next_image_index(

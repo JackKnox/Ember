@@ -146,9 +146,6 @@ typedef struct box_renderer_backend {
 
     /** @brief Renderer capabilities supported by this backend. */
     box_renderer_capabilities capabilities;
-    
-    /** @brief Main render target that connects to platform surface. */
-    box_rendertarget main_rendertarget;
 
     /**
      * @brief Initializes the renderer backend.

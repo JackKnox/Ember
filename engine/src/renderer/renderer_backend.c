@@ -59,23 +59,28 @@ b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starti
 	out_renderer_backend->plat_state = plat_state;
 
     if (config->api_type == RENDERER_BACKEND_TYPE_VULKAN) {
-        out_renderer_backend->initialize = vulkan_renderer_backend_initialize;
-        out_renderer_backend->shutdown = vulkan_renderer_backend_shutdown;
+        out_renderer_backend->initialize      = vulkan_renderer_backend_initialize;
+        out_renderer_backend->shutdown        = vulkan_renderer_backend_shutdown;
         out_renderer_backend->wait_until_idle = vulkan_renderer_backend_wait_until_idle;
-        out_renderer_backend->resized = vulkan_renderer_backend_on_resized;
-        out_renderer_backend->begin_frame = vulkan_renderer_backend_begin_frame;
+        out_renderer_backend->resized         = vulkan_renderer_backend_on_resized;
+
+        out_renderer_backend->begin_frame     = vulkan_renderer_backend_begin_frame;
         out_renderer_backend->execute_command = vulkan_renderer_execute_command;
-        out_renderer_backend->end_frame = vulkan_renderer_backend_end_frame;
-        out_renderer_backend->create_renderstage = vulkan_renderstage_create;
+        out_renderer_backend->end_frame       = vulkan_renderer_backend_end_frame;
+
+        out_renderer_backend->create_renderstage             = vulkan_renderstage_create;
 		out_renderer_backend->update_renderstage_descriptors = vulkan_renderstage_update_descriptors;
-        out_renderer_backend->destroy_renderstage = vulkan_renderstage_destroy;
-        out_renderer_backend->create_renderbuffer = vulkan_renderbuffer_create;
-        out_renderer_backend->upload_to_renderbuffer = vulkan_renderbuffer_upload_data;
-        out_renderer_backend->destroy_renderbuffer = vulkan_renderbuffer_destroy;
-        out_renderer_backend->create_texture = vulkan_texture_create;
-		out_renderer_backend->upload_to_texture = vulkan_texture_upload_data;
-        out_renderer_backend->destroy_texture = vulkan_texture_destroy;
-   	 	out_renderer_backend->create_rendertarget = vulkan_rendertarget_create;
+        out_renderer_backend->destroy_renderstage            = vulkan_renderstage_destroy;
+
+        out_renderer_backend->create_renderbuffer            = vulkan_renderbuffer_create;
+        out_renderer_backend->upload_to_renderbuffer         = vulkan_renderbuffer_upload_data;
+        out_renderer_backend->destroy_renderbuffer           = vulkan_renderbuffer_destroy;
+
+        out_renderer_backend->create_texture       = vulkan_texture_create;
+		out_renderer_backend->upload_to_texture    = vulkan_texture_upload_data;
+        out_renderer_backend->destroy_texture      = vulkan_texture_destroy;
+
+   	 	out_renderer_backend->create_rendertarget  = vulkan_rendertarget_create;
     	out_renderer_backend->destroy_rendertarget = vulkan_rendertarget_destroy;
     }
     else {
@@ -84,21 +89,11 @@ b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starti
     }
 
     out_renderer_backend->initialize(out_renderer_backend, config, starting_size, application_name);
-
-	out_renderer_backend->main_rendertarget.is_window = TRUE;
-	out_renderer_backend->main_rendertarget.size = (vec2) { starting_size.x, starting_size.y };
-	if (!out_renderer_backend->create_rendertarget(out_renderer_backend, &out_renderer_backend->main_rendertarget)) {
-		BX_ERROR("Failed to create main rendertarget for renderer backend");
-		return FALSE;
-	}
-
     return TRUE;
 }
 
 void box_renderer_backend_destroy(box_renderer_backend* renderer_backend) {
 	renderer_backend->wait_until_idle(renderer_backend, UINT64_MAX);
-
-	renderer_backend->destroy_rendertarget(renderer_backend, &renderer_backend->main_rendertarget);
 
     if (renderer_backend->shutdown != NULL) 
         renderer_backend->shutdown(renderer_backend);

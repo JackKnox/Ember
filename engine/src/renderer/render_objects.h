@@ -118,30 +118,6 @@ box_renderstage box_renderstage_graphics_default(const char** shader_stages, u8 
 box_renderstage box_renderstage_compute_default(const char** shader_stages, u8 shader_stage_count);
 
 /**
- * @brief Represents a render target used by the renderer backend.
- *
- * A render target is the destination for rendering operations. It can either
- * represent a window-backed surface (such as a swapchain image) or an
- * offscreen render target (such as a framebuffer or texture).
- */
-typedef struct box_rendertarget {
-    /** @brief Clear colour value used when beginning a render pass. */
-    u32 clear_colour;
-
-    /** @brief Render area origin. */
-    vec2 origin;
-
-    /** @brief Render area size. */
-    vec2 size;
-
-    /** @brief Indicates whether this render target represents a window surface. */
-    b8 is_window;
-
-    /** @brief Backend-specific internal data. */
-    void* internal_data;
-} box_rendertarget;
-
-/**
  * @brief Backend-agnostic texture resource.
  *
  * Represents GPU image data along with sampling configuration.
@@ -184,6 +160,60 @@ box_texture box_texture_default();
  * @return The total size of the texture in bytes.
  */
 u64 box_texture_get_size_in_bytes(box_texture* texture);
+
+/**
+ * @brief Describes a single render target attachment.
+ */
+typedef struct box_rendertarget_attachment {
+    /** Logical attachment type (color, depth, stencil, etc.). */
+    box_attachment_type type;
+
+    /** Engine-defined pixel format. Must be compatible with the attachment type. */
+    box_render_format format;
+
+    /** Load operation for color or depth aspect. */
+    box_load_op load_op;
+
+    /** Store operation for color or depth aspect. */
+    box_store_op store_op;
+
+    /**
+     * Load operation for stencil aspect.
+     * Only relevant for stencil or depth-stencil attachments.
+     */
+    box_load_op stencil_load_op;
+
+    /**
+     * Store operation for stencil aspect.
+     * Only relevant for stencil or depth-stencil attachments.
+     */
+    box_store_op stencil_store_op;
+} box_rendertarget_attachment;
+
+/**
+ * @brief Represents a render target used by the renderer backend.
+ *
+ * A render target is the destination for rendering operations. It can either
+ * represent a window-backed surface (such as a swapchain image) or an
+ * offscreen render target (such as a framebuffer or texture).
+ */
+typedef struct box_rendertarget {
+    /** @brief Clear colour value used when beginning a render pass. */
+    u32 clear_colour;
+
+    /** @brief Render area origin. */
+    uvec2 origin;
+
+    /** @brief Render area size. */
+    uvec2 size;
+
+    box_rendertarget_attachment* attachments;
+
+    u32 attachment_count;
+
+    /** @brief Backend-specific internal data. */
+    void* internal_data;
+} box_rendertarget;
 
 /**
  * @brief Describes a single descriptor update for a renderstage.
