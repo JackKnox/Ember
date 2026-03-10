@@ -1,8 +1,6 @@
 #include "defines.h"
 #include "renderer_backend.h"
 
-#include "platform/platform.h"
-
 #include "vulkan/vulkan_backend.h"
 #include "vulkan/vulkan_renderbuffer.h"
 #include "vulkan/vulkan_renderstage.h"
@@ -10,32 +8,23 @@
 #include "vulkan/vulkan_texture.h"
 
 u64 box_render_format_size(box_render_format format) {
-	u64 base_size = 1;
-	
-	switch (format.type) {
-	case BOX_FORMAT_TYPE_SINT8:
-	case BOX_FORMAT_TYPE_UINT8:
-	case BOX_FORMAT_TYPE_BOOL:
-		base_size = 1;
-		break;
+    u32 bits_index = (format >> 16) & 0xF;
+    u32 channels   = (format >> 12) & 0xF;
 
-	case BOX_FORMAT_TYPE_SINT16:
-	case BOX_FORMAT_TYPE_UINT16:
-		base_size = 2;
-		break;
+	return (u64)((bits_index + 1) << 3 * channels);
+}
 
-	case BOX_FORMAT_TYPE_SINT32:
-	case BOX_FORMAT_TYPE_UINT32:
-	case BOX_FORMAT_TYPE_FLOAT32:
-		base_size = 4;
-		break;
-    }
+b8 box_render_format_normalized(box_render_format format) {
+    u32 flags = (format >> 24) & 0xFF;
+    return (flags & BOX_FORMAT_FLAG_NORMALIZED) != 0;
+}
 
-	return base_size * format.channel_count;
+u32 box_render_format_channel_count(box_render_format format) {
+    return (format >> 12) & 0xF;
 }
 
 box_renderer_backend_config box_renderer_backend_default_config() {
-    box_renderer_backend_config configuration = {0}; // fill with zeros
+    box_renderer_backend_config configuration = {};
     configuration.modes = RENDERER_MODE_GRAPHICS;
     configuration.enable_validation = FALSE;
 	configuration.frames_in_flight = 3;
@@ -46,8 +35,8 @@ box_renderer_backend_config box_renderer_backend_default_config() {
     return configuration;
 }
 
-b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, struct box_platform* plat_state, box_renderer_backend* out_renderer_backend) {
-    BX_ASSERT(starting_size.x != 0 && starting_size.y != 0 && application_name != NULL && plat_state != NULL && config != NULL && out_renderer_backend != NULL && "Invalid arguments passed to box_renderer_backend_create");
+b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, box_platform* plat_state, box_renderer_backend* out_renderer_backend) {
+    BX_ASSERT(config != NULL && starting_size.width > 0 && starting_size.height > 0 && application_name != NULL && out_renderer_backend != NULL && "Invalid arguments passed to box_renderer_backend_create");
     
 	if (config->modes == 0 || config->frames_in_flight <= 0) {
 		BX_ERROR("Invalid box_platform passed to box_renderer_backend_create");
@@ -100,6 +89,8 @@ void box_renderer_backend_destroy(box_renderer_backend* renderer_backend) {
 }
 
 b8 box_renderer_backend_submit_rendercmd(box_renderer_backend* renderer_backend, box_rendercmd_context* playback_context, box_rendercmd* rendercmd) {
+	BX_ASSERT(renderer_backend != NULL && playback_context != NULL && rendercmd != NULL && "Invalid arguments passed to box_renderer_backend_submit_rendercmd");
+
 	u8* cursor = 0;
 	while (freelist_next_block(&rendercmd->buffer, &cursor)) {
 		rendercmd_header* hdr = (rendercmd_header*)cursor;

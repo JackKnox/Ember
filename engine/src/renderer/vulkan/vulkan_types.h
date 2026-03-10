@@ -334,11 +334,6 @@ VkShaderStageFlags box_shader_type_to_vulkan_type(box_shader_stage_type type);
 VkDescriptorType box_descriptor_type_to_vulkan_type(box_descriptor_type descriptor_type);
 
 /**
- * @brief Converts engine index format to a Vulkan index type.
- */
-VkIndexType box_format_to_vulkan_index_type(box_format_type data_type);
-
-/**
  * @brief Converts engine filter mode to a Vulkan filter.
  */
 VkFilter box_filter_to_vulkan_type(box_filter_type filter_type);

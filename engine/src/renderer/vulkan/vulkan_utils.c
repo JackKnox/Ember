@@ -68,10 +68,11 @@ VkShaderStageFlags box_shader_type_to_vulkan_type(box_shader_stage_type type) {
     case BOX_SHADER_STAGE_TYPE_VERTEX:  return VK_SHADER_STAGE_VERTEX_BIT;
     case BOX_SHADER_STAGE_TYPE_FRAGMENT: return VK_SHADER_STAGE_FRAGMENT_BIT;
     case BOX_SHADER_STAGE_TYPE_COMPUTE:  return VK_SHADER_STAGE_COMPUTE_BIT;
-    }
 
-    BX_ASSERT(FALSE && "Unsupported shader stage type!");
-    return 0;
+    default:
+        BX_ASSERT(FALSE && "Unsupported shader stage type!");
+        return 0;
+    }
 }
 
 VkDescriptorType box_descriptor_type_to_vulkan_type(box_descriptor_type descriptor_type) {
@@ -79,42 +80,22 @@ VkDescriptorType box_descriptor_type_to_vulkan_type(box_descriptor_type descript
     case BOX_DESCRIPTOR_TYPE_STORAGE_BUFFER: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     case BOX_DESCRIPTOR_TYPE_STORAGE_IMAGE:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     case BOX_DESCRIPTOR_TYPE_IMAGE_SAMPLER:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    
+    default:
+        BX_ASSERT(FALSE && "Unsupported descriptor type!");
+        return 0;
     }
-
-    BX_ASSERT(FALSE && "Unsupported descriptor type!");
-    return 0;
-}
-
-VkIndexType box_format_to_vulkan_index_type(box_format_type data_type) {
-    switch (data_type) {
-    case BOX_FORMAT_TYPE_SINT8:
-    case BOX_FORMAT_TYPE_UINT8:
-        return VK_INDEX_TYPE_UINT8_KHR;
-        break;
-
-    case BOX_FORMAT_TYPE_SINT16:
-    case BOX_FORMAT_TYPE_UINT16:
-        return VK_INDEX_TYPE_UINT16;
-        break;
-
-    case BOX_FORMAT_TYPE_SINT32:
-    case BOX_FORMAT_TYPE_UINT32:
-        return VK_INDEX_TYPE_UINT32;
-        break;
-    }
-
-    BX_ASSERT(FALSE && "Unsupported format type!");
-    return 0;
 }
 
 VkFilter box_filter_to_vulkan_type(box_filter_type filter_type) {
     switch (filter_type) {
     case BOX_FILTER_TYPE_NEAREST: return VK_FILTER_NEAREST;
     case BOX_FILTER_TYPE_LINEAR:  return VK_FILTER_LINEAR;
-    }
 
-    BX_ASSERT(FALSE && "Unsupported filter type!");
-    return 0;
+    default:
+        BX_ASSERT(FALSE && "Unsupported filter type!");
+        return 0;
+    }
 }
 
 VkSamplerAddressMode box_address_mode_to_vulkan_type(box_address_mode address) {
@@ -124,66 +105,79 @@ VkSamplerAddressMode box_address_mode_to_vulkan_type(box_address_mode address) {
     case BOX_ADDRESS_MODE_CLAMP_TO_EDGE:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     case BOX_ADDRESS_MODE_CLAMP_TO_BORDER:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
     case BOX_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+    
+    default:
+        BX_ASSERT(FALSE && "Unsupported address mode!");
+        return 0;
     }
-
-    BX_ASSERT(FALSE && "Unsupported address mode!");
-    return 0;
 }
 
 VkFormat box_format_to_vulkan_type(box_render_format format) {
-    switch (format.type) {
-    case BOX_FORMAT_TYPE_SINT8:
-        if (format.channel_count == 1) return VK_FORMAT_R8_SINT;
-        if (format.channel_count == 2) return VK_FORMAT_R8G8_SINT;
-        if (format.channel_count == 3) return VK_FORMAT_R8G8B8_SINT;
-        if (format.channel_count == 4) return VK_FORMAT_R8G8B8A8_SINT;
+    switch (format) {
+        /* 8-bit integer  */
+        case BOX_FORMAT_R8_UINT:    return VK_FORMAT_R8_UINT;
+        case BOX_FORMAT_R8_SINT:    return VK_FORMAT_R8_SINT;
+        case BOX_FORMAT_RG8_UINT:   return VK_FORMAT_R8G8_UINT;
+        case BOX_FORMAT_RG8_SINT:   return VK_FORMAT_R8G8_SINT;
+        case BOX_FORMAT_RGB8_UINT:  return VK_FORMAT_R8G8B8_UINT;
+        case BOX_FORMAT_RGB8_SINT:  return VK_FORMAT_R8G8B8_SINT;
+        case BOX_FORMAT_RGBA8_UINT: return VK_FORMAT_R8G8B8A8_UINT;
+        case BOX_FORMAT_RGBA8_SINT: return VK_FORMAT_R8G8B8A8_SINT;
 
-    case BOX_FORMAT_TYPE_SINT16:
-        if (format.channel_count == 1) return VK_FORMAT_R16_SINT;
-        if (format.channel_count == 2) return VK_FORMAT_R16G16_SINT;
-        if (format.channel_count == 3) return VK_FORMAT_R16G16B16_SINT;
-        if (format.channel_count == 4) return VK_FORMAT_R16G16B16A16_SINT;
+        /* 8-bit normalized */
+        case BOX_FORMAT_R8_UNORM:    return VK_FORMAT_R8_UNORM;
+        case BOX_FORMAT_R8_SNORM:    return VK_FORMAT_R8_SNORM;
+        case BOX_FORMAT_RG8_UNORM:   return VK_FORMAT_R8G8_UNORM;
+        case BOX_FORMAT_RG8_SNORM:   return VK_FORMAT_R8G8_SNORM;
+        case BOX_FORMAT_RGB8_UNORM:  return VK_FORMAT_R8G8B8_UNORM;
+        case BOX_FORMAT_RGB8_SNORM:  return VK_FORMAT_R8G8B8_SNORM;
+        case BOX_FORMAT_RGBA8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
+        case BOX_FORMAT_RGBA8_SNORM: return VK_FORMAT_R8G8B8A8_SNORM;
 
-    case BOX_FORMAT_TYPE_SINT32:
-        if (format.channel_count == 1) return VK_FORMAT_R32_SINT;
-        if (format.channel_count == 2) return VK_FORMAT_R32G32_SINT;
-        if (format.channel_count == 3) return VK_FORMAT_R32G32B32_SINT;
-        if (format.channel_count == 4) return VK_FORMAT_R32G32B32A32_SINT;
+        /* sRGB */
+        case BOX_FORMAT_R8_SRGB:    return VK_FORMAT_R8_SRGB;
+        case BOX_FORMAT_RG8_SRGB:   return VK_FORMAT_R8G8_SRGB;
+        case BOX_FORMAT_RGB8_SRGB:  return VK_FORMAT_R8G8B8_SRGB;
+        case BOX_FORMAT_RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
 
-    case BOX_FORMAT_TYPE_UINT8:
-        if (format.channel_count == 1) return VK_FORMAT_R8_UINT;
-        if (format.channel_count == 2) return VK_FORMAT_R8G8_UINT;
-        if (format.channel_count == 3) return VK_FORMAT_R8G8B8_UINT;
-        if (format.channel_count == 4) return VK_FORMAT_R8G8B8A8_UINT;
+        /* 16-bit */
+        case BOX_FORMAT_R16_UINT:    return VK_FORMAT_R16_UINT;
+        case BOX_FORMAT_R16_SINT:    return VK_FORMAT_R16_SINT;
+        case BOX_FORMAT_R16_FLOAT:   return VK_FORMAT_R16_SFLOAT;
 
-    case BOX_FORMAT_TYPE_UINT16:
-        if (format.channel_count == 1) return VK_FORMAT_R16_UINT;
-        if (format.channel_count == 2) return VK_FORMAT_R16G16_UINT;
-        if (format.channel_count == 3) return VK_FORMAT_R16G16B16_UINT;
-        if (format.channel_count == 4) return VK_FORMAT_R16G16B16A16_UINT;
+        case BOX_FORMAT_RG16_UINT:   return VK_FORMAT_R16G16_UINT;
+        case BOX_FORMAT_RG16_SINT:   return VK_FORMAT_R16G16_SINT;
+        case BOX_FORMAT_RG16_FLOAT:  return VK_FORMAT_R16G16_SFLOAT;
 
-    case BOX_FORMAT_TYPE_BOOL:
-    case BOX_FORMAT_TYPE_UINT32:
-        if (format.channel_count == 1) return VK_FORMAT_R32_UINT;
-        if (format.channel_count == 2) return VK_FORMAT_R32G32_UINT;
-        if (format.channel_count == 3) return VK_FORMAT_R32G32B32_UINT;
-        if (format.channel_count == 4) return VK_FORMAT_R32G32B32A32_UINT;
+        case BOX_FORMAT_RGB16_UINT:  return VK_FORMAT_R16G16B16_UINT;
+        case BOX_FORMAT_RGB16_SINT:  return VK_FORMAT_R16G16B16_SINT;
+        case BOX_FORMAT_RGB16_FLOAT: return VK_FORMAT_R16G16B16_SFLOAT;
 
-    case BOX_FORMAT_TYPE_FLOAT32:
-        if (format.channel_count == 1) return VK_FORMAT_R32_SFLOAT;
-        if (format.channel_count == 2) return VK_FORMAT_R32G32_SFLOAT;
-        if (format.channel_count == 3) return VK_FORMAT_R32G32B32_SFLOAT;
-        if (format.channel_count == 4) return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case BOX_FORMAT_RGBA16_UINT:  return VK_FORMAT_R16G16B16A16_UINT;
+        case BOX_FORMAT_RGBA16_SINT:  return VK_FORMAT_R16G16B16A16_SINT;
+        case BOX_FORMAT_RGBA16_FLOAT: return VK_FORMAT_R16G16B16A16_SFLOAT;
 
-    case BOX_FORMAT_TYPE_SRGB:
-        if (format.channel_count == 1) return VK_FORMAT_R8_SRGB;
-        if (format.channel_count == 2) return VK_FORMAT_R8G8_SRGB;
-        if (format.channel_count == 3) return VK_FORMAT_R8G8B8_SRGB;
-        if (format.channel_count == 4) return VK_FORMAT_R8G8B8A8_SRGB;
+        /* 32-bit */
+        case BOX_FORMAT_R32_UINT:    return VK_FORMAT_R32_UINT;
+        case BOX_FORMAT_R32_SINT:    return VK_FORMAT_R32_SINT;
+        case BOX_FORMAT_R32_FLOAT:   return VK_FORMAT_R32_SFLOAT;
+
+        case BOX_FORMAT_RG32_UINT:   return VK_FORMAT_R32G32_UINT;
+        case BOX_FORMAT_RG32_SINT:   return VK_FORMAT_R32G32_SINT;
+        case BOX_FORMAT_RG32_FLOAT:  return VK_FORMAT_R32G32_SFLOAT;
+
+        case BOX_FORMAT_RGB32_UINT:  return VK_FORMAT_R32G32B32_UINT;
+        case BOX_FORMAT_RGB32_SINT:  return VK_FORMAT_R32G32B32_SINT;
+        case BOX_FORMAT_RGB32_FLOAT: return VK_FORMAT_R32G32B32_SFLOAT;
+
+        case BOX_FORMAT_RGBA32_UINT:  return VK_FORMAT_R32G32B32A32_UINT;
+        case BOX_FORMAT_RGBA32_SINT:  return VK_FORMAT_R32G32B32A32_SINT;
+        case BOX_FORMAT_RGBA32_FLOAT: return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+        default:
+            BX_ASSERT(FALSE && "Unsupported render format!");
+            return VK_FORMAT_UNDEFINED;
     }
-
-    BX_ASSERT(FALSE && "Unsupported render format!");
-    return VK_FORMAT_UNDEFINED;
 }
 
 VkAttachmentLoadOp box_load_op_to_vulkan_type(box_load_op load_op) {
@@ -191,20 +185,22 @@ VkAttachmentLoadOp box_load_op_to_vulkan_type(box_load_op load_op) {
     case BOX_LOAD_OP_LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
     case BOX_LOAD_OP_CLEAR: return VK_ATTACHMENT_LOAD_OP_CLEAR;
     case BOX_LOAD_OP_DONT_CARE: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    }
 
-    BX_ASSERT(FALSE && "Unsupported load op!");
-    return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    default:
+        BX_ASSERT(FALSE && "Unsupported load op!");
+        return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    }
 }
 
 VkAttachmentStoreOp box_store_op_to_vulkan_type(box_store_op store_op) {
     switch (store_op) {
     case BOX_STORE_OP_STORE: return VK_ATTACHMENT_STORE_OP_STORE;
     case BOX_STORE_OP_DONT_CARE: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    
+    default:
+        BX_ASSERT(FALSE && "Unsupported store op!");
+        return VK_ATTACHMENT_STORE_OP_DONT_CARE;
     }
-
-    BX_ASSERT(FALSE && "Unsupported store op!");
-    return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 }
 
 const char* vulkan_result_string(VkResult result, b8 get_extended) {

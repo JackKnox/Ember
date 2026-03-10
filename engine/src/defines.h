@@ -154,7 +154,7 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 #define BX_ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
 
-static u64 alignment(u64 v, u64 align) {
+inline static u64 alignment(u64 v, u64 align) {
     return (v + (align - 1)) & ~(align - 1);
 }
 

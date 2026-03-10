@@ -277,7 +277,7 @@ typedef struct box_renderer_backend {
  * @param out_renderer_backend Output backend instance.
  * @return True if creation succeeded.
  */
-b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, struct box_platform* plat_state, box_renderer_backend* out_renderer_backend);
+b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, box_platform* plat_state, box_renderer_backend* out_renderer_backend);
 
 /**
  * @brief Destroys a renderer backend instance.

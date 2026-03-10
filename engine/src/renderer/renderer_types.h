@@ -41,52 +41,124 @@ typedef enum box_renderer_mode {
     RENDERER_MODE_TRANSFER = 1 << 2,  /**< Data transfer operations */
 } box_renderer_mode;
 
-/**
- * @brief Base data types supported by the renderer.
- */
-typedef enum box_format_type {
-    BOX_FORMAT_TYPE_UINT8,    /**< Unsigned 8-bit integer */
-    BOX_FORMAT_TYPE_UINT16,   /**< Unsigned 16-bit integer */
-    BOX_FORMAT_TYPE_UINT32,   /**< Unsigned 32-bit integer */
+#define BOX_FORMAT_UINT  0
+#define BOX_FORMAT_SINT  1
+#define BOX_FORMAT_FLOAT 2
+#define BOX_FORMAT_BOOL  3
 
-    BOX_FORMAT_TYPE_SINT8,    /**< Signed 8-bit integer */
-    BOX_FORMAT_TYPE_SINT16,   /**< Signed 16-bit integer */
-    BOX_FORMAT_TYPE_SINT32,   /**< Signed 32-bit integer */
+#define BOX_FORMAT_FLAG_NORMALIZED 1 << 0
+#define BOX_FORMAT_FLAG_SRGB       1 << 1
+//#define BOX_FORMAT_FLAG_DEPTH      = 1 << 2
+//#define BOX_FORMAT_FLAG_STENCIL    = 1 << 3
 
-    BOX_FORMAT_TYPE_FLOAT32,  /**< 32-bit floating point */
-    BOX_FORMAT_TYPE_SRGB,     /**< sRGB color format */
-
-    BOX_FORMAT_TYPE_BOOL,     /**< Boolean type */
-} box_format_type;
+#define BOX_RENDER_FORMAT(type, bits, channels, flags) \
+    (((flags)              << 24)  | \
+     ((type)               << 20)  | \
+     (((bits / 8) - 1)     << 16)  | \
+     ((channels)           << 12))
 
 /**
  * @brief Describes a data format used by the renderer.
  *
  * Used for vertex attributes, textures, and general GPU data.
  */
-typedef struct box_render_format {
-    /** @brief Underlying data type. */
-    box_format_type type;
-
-    /** @brief Number of components per element (e.g., RGBA = 4). */
-    u8 channel_count;
+typedef enum box_render_format {
+    BOX_FORMAT_UNDEFINED = 0,
 
     /**
-     * @brief Whether integer formats are normalized.
-     *
-     * If true, integer values are mapped to [0,1] or [-1,1]
-     * when accessed in shaders.
+     * @brief 8-bit integer formats
      */
-    b8 normalized;
+    BOX_FORMAT_R8_UINT    = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 1, 0),
+    BOX_FORMAT_RG8_UINT   = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 2, 0),
+    BOX_FORMAT_RGB8_UINT  = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 3, 0),
+    BOX_FORMAT_RGBA8_UINT = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 4, 0),
+
+    BOX_FORMAT_R8_SINT    = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 1, 0),
+    BOX_FORMAT_RG8_SINT   = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 2, 0),
+    BOX_FORMAT_RGB8_SINT  = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 3, 0),
+    BOX_FORMAT_RGBA8_SINT = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 4, 0),
+
+    /**
+     * @brief 8-bit normalized formats
+     */
+    BOX_FORMAT_R8_UNORM    = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 1, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RG8_UNORM   = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 2, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RGB8_UNORM  = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 3, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RGBA8_UNORM = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 4, BOX_FORMAT_FLAG_NORMALIZED),
+
+    BOX_FORMAT_R8_SNORM    = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 1, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RG8_SNORM   = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 2, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RGB8_SNORM  = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 3, BOX_FORMAT_FLAG_NORMALIZED),
+    BOX_FORMAT_RGBA8_SNORM = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 8, 4, BOX_FORMAT_FLAG_NORMALIZED),
+
+    /**
+     * @brief 16-bit formats
+     */
+    BOX_FORMAT_R16_UINT    = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 16, 1, 0),
+    BOX_FORMAT_RG16_UINT   = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 16, 2, 0),
+    BOX_FORMAT_RGB16_UINT  = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 16, 3, 0),
+    BOX_FORMAT_RGBA16_UINT = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 16, 4, 0),
+
+    BOX_FORMAT_R16_SINT    = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 16, 1, 0),
+    BOX_FORMAT_RG16_SINT   = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 16, 2, 0),
+    BOX_FORMAT_RGB16_SINT  = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 16, 3, 0),
+    BOX_FORMAT_RGBA16_SINT = BOX_RENDER_FORMAT(BOX_FORMAT_SINT, 16, 4, 0),
+
+    BOX_FORMAT_R16_FLOAT   = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 16, 1, 0),
+    BOX_FORMAT_RG16_FLOAT  = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 16, 2, 0),
+    BOX_FORMAT_RGB16_FLOAT = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 16, 3, 0),
+    BOX_FORMAT_RGBA16_FLOAT = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 16, 4, 0),
+
+    /**
+     * @brief 32-bit formats
+     */
+    BOX_FORMAT_R32_UINT    = BOX_RENDER_FORMAT(BOX_FORMAT_UINT,  32, 1, 0),
+    BOX_FORMAT_RG32_UINT   = BOX_RENDER_FORMAT(BOX_FORMAT_UINT,  32, 2, 0),
+    BOX_FORMAT_RGB32_UINT  = BOX_RENDER_FORMAT(BOX_FORMAT_UINT,  32, 3, 0),
+    BOX_FORMAT_RGBA32_UINT = BOX_RENDER_FORMAT(BOX_FORMAT_UINT,  32, 4, 0),
+
+    BOX_FORMAT_R32_SINT    = BOX_RENDER_FORMAT(BOX_FORMAT_SINT,  32, 1, 0),
+    BOX_FORMAT_RG32_SINT   = BOX_RENDER_FORMAT(BOX_FORMAT_SINT,  32, 2, 0),
+    BOX_FORMAT_RGB32_SINT  = BOX_RENDER_FORMAT(BOX_FORMAT_SINT,  32, 3, 0),
+    BOX_FORMAT_RGBA32_SINT = BOX_RENDER_FORMAT(BOX_FORMAT_SINT,  32, 4, 0),
+
+    BOX_FORMAT_R32_FLOAT   = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 32, 1, 0),
+    BOX_FORMAT_RG32_FLOAT  = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 32, 2, 0),
+    BOX_FORMAT_RGB32_FLOAT = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 32, 3, 0),
+    BOX_FORMAT_RGBA32_FLOAT = BOX_RENDER_FORMAT(BOX_FORMAT_FLOAT, 32, 4, 0),
+
+    /**
+     * @brief sRGB formats
+     */
+    BOX_FORMAT_R8_SRGB    = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 1, BOX_FORMAT_FLAG_NORMALIZED | BOX_FORMAT_FLAG_SRGB),
+    BOX_FORMAT_RG8_SRGB   = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 2, BOX_FORMAT_FLAG_NORMALIZED | BOX_FORMAT_FLAG_SRGB),
+    BOX_FORMAT_RGB8_SRGB  = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 3, BOX_FORMAT_FLAG_NORMALIZED | BOX_FORMAT_FLAG_SRGB),
+    BOX_FORMAT_RGBA8_SRGB = BOX_RENDER_FORMAT(BOX_FORMAT_UINT, 8, 4, BOX_FORMAT_FLAG_NORMALIZED | BOX_FORMAT_FLAG_SRGB),
 } box_render_format;
 
 /**
  * @brief Returns the size in bytes of a render format element.
  *
- * @param format Format description.
+ * @param format Renderer description.
  * @return Size in bytes of a single element.
  */
 u64 box_render_format_size(box_render_format format);
+
+/**
+ * @brief Returns if the render format is normalized.
+ *
+ * @param format Renderer description.
+ * @return Whetever the passed render format is normalized.
+ */
+b8 box_render_format_normalized(box_render_format format);
+
+/**
+ * @brief Returns the channel count of a render format element.
+ *
+ * @param format Renderer description.
+ * @return Channel count of a single element.
+ */
+u32 box_render_format_channel_count(box_render_format format);
 
 /**
  * @brief Intended usage of a render buffer.

@@ -54,15 +54,17 @@ b8 vulkan_renderer_backend_initialize(box_renderer_backend* backend, box_rendere
 	app_info.pApplicationName = application_name;
 	app_info.pEngineName = "Boxel";
 
-	const char** platform_extensions = NULL;
-	u32 platform_extensions_count = vulkan_platform_get_required_extensions(&platform_extensions);
-
 	// Obtain a list of required extensions
-	const char** required_extensions = darray_reserve(const char*, platform_extensions_count, MEMORY_TAG_RENDERER);
+	const char** required_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
 	const char** required_validation_layer_names = darray_create(const char*, MEMORY_TAG_RENDERER);
 
-	for (int i = 0; i < platform_extensions_count; ++i)
-		darray_push(required_extensions, platform_extensions[i]);
+	if (backend->plat_state != NULL) {
+		const char** platform_extensions = NULL;
+		u32 platform_extensions_count = vulkan_platform_get_required_extensions(&platform_extensions);
+		
+		for (int i = 0; i < platform_extensions_count; ++i)
+			darray_push(required_extensions, platform_extensions[i]);
+	}
 
 	// Add debug extensions/layers if enabled
 	if (context->config.enable_validation) {
@@ -236,7 +238,7 @@ void vulkan_renderer_backend_shutdown(box_renderer_backend* backend) {
 		darray_destroy(context->in_flight_fences);
 	}
 
-	if (backend->plat_state->internal_renderer_state != NULL) {
+	if (backend->plat_state != NULL && backend->plat_state->internal_renderer_state != NULL) {
 		vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
 
 		vulkan_window_system_destroy(context, window_system);
