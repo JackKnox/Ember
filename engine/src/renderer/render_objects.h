@@ -12,10 +12,23 @@
 #include "utils/freelist.h"
 
 /**
+ * @brief Configuration for a render buffer.
+ *
+ * Defines a GPU buffer such as a vertex, index, 
+ * uniform, or storage buffer.
+ */
+typedef struct box_renderbuffer_config {
+    /** @brief Intended usage of the buffer (vertex, index, uniform, etc.). */
+    box_renderbuffer_usage usage;
+
+    /** @brief Total size of the buffer in bytes. */
+    u64 buffer_size;
+} box_renderbuffer_config;
+
+/**
  * @brief Backend-agnostic GPU buffer handle.
  *
- * Represents a GPU-resident buffer resource such as a vertex,
- * index, uniform, or storage buffer.
+ * Represents a GPU-resident buffer resource.
  */
 typedef struct box_renderbuffer {
     /** @brief Total size of the buffer in bytes. */
@@ -23,34 +36,61 @@ typedef struct box_renderbuffer {
 
     /** @brief Backend-specific buffer state/handle. */
     void* internal_data;
-
-    /** @brief Intended usage of the buffer (vertex, index, uniform, etc.). */
-    box_renderbuffer_usage usage;
 } box_renderbuffer;
 
 /**
- * @brief Creates a default-initialized render buffer.
+ * @brief Creates a default render buffer configuration.
  *
- * @return A zeroed/default render buffer instance.
+ * @return A default-initialized box_renderbuffer_config.
  */
-box_renderbuffer box_renderbuffer_default();
+box_renderbuffer_config box_renderbuffer_default();
 
 /**
- * @brief Raw shader stage data.
+ * @brief Describes the shader layout used by a render stage.
  *
- * Contains shader source code or compiled bytecode
- * loaded from disk or memory.
+ * Contains the shader sources and descriptor bindings required
+ * to build a pipeline layout. This layout is shared between
+ * graphics and compute stages.
  */
-typedef struct {
-    /** @brief Pointer to shader source or compiled bytecode. */
-    const void* file_data;
+typedef struct box_renderstage_layout {
+    /** @brief Shader stages indexed by box_shader_stage_type. */
+    box_shader_src stages[BOX_SHADER_STAGE_TYPE_MAX];
 
-    /** @brief Size of the shader data in bytes. */
-    u64 file_size;
-} shader_stage;
+    /** @brief Descriptor binding descriptions used by the pipeline. */
+	box_descriptor_desc* descriptors;
 
-#define BOX_MAX_VERTEX_ATTRIBS 8
-#define BOX_MAX_DESCRIPTORS 8
+    /** @brief Number of active descriptor bindings. */
+	u32 descriptor_count;
+} box_renderstage_layout;
+
+/**
+ * @brief Configuration for a graphics render stage.
+ *
+ * Defines the shader layout, vertex input layout, and optional
+ * vertex/index buffers used when creating a graphics pipeline.
+ */
+typedef struct box_graphicstage_config {
+    /** @brief Shader layout used by the stage. */
+    box_renderstage_layout layout;
+
+    /** @brief Vertex attribute formats in binding order. */
+    box_render_format* vertex_attributes;
+
+    /** @brief Number of active vertex attributes. */
+    u32 vertex_attribute_count;
+
+    /** @brief Optional vertex buffer bound to this render stage. */
+    box_renderbuffer* vertex_buffer;
+
+    /** @brief Optional index buffer bound to this render stage. */
+    box_renderbuffer* index_buffer;
+} box_graphicstage_config;
+
+
+typedef struct box_computestage_config {
+    /** @brief Shader layout used by the stage. */
+    box_renderstage_layout layout;
+} box_computestage_config;
 
 /**
  * @brief Represents a render pipeline configuration.
@@ -62,76 +102,41 @@ typedef struct {
  * into API-specific pipeline objects internally.
  */
 typedef struct box_renderstage {
-    /** @brief Shader stages indexed by box_shader_stage_type. */
-    shader_stage stages[BOX_SHADER_STAGE_TYPE_MAX];
-    
-	/** @brief Descriptor binding descriptions used by the pipeline. */
-	box_descriptor_desc descriptors[BOX_MAX_DESCRIPTORS];
+    // TODO: Remove this as box_renderer_mode is technically a bitmask
+    /** @brief Type / supported mode of the renderstage. */
+    box_renderer_mode pipeline_type;
 
-    /** @brief Number of active descriptor bindings. */
-	u8 descriptor_count;
+    box_descriptor_desc* descriptors;
 
-    /** @brief Rendering mode (graphics, compute, etc.). */
-    box_renderer_mode mode;
-
-    union {
-        /**
-         * @brief Graphics pipeline configuration.
-         */
-        struct {
-            /** @brief Vertex attribute formats in binding order. */
-            box_render_format vertex_attributes[BOX_MAX_VERTEX_ATTRIBS];
-
-            /** @brief Number of active vertex attributes. */
-            u8 vertex_attribute_count;
-
-            /** @brief Optional vertex buffer bound to this render stage. */
-            box_renderbuffer* vertex_buffer;
-
-            /** @brief Optional index buffer bound to this render stage. */
-            box_renderbuffer* index_buffer;
-        } graphics;
-
-        /**
-         * @brief Compute pipeline configuration.
-         */
-        struct {
-            /* Future compute-specific configuration */
-        } compute;
-
-    };
-
-    /** @brief Backend-specific pipeline or program state. */
+    /** @brief Backend-specific pipeline or program data. */
     void* internal_data;
 } box_renderstage;
 
 /**
- * @brief Creates a default render stage with graphics configuration.
+ * @brief Creates a default graphics stage configuration.
  *
- * @param shader_stages Array of shader file paths or stage identifiers.
- * @param shader_stage_count Number of shader stages provided.
+ * Initializes a graphics stage configuration with sensible
+ * defaults for shader layout and vertex input state.
  *
- * @return A default-initialized graphics render stage.
+ * @return A default-initialized box_graphicstage_config.
  */
-box_renderstage box_renderstage_graphics_default(const char** shader_stages, u8 shader_stage_count);
-
-box_renderstage box_renderstage_compute_default(const char** shader_stages, u8 shader_stage_count);
+box_graphicstage_config box_renderstage_default_graphic();
 
 /**
- * @brief Backend-agnostic texture resource.
+ * @brief Creates a default compute stage configuration.
  *
- * Represents GPU image data along with sampling configuration.
- * Converted internally into API-specific image and sampler objects.
+ * Initializes a compute stage configuration with default values.
+ *
+ * @return A default-initialized box_computestage_config.
  */
-typedef struct box_texture {
+box_computestage_config box_renderstage_default_compute();
+
+typedef struct box_texture_config {
     /** @brief Dimensions of the texture in pixels. */
     uvec2 size;
        
     /** @brief Image format of the texture data. */
     box_render_format image_format;
-
-    /** @brief Backend-specific image and sampler state. */
-    void* internal_data;
 
     /** @brief Texture filtering mode. */
     box_filter_type filter_type;
@@ -142,7 +147,25 @@ typedef struct box_texture {
     /** @brief Max anisotropy of attached sampler in backend, ignored if texture is not sampled. */
     f32 max_anisotropy;
 
+    /** @brief Intended usage of texture after creation. */
     box_texture_usage usage;
+} box_texture_config;
+
+/**
+ * @brief Backend-agnostic texture resource.
+ *
+ * Represents GPU image data along with sampling configuration.
+ * Converted internally into API-specific image and sampler objects.
+ */
+typedef struct box_texture {
+    /** @brief Dimensions of the texture in pixels. */
+    uvec2 size;
+
+    /** @brief Image format of the texture data. */
+    box_render_format image_format;
+
+    /** @brief Backend-specific image and sampler state. */
+    void* internal_data;
 } box_texture;
 
 /**
@@ -150,7 +173,7 @@ typedef struct box_texture {
  *
  * @return A zeroed/default texture instance.
  */
-box_texture box_texture_default();
+box_texture_config box_texture_default();
 
 /**
  * @brief Calculates the total memory size of a texture in bytes.
@@ -190,6 +213,20 @@ typedef struct box_rendertarget_attachment {
     box_store_op stencil_store_op;
 } box_rendertarget_attachment;
 
+typedef struct box_rendertarget_config {
+    /** @brief Render area origin. */
+    uvec2 origin;
+
+    /** @brief Render area size. */
+    uvec2 size;
+
+    /** @brief Attachments created within the rendertarget. */
+    box_rendertarget_attachment* attachments;
+
+    /** @brief Number of attachments attached to the rendertarget. */
+    u32 attachment_count;
+} box_rendertarget_config;
+
 /**
  * @brief Represents a render target used by the renderer backend.
  *
@@ -201,21 +238,20 @@ typedef struct box_rendertarget {
     /** @brief Clear colour value used when beginning a render pass. */
     u32 clear_colour;
 
+    /** @brief Number of attachments attached to the rendertarget. */
+    u32 attachment_count;
+
     /** @brief Render area origin. */
     uvec2 origin;
-
+    
     /** @brief Render area size. */
     uvec2 size;
-
-    box_rendertarget_attachment* attachments;
-
-    u32 attachment_count;
 
     /** @brief Backend-specific internal data. */
     void* internal_data;
 } box_rendertarget;
 
-box_rendertarget box_rendertarget_default();
+box_rendertarget_config box_rendertarget_default();
 
 /**
  * @brief Describes a single descriptor update for a renderstage.

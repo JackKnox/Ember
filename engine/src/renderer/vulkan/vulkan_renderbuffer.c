@@ -5,15 +5,15 @@
 
 VkBufferUsageFlags get_vulkan_renderbuffer_usage(
     vulkan_context* context,
-	box_renderbuffer* buffer) {
+	box_renderbuffer_config* config) {
     VkBufferUsageFlags buffer_usage = 0;
 	if (context->config.modes & RENDERER_MODE_TRANSFER) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-	if (buffer->usage & BOX_RENDERBUFFER_USAGE_VERTEX)
+	if (config->usage & BOX_RENDERBUFFER_USAGE_VERTEX)
 		buffer_usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	if (buffer->usage & BOX_RENDERBUFFER_USAGE_INDEX)
+	if (config->usage & BOX_RENDERBUFFER_USAGE_INDEX)
 		buffer_usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	if (buffer->usage & BOX_RENDERBUFFER_USAGE_STORAGE)
+	if (config->usage & BOX_RENDERBUFFER_USAGE_STORAGE)
 		buffer_usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     
     return buffer_usage;
@@ -21,18 +21,21 @@ VkBufferUsageFlags get_vulkan_renderbuffer_usage(
 
 b8 vulkan_renderbuffer_create(
 	box_renderer_backend* backend,
+	box_renderbuffer_config* config,
 	box_renderbuffer* out_buffer) {
     vulkan_context* context = (vulkan_context*)backend->internal_context;
     
     out_buffer->internal_data = ballocate(sizeof(internal_vulkan_renderbuffer), MEMORY_TAG_RENDERER);
     internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)out_buffer->internal_data;
 
+	out_buffer->buffer_size = config->buffer_size;
+
     // TODO: Make configurable.
     internal_buffer->properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     VkBufferCreateInfo create_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-	create_info.size = out_buffer->buffer_size;
-	create_info.usage = get_vulkan_renderbuffer_usage(context, out_buffer);
+	create_info.size = config->buffer_size;
+	create_info.usage = get_vulkan_renderbuffer_usage(context, config);
 	create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: Make configurable.
 	VkResult result = vkCreateBuffer(context->device.logical_device, &create_info, context->allocator, &internal_buffer->handle);
 	if (!vulkan_result_is_success(result)) return FALSE;
@@ -72,9 +75,11 @@ b8 vulkan_renderbuffer_upload_data(
 
     internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)buffer->internal_data;
 
-    box_renderbuffer staging_buffer = box_renderbuffer_default();
-	staging_buffer.buffer_size = buffer->buffer_size;
-    if (!create_staging_buffer(context, buf_data, &staging_buffer)) {
+    box_renderbuffer_config staging_buffer_config = box_renderbuffer_default();
+	staging_buffer_config.buffer_size = buffer->buffer_size;
+
+	box_renderbuffer staging_buffer = {};
+    if (!create_staging_buffer(context, buf_data, &staging_buffer_config, &staging_buffer)) {
         BX_ERROR("Failed to create staging buffer for uploading data.");
         return FALSE;
     }

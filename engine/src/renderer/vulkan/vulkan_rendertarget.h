@@ -6,12 +6,14 @@
 
 b8 vulkan_rendertarget_create(
     box_renderer_backend* backend,
+    box_rendertarget_config* config,
     box_rendertarget* out_rendertarget);
 
-b8 vulkan_rendertarget_create_external(
+VkResult vulkan_rendertarget_create_internal(
     vulkan_context* context,
-    vulkan_image* external_images,
+    vulkan_image* external_images, 
     u32 image_count,
+    box_rendertarget_config* config,
     box_rendertarget* out_rendertarget);
 
 void vulkan_rendertarget_begin(

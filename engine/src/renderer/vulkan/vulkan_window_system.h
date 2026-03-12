@@ -19,17 +19,17 @@ typedef struct vulkan_window_system {
 } vulkan_window_system;
 
 b8 vulkan_window_system_create(
-    vulkan_context* context, 
+    box_renderer_backend* backend,
     box_platform* plat_state,
     uvec2 window_size,
     vulkan_window_system* out_window_system);
 
-void vulkan_window_system_destroy(vulkan_context* context, vulkan_window_system* window_system);
+void vulkan_window_system_destroy(box_renderer_backend* backend, vulkan_window_system* window_system);
 
-b8 vulkan_window_system_connect_rendertarget(vulkan_context* context, vulkan_window_system* window_system, box_rendertarget** out_rendertarget);
+b8 vulkan_window_system_connect_rendertarget(box_renderer_backend* backend, vulkan_window_system* window_system, box_rendertarget** out_rendertarget);
 
-//void vulkan_window_system_on_resized(vulkan_context* context, vulkan_window_system* window_system, uvec2 new_size);
+//void vulkan_window_system_on_resized(box_renderer_backend* backend, vulkan_window_system* window_system, uvec2 new_size);
 
-b8 vulkan_window_system_acquire_frame(vulkan_context* context, vulkan_window_system* window_system, f64 delta_time, u64 timeout);
+b8 vulkan_window_system_acquire_frame(box_renderer_backend* backend, vulkan_window_system* window_system, f64 delta_time, u64 timeout);
 
-b8 vulkan_window_system_present(vulkan_context* context, vulkan_window_system* window_system, VkQueue queue, VkSemaphore* wait_semaphores, u32 wait_semaphore_count);
+b8 vulkan_window_system_present(box_renderer_backend* backend, vulkan_window_system* window_system, VkQueue queue, VkSemaphore* wait_semaphores, u32 wait_semaphore_count);

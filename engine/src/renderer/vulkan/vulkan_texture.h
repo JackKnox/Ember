@@ -6,6 +6,7 @@
 
 b8 vulkan_texture_create(
 	box_renderer_backend* backend,
+    box_texture_config* config,
     box_texture* out_texture);
 
 b8 vulkan_texture_upload_data(

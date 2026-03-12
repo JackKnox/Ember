@@ -4,12 +4,15 @@
 b8 create_staging_buffer(
     vulkan_context* context, 
     const void* map_ptr, 
+    box_renderbuffer_config* config,
     box_renderbuffer* out_buffer) {
     out_buffer->internal_data = ballocate(sizeof(internal_vulkan_renderbuffer), MEMORY_TAG_RENDERER);
     internal_vulkan_renderbuffer* internal_buffer = (internal_vulkan_renderbuffer*)out_buffer->internal_data;
+    
+    out_buffer->buffer_size = config->buffer_size;
 
     VkBufferCreateInfo create_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    create_info.size = out_buffer->buffer_size;
+    create_info.size = config->buffer_size;
     create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT; //! <--------
     create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: Make configurable.
     VkResult result = vkCreateBuffer(context->device.logical_device, &create_info, context->allocator, &internal_buffer->handle);

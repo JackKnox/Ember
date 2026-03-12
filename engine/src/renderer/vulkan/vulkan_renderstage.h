@@ -4,9 +4,15 @@
 
 #include "vulkan_types.h"
 
-b8 vulkan_renderstage_create(
+b8 vulkan_renderstage_create_graphic(
 	box_renderer_backend* backend,
+	box_graphicstage_config* config, 
 	box_rendertarget* bound_rendertarget,
+	box_renderstage* out_renderstage);
+
+b8 vulkan_renderstage_create_compute(
+	box_renderer_backend* backend,
+	box_computestage_config* config, 
 	box_renderstage* out_renderstage);
 
 b8 vulkan_renderstage_update_descriptors(

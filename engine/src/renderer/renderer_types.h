@@ -285,6 +285,19 @@ typedef struct {
 } box_descriptor_desc;
 
 /**
+ * @brief Raw shader stage data.
+ *
+ * Contains compiled bytecode loaded from disk or memory.
+ */
+typedef struct box_shader_src {
+    /** @brief Pointer to compiled bytecode. */
+    const void* data;
+
+    /** @brief Size of the shader data in bytes. */
+    u64 size;
+} box_shader_src;
+
+/**
  * @brief Describes the capabilities of the active renderer device.
  */
 typedef struct box_renderer_capabilities {

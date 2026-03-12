@@ -56,7 +56,8 @@ b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starti
         out_renderer_backend->execute_command = vulkan_renderer_execute_command;
         out_renderer_backend->end_frame       = vulkan_renderer_backend_end_frame;
 
-        out_renderer_backend->create_renderstage             = vulkan_renderstage_create;
+        out_renderer_backend->create_graphicstage            = vulkan_renderstage_create_graphic;
+		out_renderer_backend->create_computestage            = vulkan_renderstage_create_compute;
 		out_renderer_backend->update_renderstage_descriptors = vulkan_renderstage_update_descriptors;
         out_renderer_backend->destroy_renderstage            = vulkan_renderstage_destroy;
 

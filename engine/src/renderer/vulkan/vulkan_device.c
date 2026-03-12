@@ -47,6 +47,8 @@ VkResult vulkan_device_create(box_renderer_backend* backend) {
         if (!exists) {
             VkDeviceQueueCreateInfo* create_info = darray_push_empty(queue_create_info);
             create_info->sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            create_info->pNext            = NULL;
+            create_info->flags            = 0;
             create_info->queueFamilyIndex = family;
             create_info->queueCount       = 1;
             create_info->pQueuePriorities = &queue_priority;
@@ -58,7 +60,7 @@ VkResult vulkan_device_create(box_renderer_backend* backend) {
 
     // Request device features.
     VkPhysicalDeviceFeatures device_features = {0};
-    device_features.samplerAnisotropy = context->config.sampler_anisotropy;  // Request anistrophy
+    device_features.samplerAnisotropy = context->config.sampler_anisotropy;  // Request anisotropy
 
     VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     device_create_info.queueCreateInfoCount = darray_length(queue_create_info);

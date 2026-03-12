@@ -4,6 +4,7 @@
 #include "utils/darray.h"
 
 #include "vulkan_rendertarget.h"
+#include "vulkan_image.h"
 
 VkResult query_support_info(vulkan_context* context, vulkan_window_system* window_system) {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context->device.physical_device, window_system->surface, &window_system->capabilities);
@@ -30,10 +31,13 @@ VkResult query_support_info(vulkan_context* context, vulkan_window_system* windo
 }
 
 b8 vulkan_window_system_create(
-    vulkan_context* context, 
+    box_renderer_backend* backend,
     box_platform* plat_state,
     uvec2 window_size,
     vulkan_window_system* out_window_system) {
+    BX_ASSERT(backend != NULL && plat_state != NULL && window_size.width > 0 && window_size.height > 0 && out_window_system != NULL && "Invalid arguments passed to vulkan_window_system_create");
+    vulkan_context* context = (vulkan_context*)backend->internal_context;
+
     CHECK_VKRESULT(
         vulkan_platform_create_surface(
             context->instance, 
@@ -138,7 +142,22 @@ b8 vulkan_window_system_create(
     return TRUE;
 }
 
-void vulkan_window_system_destroy(vulkan_context* context, vulkan_window_system* window_system) {
+void vulkan_window_system_destroy(box_renderer_backend* backend, vulkan_window_system* window_system) {
+    vulkan_context* context = (vulkan_context*)backend->internal_context;
+    BX_ASSERT(backend != NULL && window_system != NULL && "Invalid arguments passed to vulkan_window_system_destroy");
+
+    // TODO: Should be in vulkan_rendertarget_destroy...
+    for (u32 i = 0; i < window_system->swapchain_image_count; ++i) {
+        if (window_system->swapchain_images[i].view) {
+            vkDestroyImageView(
+                context->device.logical_device, 
+                window_system->swapchain_images[i].view, 
+                context->allocator);
+        }
+    }
+
+    vulkan_rendertarget_destroy(backend, &window_system->surface_rendertarget);
+
     bfree(window_system->swapchain_images, sizeof(VkImage) * window_system->swapchain_image_count, MEMORY_TAG_RENDERER);
     window_system->swapchain_images = 0;
 
@@ -150,12 +169,31 @@ void vulkan_window_system_destroy(vulkan_context* context, vulkan_window_system*
     vkDestroySurfaceKHR(context->instance, window_system->surface, context->allocator);
 }
 
-b8 vulkan_window_system_connect_rendertarget(vulkan_context* context, vulkan_window_system* window_system, box_rendertarget** out_rendertarget) {
+b8 vulkan_window_system_connect_rendertarget(box_renderer_backend* backend, vulkan_window_system* window_system, box_rendertarget** out_rendertarget) {
+    BX_ASSERT(backend != NULL && window_system != NULL && out_rendertarget != NULL && "Invalid arguments passed to vulkan_window_system_connect_rendertarget");
+    vulkan_context* context = (vulkan_context*)backend->internal_context;
+
+    box_rendertarget_attachment swapchain_attachments[] = {
+		{
+			.type = BOX_ATTACHMENT_COLOR,
+			.format = BOX_FORMAT_RGBA8_UNORM,
+			.load_op = BOX_LOAD_OP_DONT_CARE,
+			.store_op = BOX_STORE_OP_STORE,
+			.stencil_load_op = BOX_LOAD_OP_DONT_CARE,
+			.stencil_store_op = BOX_STORE_OP_DONT_CARE,
+		}
+	};
+
+    box_rendertarget_config rendertarget_config = box_rendertarget_default();
+    rendertarget_config.size = (uvec2) { 640, 640 };
+    rendertarget_config.attachments = swapchain_attachments;
+    rendertarget_config.attachment_count = BX_ARRAYSIZE(swapchain_attachments);
     
-    if (!vulkan_rendertarget_create_external(
+    if (!vulkan_rendertarget_create_internal(
         context, 
         window_system->swapchain_images, 
         window_system->swapchain_image_count, 
+        &rendertarget_config,
         &window_system->surface_rendertarget)) {
         return FALSE;
     }
@@ -164,10 +202,12 @@ b8 vulkan_window_system_connect_rendertarget(vulkan_context* context, vulkan_win
     return TRUE;
 }
 
-b8 vulkan_window_system_acquire_frame(vulkan_context *context, vulkan_window_system *window_system, f64 delta_time, u64 timeout) {
+b8 vulkan_window_system_acquire_frame(box_renderer_backend* backend, vulkan_window_system* window_system, f64 delta_time, u64 timeout) {
+    BX_ASSERT(backend != NULL && window_system != NULL && delta_time > 0 && "Invalid arguments passed to vulkan_window_system_acquire_frame");
     return TRUE;
 }
 
-b8 vulkan_window_system_present(vulkan_context *context, vulkan_window_system *window_system, VkQueue queue, VkSemaphore *wait_semaphores, u32 wait_semaphore_count) {
+b8 vulkan_window_system_present(box_renderer_backend* backend, vulkan_window_system* window_system, VkQueue queue, VkSemaphore *wait_semaphores, u32 wait_semaphore_count) {
+    BX_ASSERT(backend != NULL && window_system != NULL && queue != VK_NULL_HANDLE && wait_semaphores != NULL && "Invalid arguments passed to vulkan_window_system_present");
     return TRUE;
 }

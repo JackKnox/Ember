@@ -7,56 +7,68 @@
 
 VkImageUsageFlags get_vulkan_texture_usage(
     vulkan_context* context, 
-    box_texture* texture) {
+    box_texture_config* config) {
 
 	VkImageUsageFlags image_usage = 0;
-    if (texture->usage & BOX_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (texture->usage & BOX_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (config->usage & BOX_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (config->usage & BOX_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 	if (context->config.modes & RENDERER_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     return image_usage;
 }
 
 b8 vulkan_texture_create(
-    box_renderer_backend* backend, 
+    box_renderer_backend* backend,
+    box_texture_config* config,
     box_texture* out_texture) {
+    BX_ASSERT(backend != NULL && out_texture != NULL && "Invalid arguments passed to vulkan_texture_create");
     vulkan_context* context = (vulkan_context*)backend->internal_context;
-
-    if (!context->config.sampler_anisotropy && out_texture->max_anisotropy > 0.0f) {
-        BX_ERROR("Attempting set anisotropy without enabling sampler anisotropy.");
-        return FALSE;
-    }
-
-    if (out_texture->max_anisotropy > backend->capabilities.max_anisotropy) {
-        BX_ERROR("Attempting set anisotropy higher than renderer capabilities.");
-        return FALSE;
-    }
 
     out_texture->internal_data = ballocate(sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
     internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)out_texture->internal_data;
+
+    out_texture->image_format = config->image_format;
+    out_texture->size = config->size;
+
+#if BOX_ENABLE_VALIDATION
+    if (out_texture->size.width <= 0 || out_texture->size.height <= 0) {
+        BX_ERROR("vulkan_texture_create(): Texture size must be greater than zero: Size = (%u, %u)", config->size.width, config->size.height);
+        return FALSE;
+    }
+
+    if (!context->config.sampler_anisotropy && config->max_anisotropy > 0.0f) {
+        BX_ERROR("vulkan_texture_create(): Attempting set anisotropy without enabling sampler anisotropy.");
+        return FALSE;
+    }
+
+    if (config->max_anisotropy > backend->capabilities.max_anisotropy) {
+        BX_ERROR("vulkan_texture_create(): Attempting set anisotropy higher than renderer capabilities.");
+        return FALSE;
+    }
+#endif
 
     CHECK_VKRESULT(
         vulkan_image_create(
             context, 
             out_texture->size, 
             box_format_to_vulkan_type(out_texture->image_format), 
-            get_vulkan_texture_usage(context, out_texture), 
+            get_vulkan_texture_usage(context, config), 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
             TRUE, 
             VK_IMAGE_ASPECT_COLOR_BIT, 
             &internal_texture->image),
         "Failed to create internal Vulkan image");
 
-    if (out_texture->usage & BOX_TEXTURE_USAGE_SAMPLED) {
+    if (config->usage & BOX_TEXTURE_USAGE_SAMPLED) {
         VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
         sampler_info.magFilter = sampler_info.minFilter 
-            = box_filter_to_vulkan_type(out_texture->filter_type);
+            = box_filter_to_vulkan_type(config->filter_type);
 
         sampler_info.addressModeU = sampler_info.addressModeV = sampler_info.addressModeW 
-            = box_address_mode_to_vulkan_type(out_texture->address_mode);
+            = box_address_mode_to_vulkan_type(config->address_mode);
 
-        sampler_info.anisotropyEnable = (out_texture->max_anisotropy > 0.0f);
-        sampler_info.maxAnisotropy = out_texture->max_anisotropy;
+        sampler_info.anisotropyEnable = (config->max_anisotropy > 0.0f);
+        sampler_info.maxAnisotropy = config->max_anisotropy;
         
         sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         sampler_info.unnormalizedCoordinates = VK_FALSE;
@@ -76,6 +88,7 @@ b8 vulkan_texture_create(
             "Failed to create internal Vulkan sampler");
     }
     
+    // TODO: This feels weird to put this here
 	vulkan_command_buffer command_buffer;
 	vulkan_command_buffer_allocate_and_begin_single_use(context, &context->device.mode_queues[VULKAN_QUEUE_TYPE_TRANSFER], &command_buffer);
     {
@@ -97,21 +110,29 @@ b8 vulkan_texture_upload_data(
     const void* data, 
     uvec2 offset, 
     uvec2 region) {
+    BX_ASSERT(backend != NULL && texture != NULL && data != NULL && offset.x > 0 && offset.y > 0 && "Invalid arguments passed to vulkan_texture_upload_data");
     vulkan_context* context = (vulkan_context*)backend->internal_context;
-
-#if BOX_ENABLE_VALIDATION
-	if (!(context->config.modes & RENDERER_MODE_TRANSFER)) {
-		BX_ERROR("Attempting to upload to texture without enabling transfer mode.");
-		return FALSE;
-	}
-#endif
 
     internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)texture->internal_data;
 
-    box_renderbuffer staging_buffer = box_renderbuffer_default();
-    staging_buffer.buffer_size = box_texture_get_size_in_bytes(texture);
-    if (!create_staging_buffer(context, data, &staging_buffer)) {
-        BX_ERROR("Failed to create staging buffer for uploading data.");
+#if BOX_ENABLE_VALIDATION
+	if (!(context->config.modes & RENDERER_MODE_TRANSFER)) {
+		BX_ERROR("vulkan_texture_create(): Attempting to upload to texture without enabling transfer mode.");
+		return FALSE;
+	}
+
+    if (region.width > texture->size.width || region.height > texture->size.height) {
+        BX_ERROR("vulkan_texture_create(): Region size must be within overral texture size: Region = (%u, %u)", region.width, region.height);
+        return FALSE;
+    }
+#endif
+
+    box_renderbuffer_config staging_buffer_config = box_renderbuffer_default();
+    staging_buffer_config.buffer_size = box_texture_get_size_in_bytes(texture);
+
+    box_renderbuffer staging_buffer = {};
+    if (!create_staging_buffer(context, data, &staging_buffer_config, &staging_buffer)) {
+        BX_ERROR("vulkan_texture_create(): Failed to create staging buffer for uploading data.");
         return FALSE;
     }
 

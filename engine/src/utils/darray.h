@@ -19,7 +19,7 @@ enum {
     DARRAY_FIELD_LENGTH
 };
 
-void* _darray_create(u64 length, u64 stride, memory_tag tag);
+void* _darray_create(u64 length, u64 stride, void* init_data, memory_tag tag);
 void _darray_destroy(void* array);
 
 u64 _darray_field_get(void* array, u64 field);
@@ -38,17 +38,20 @@ void* _darray_insert_at(void* array, u64 index, void* value_ptr);
 #define DARRAY_RESIZE_FACTOR 2
 
 #define darray_create(type, tag) \
-    _darray_create(DARRAY_DEFAULT_CAPACITY, sizeof(type), tag)
+    _darray_create(DARRAY_DEFAULT_CAPACITY, sizeof(type), NULL, tag)
 
 #define darray_reserve(type, capacity, tag) \
-    _darray_create(capacity, sizeof(type), tag)
+    _darray_create(capacity, sizeof(type), NULL, tag)
+
+#define darray_from_data(type, length, data_ptr, tag) \
+    _darray_create(length, sizeof(type), data_ptr, tag);
 
 #define darray_destroy(array) _darray_destroy(array);
 
-#define darray_push(array, value)           \
-    do {                                    \
-        void* temp = (void*)(value);   \
-        array = _darray_push(array, &temp); \
+#define darray_push(array, value)                        \
+    do {                                                 \
+        __typeof__(*(array)) _tmp = (value);             \
+        array = _darray_push(array, &_tmp);              \
     } while(0)
 
 #define darray_push_empty(array) \

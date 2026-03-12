@@ -4,7 +4,7 @@
 #include "render_objects.h"
 
 #if BOX_ENABLE_VALIDATION
-#   define CHECK_FINISHED() if (!cmd) return; if (cmd->finished) { BX_ERROR("Adding to render command after ending, users should not be calling _box_rendercmd_end."); return; }
+#   define CHECK_FINISHED() if (!cmd) return; if (cmd->finished) { BX_ERROR("Adding to render command after ending, users should not be calling box_rendercmd_end before beginning."); return; }
 #else
 #   define CHECK_FINISHED()
 #endif
@@ -33,7 +33,7 @@ rendercmd_payload* add_command(box_rendercmd* cmd, box_renderer_mode mode, rende
 }
 
 void box_rendercmd_begin(box_rendercmd* cmd) {
-    if (!cmd) return;
+    BX_ASSERT(cmd != NULL && "Invalid arguments passed to box_rendercmd_begin");
     if (!freelist_empty(&cmd->buffer))
         freelist_reset(&cmd->buffer, FALSE, FALSE);
 
@@ -41,7 +41,7 @@ void box_rendercmd_begin(box_rendercmd* cmd) {
 }
 
 void box_rendercmd_destroy(box_rendercmd* cmd) {
-    if (!cmd) return;
+    BX_ASSERT(cmd != NULL && "Invalid arguments passed to box_rendercmd_end");
     freelist_destroy(&cmd->buffer);
     bzero_memory(cmd, sizeof(box_rendercmd));
 }
@@ -69,7 +69,7 @@ void box_rendercmd_begin_renderstage(box_rendercmd* cmd, box_renderstage* render
     CHECK_FINISHED();
 
     rendercmd_payload* payload;
-    payload = add_command(cmd, renderstage->mode, RENDERCMD_BEGIN_RENDERSTAGE, sizeof(payload->begin_renderstage));
+    payload = add_command(cmd, renderstage->pipeline_type, RENDERCMD_BEGIN_RENDERSTAGE, sizeof(payload->begin_renderstage));
     payload->begin_renderstage.renderstage = renderstage;
 }
 

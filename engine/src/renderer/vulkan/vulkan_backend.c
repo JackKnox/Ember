@@ -118,7 +118,7 @@ b8 vulkan_renderer_backend_initialize(box_renderer_backend* backend, box_rendere
 		backend->plat_state->internal_renderer_state = ballocate(sizeof(vulkan_window_system), MEMORY_TAG_RENDERER);
 		vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
 
-		if (!vulkan_window_system_create(context, backend->plat_state, starting_size, window_system)) {
+		if (!vulkan_window_system_create(backend, backend->plat_state, starting_size, window_system)) {
 			BX_ERROR("Failed to connect Vulkan to platform surface");
 			return FALSE;
 		}
@@ -241,7 +241,7 @@ void vulkan_renderer_backend_shutdown(box_renderer_backend* backend) {
 	if (backend->plat_state != NULL && backend->plat_state->internal_renderer_state != NULL) {
 		vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
 
-		vulkan_window_system_destroy(context, window_system);
+		vulkan_window_system_destroy(backend, window_system);
 		bfree(window_system, sizeof(vulkan_window_system), MEMORY_TAG_RENDERER);
 		backend->plat_state->internal_renderer_state = NULL;
 	}
@@ -277,7 +277,7 @@ b8 vulkan_renderer_backend_create_rendertarget_on_platform(box_renderer_backend*
 	}
 	
 	vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
-    return vulkan_window_system_connect_rendertarget(context, window_system, out_rendertarget);
+    return vulkan_window_system_connect_rendertarget(backend, window_system, out_rendertarget);
 }
 
 void vulkan_renderer_backend_on_resized(box_renderer_backend* backend, uvec2 new_size) {
@@ -305,7 +305,7 @@ b8 vulkan_renderer_backend_begin_frame(box_renderer_backend* backend, f64 delta_
 		vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
 		
 		if (!vulkan_window_system_acquire_frame(
-			context, 
+			backend, 
 			window_system,
 			delta_time, 
 			UINT64_MAX)) {
@@ -456,7 +456,7 @@ b8 vulkan_renderer_backend_end_frame(box_renderer_backend* backend) {
 		vulkan_window_system* window_system = (vulkan_window_system*)backend->plat_state->internal_renderer_state;
 		
 		if (!vulkan_window_system_present(
-			context, 
+			backend, 
 			window_system, 
 			context->device.mode_queues[VULKAN_QUEUE_TYPE_PRESENT].handle, 
 			&render_complete_semaphore, 1)) {

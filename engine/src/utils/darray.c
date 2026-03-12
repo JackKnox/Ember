@@ -1,16 +1,20 @@
 #include "defines.h"
 #include "darray.h"
 
-void* _darray_create(u64 length, u64 stride, memory_tag tag) {
+void* _darray_create(u64 length, u64 stride, void* init_data, memory_tag tag) {
     u64 header_size = DARRAY_FIELD_LENGTH * sizeof(u64);
     u64 array_size = length * stride;
     u64* new_array = ballocate(header_size + array_size, tag);
     new_array[DARRAY_CAPACITY] = length;
-    new_array[DARRAY_LENGTH] = 0;
+    new_array[DARRAY_LENGTH] = (init_data != NULL ? length : 0);
     new_array[DARRAY_STRIDE] = stride;
     new_array[DARRAY_MEMORY_TAG] = tag;
 
-    return bzero_memory((void*)(new_array + DARRAY_FIELD_LENGTH), array_size);
+    void* temp = bzero_memory((void*)(new_array + DARRAY_FIELD_LENGTH), array_size);
+    if (init_data) {
+        bcopy_memory(temp, init_data, length * stride);
+    }
+    return temp;
 }
 
 void _darray_destroy(void* array) {
@@ -44,8 +48,8 @@ void* _darray_resize(void* array) {
     u64 stride = darray_stride(array);
     void* temp = _darray_create(
         (DARRAY_RESIZE_FACTOR * darray_capacity(array)),
-        stride, _darray_field_get(array, DARRAY_MEMORY_TAG));
-    bcopy_memory(temp, array, length * stride);
+        stride, array, 
+        _darray_field_get(array, DARRAY_MEMORY_TAG));
 
     _darray_field_set(temp, DARRAY_LENGTH, length);
     _darray_destroy(array);

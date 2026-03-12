@@ -211,13 +211,14 @@ typedef struct box_renderer_backend {
     /** @{ */
 
     /** @brief Creates a render stage. */
-    b8 (*create_renderstage)(struct box_renderer_backend* backend, box_rendertarget* bound_rendertarget, box_renderstage* out_stage);
+    b8 (*create_graphicstage)(struct box_renderer_backend* backend, box_graphicstage_config* config, box_rendertarget* bound_rendertarget, box_renderstage* out_graphicstage);
+
+    b8 (*create_computestage)(struct box_renderer_backend* backend, box_computestage_config* config, box_renderstage* out_computestage);
 
     /**
      * @brief Updates one or more descriptor bindings for a renderstage.
      *
      * @param backend           Pointer to the renderer backend.
-     * @param stage             Renderstage whose descriptors will be updated.
      * @param descriptors       Array of descriptor update descriptions.
      * @param descriptor_count  Number of elements in @p descriptors.
      */
@@ -227,7 +228,7 @@ typedef struct box_renderer_backend {
     void (*destroy_renderstage)(struct box_renderer_backend* backend, box_renderstage* stage);
     
     /** @brief Creates a render buffer. */
-    b8 (*create_renderbuffer)(struct box_renderer_backend* backend, box_renderbuffer* out_buffer);
+    b8 (*create_renderbuffer)(struct box_renderer_backend* backend, box_renderbuffer_config* config, box_renderbuffer* out_buffer);
 
     /**
      * @brief Uploads data into a render buffer.
@@ -244,7 +245,7 @@ typedef struct box_renderer_backend {
     void (*destroy_renderbuffer)(struct box_renderer_backend* backend, box_renderbuffer* buffer);
 
     /** @brief Creates a texture resource. */
-    b8 (*create_texture)(struct box_renderer_backend* backend, box_texture* out_texture);
+    b8 (*create_texture)(struct box_renderer_backend* backend, box_texture_config* config, box_texture* out_texture);
 
     /**
      * @brief Uploads data into a texture.
@@ -260,7 +261,7 @@ typedef struct box_renderer_backend {
     /** @brief Destroys a texture resource. */
     void (*destroy_texture)(struct box_renderer_backend* backend, box_texture* texture);
 
-    b8 (*create_rendertarget)(struct box_renderer_backend* backend, box_rendertarget* rendertarget);
+    b8 (*create_rendertarget)(struct box_renderer_backend* backend,  box_rendertarget_config* config, box_rendertarget* rendertarget);
 
     void (*destroy_rendertarget)(struct box_renderer_backend* backend, box_rendertarget* rendertarget);
 

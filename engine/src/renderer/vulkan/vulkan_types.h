@@ -203,6 +203,12 @@ typedef struct internal_vulkan_renderstage {
 
     /** @brief Descriptor set layout. */
     VkDescriptorSetLayout descriptor;
+
+    union {
+        struct {
+            box_renderbuffer* vertex_buffer, * index_buffer;
+        } graphics;
+    };
 } internal_vulkan_renderstage;
 
 /**
@@ -304,6 +310,7 @@ typedef struct vulkan_context {
 b8 create_staging_buffer(
     vulkan_context* context,
     const void* map_ptr,
+    box_renderbuffer_config* config,
     box_renderbuffer* out_buffer);
 
 /**

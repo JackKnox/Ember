@@ -6,6 +6,7 @@
 
 b8 vulkan_renderbuffer_create(
 	box_renderer_backend* backend,
+	box_renderbuffer_config* config,
 	box_renderbuffer* out_buffer);
 
 b8 vulkan_renderbuffer_upload_data(
