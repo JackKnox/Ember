@@ -11,8 +11,18 @@ box_renderbuffer_config box_renderbuffer_default() {
 	return config;
 }
 
+box_graphicstage_config box_renderstage_default_graphic() {
+	box_graphicstage_config config = {};
+    return config;
+}
+
+box_computestage_config box_renderstage_default_compute() {
+	box_computestage_config config = {};
+    return config;
+}
+
 box_texture_config box_texture_default() {
-	box_texture_config config = {};
+    box_texture_config config = {};
 	config.address_mode = BOX_ADDRESS_MODE_REPEAT;
 	config.filter_type = BOX_FILTER_TYPE_NEAREST;
 

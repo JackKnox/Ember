@@ -15,7 +15,7 @@ rendercmd_payload* add_command(box_rendercmd* cmd, box_renderer_mode mode, rende
     u64 user_block_size = sizeof(rendercmd_header) + payload_size;
 
     if (freelist_empty(&cmd->buffer)) {
-        freelist_create(user_block_size, MEMORY_TAG_ENGINE, &cmd->buffer);
+        freelist_create(user_block_size, MEMORY_TAG_RENDERER, &cmd->buffer);
     }
 
     void* user_memory = freelist_push(&cmd->buffer, user_block_size, NULL);

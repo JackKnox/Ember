@@ -84,7 +84,7 @@ void* _darray_push_empty(void** out_array) {
     }
     
     _darray_field_set(*out_array, DARRAY_LENGTH, length + 1);
-    return (void*) (u64)*out_array + (length * stride);
+    return bzero_memory((void*) (u64)*out_array + (length * stride), stride); 
 }
 
 void _darray_pop(void* array, void* dest) {

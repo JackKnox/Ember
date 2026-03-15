@@ -16,6 +16,13 @@ b8 vulkan_renderbuffer_upload_data(
     u64 buf_offset, 
     u64 buf_size);
 
+b8 vulkan_renderbuffer_map_data(
+	box_renderer_backend* backend,
+	box_renderbuffer* buffer,
+	const void* source,
+	u64 buf_offset,
+	u64 buf_size);
+
 void vulkan_renderbuffer_destroy(
 	box_renderer_backend* backend,
 	box_renderbuffer* buffer);

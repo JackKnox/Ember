@@ -128,10 +128,12 @@ b8 vulkan_texture_upload_data(
 #endif
 
     box_renderbuffer_config staging_buffer_config = box_renderbuffer_default();
+	staging_buffer_config.usage = BOX_RENDERBUFFER_USAGE_CPU_VISIBLE;
     staging_buffer_config.buffer_size = box_texture_get_size_in_bytes(texture);
 
     box_renderbuffer staging_buffer = {};
-    if (!create_staging_buffer(context, data, &staging_buffer_config, &staging_buffer)) {
+    if (!vulkan_renderbuffer_create(backend, &staging_buffer_config, &staging_buffer) || 
+		!vulkan_renderbuffer_map_data(backend, &staging_buffer, data, 0, staging_buffer.buffer_size)) {
         BX_ERROR("vulkan_texture_create(): Failed to create staging buffer for uploading data.");
         return FALSE;
     }
@@ -170,7 +172,7 @@ void vulkan_texture_destroy(
         if (internal_texture->sampler)
             vkDestroySampler(context->device.logical_device, internal_texture->sampler, context->allocator);
 
-        vulkan_image_destroy(context, &internal_texture->image);
+        vulkan_image_destroy(context, &internal_texture->image, TRUE);
 
         bfree(internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
     }

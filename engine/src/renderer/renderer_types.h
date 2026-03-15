@@ -169,6 +169,7 @@ typedef enum box_renderbuffer_usage {
     BOX_RENDERBUFFER_USAGE_VERTEX  = 1 << 0, /**< Vertex buffer */
     BOX_RENDERBUFFER_USAGE_INDEX   = 1 << 1, /**< Index buffer */
     BOX_RENDERBUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
+    BOX_RENDERBUFFER_USAGE_CPU_VISIBLE = 1 << 3, /**< CPU-coherent buffer */
 } box_renderbuffer_usage;
 
 /**
@@ -311,6 +312,22 @@ typedef struct box_renderer_capabilities {
     f32 max_anisotropy;
 } box_renderer_capabilities;
 
+typedef struct box_rendersurface_config {
+    uvec2 starting_size;
+    b8 window_surface;
+
+    union {
+        struct {
+            box_platform* platform;
+        } window;
+
+        struct {
+            /* attachments / texture usage */
+        } offscreen;
+    };
+} box_rendersurface_config;
+
+box_rendersurface_config box_rendersurface_default_config();
 /**
  * @brief Configuration for creating a renderer backend.
  */
@@ -327,6 +344,8 @@ typedef struct box_renderer_backend_config {
      * Must be greater than 1.
      */
     u32 frames_in_flight;
+
+    b8 enable_platform_window;
 
     /** @brief Enable validation and debug messages. */
     b8 enable_validation;

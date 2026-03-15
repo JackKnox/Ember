@@ -20,8 +20,10 @@ b8 strings_equal(const char* str0, const char* str1);
 // Case-sensitive string comparison, where comparison stops at max_len.
 b8 strings_nequal(const char* str0, const char* str1, u32 max_len);
 
-// Performs string formatting against the given format string and parameters. NOTE: This performs a dynamic allocation and should be freed by the caller.
+// * NOTE: This performs a dynamic allocation and should be freed by the caller.
+// Performs string formatting against the given format string and parameters. 
 char* string_format(const char* format, ...);
 
-// Performs variadic string formatting against the given format string and va_list. NOTE: This performs a dynamic allocation and should be freed by the caller.
+// * NOTE: This performs a dynamic allocation and should be freed by the caller.
+// Performs variadic string formatting against the given format string and va_list. 
 char* string_format_v(const char* format, void* va_list);

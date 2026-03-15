@@ -46,6 +46,14 @@ VkResult vulkan_renderstage_create_layout(
 		}
         // ------------------------------------------
 
+        // Create descriptor set layout.
+		VkDescriptorSetLayoutCreateInfo layoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+		layoutInfo.bindingCount = darray_length(descriptor_bindings);
+		layoutInfo.pBindings = descriptor_bindings;
+		VkResult result = vkCreateDescriptorSetLayout(context->device.logical_device, &layoutInfo, context->allocator, &internal_renderstage->descriptor);
+		if (!vulkan_result_is_success(result)) return result;
+        // ------------------------------------------
+
         // Create descriptor pool.
         // TODO: Global descriptor pool that belongs to the context.
 		VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
@@ -53,7 +61,7 @@ VkResult vulkan_renderstage_create_layout(
 		pool_info.pPoolSizes = descriptor_pools;
 		pool_info.maxSets = context->config.frames_in_flight;
 
-		VkResult result = vkCreateDescriptorPool(context->device.logical_device, &pool_info, context->allocator, &internal_renderstage->descriptor_pool);
+		result = vkCreateDescriptorPool(context->device.logical_device, &pool_info, context->allocator, &internal_renderstage->descriptor_pool);
 		if (!vulkan_result_is_success(result)) return result;
         // ------------------------------------------
 
@@ -72,14 +80,6 @@ VkResult vulkan_renderstage_create_layout(
 		if (!vulkan_result_is_success(result)) return result;
 
 		darray_length_set(internal_renderstage->descriptor_sets, alloc_info.descriptorSetCount);
-        // ------------------------------------------
-
-        // Create descriptor set layout.
-		VkDescriptorSetLayoutCreateInfo layoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-		layoutInfo.bindingCount = darray_length(descriptor_bindings);
-		layoutInfo.pBindings = descriptor_bindings;
-		result = vkCreateDescriptorSetLayout(context->device.logical_device, &layoutInfo, context->allocator, &internal_renderstage->descriptor);
-		if (!vulkan_result_is_success(result)) return result;
         // ------------------------------------------
 
         // Destory all temp memory...
@@ -113,7 +113,9 @@ b8 vulkan_renderstage_create_graphic(
 
     out_renderstage->pipeline_type = RENDERER_MODE_GRAPHICS;
     out_renderstage->descriptors = darray_from_data(box_descriptor_desc, config->layout.descriptor_count, config->layout.descriptors, MEMORY_TAG_RENDERER);
-    
+    internal_renderstage->graphics.vertex_buffer = config->vertex_buffer;
+    internal_renderstage->graphics.index_buffer = config->index_buffer;
+
     VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, MEMORY_TAG_RENDERER);
 
     CHECK_VKRESULT(
@@ -254,7 +256,7 @@ b8 vulkan_renderstage_create_graphic(
     pipeline_create_info.pVertexInputState = &vertex_input_state;
     pipeline_create_info.pInputAssemblyState = &input_assembly;
 
-     CHECK_VKRESULT(
+    CHECK_VKRESULT(
         vkCreateGraphicsPipelines(
             context->device.logical_device, 
             VK_NULL_HANDLE, 
@@ -276,7 +278,53 @@ b8 vulkan_renderstage_create_compute(
     box_renderer_backend* backend, 
     box_computestage_config* config, 
     box_renderstage* out_renderstage) {
-    //out_renderstage->pipeline_type = RENDERER_MODE_COMPUTE;
+    vulkan_context* context = (vulkan_context*)backend->internal_context;
+    
+    out_renderstage->internal_data = ballocate(sizeof(internal_vulkan_renderstage), MEMORY_TAG_RENDERER);
+    internal_vulkan_renderstage* internal_renderstage = (internal_vulkan_renderstage*)out_renderstage->internal_data;
+
+    out_renderstage->pipeline_type = RENDERER_MODE_COMPUTE;
+    out_renderstage->descriptors = darray_from_data(box_descriptor_desc, config->layout.descriptor_count, config->layout.descriptors, MEMORY_TAG_RENDERER);
+    
+    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, MEMORY_TAG_RENDERER);
+
+    CHECK_VKRESULT(
+        vulkan_renderstage_create_layout(
+            context, 
+            &shader_stages,
+            &config->layout, 
+            out_renderstage), 
+        "Failed to create internal Vulkan pipeline layout");
+    
+#if BOX_ENABLE_VALIDATION
+    if (darray_length(shader_stages) > 1) {
+        BX_ERROR("Compute shader contain more than 1 stage (only needs a single compute shader stage)");
+        return FALSE;
+    }
+
+    if (shader_stages[0].stage != VK_SHADER_STAGE_COMPUTE_BIT) {
+        BX_ERROR("Compute renderstage contains no compute stages");
+        return FALSE;
+    }
+#endif
+
+    VkComputePipelineCreateInfo pipeline_create_info = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
+    pipeline_create_info.stage = shader_stages[0];
+    pipeline_create_info.layout = internal_renderstage->layout;
+
+    CHECK_VKRESULT(
+        vkCreateComputePipelines(
+            context->device.logical_device, 
+            VK_NULL_HANDLE, 
+            1, 
+            &pipeline_create_info, 
+            context->allocator, 
+            &internal_renderstage->handle),
+        "Failed to create internal Vulkan pipeline");
+
+    for (u32 i = 0; i < darray_length(shader_stages); ++i)
+		vkDestroyShaderModule(context->device.logical_device, shader_stages[i].module, context->allocator);
+    darray_destroy(shader_stages);
     return TRUE;
 }
 

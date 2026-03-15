@@ -126,13 +126,14 @@ void vulkan_image_copy_from_buffer(
 
 void vulkan_image_destroy(
     vulkan_context* context, 
-    vulkan_image* image) {
+    vulkan_image* image,
+    b8 ownes_image) {
     if (image->view)
         vkDestroyImageView(context->device.logical_device, image->view, context->allocator);
     
-    if (image->memory)
+    if (image->memory && ownes_image)
         vkFreeMemory(context->device.logical_device, image->memory, context->allocator);
 
-    if (image->handle)
+    if (image->handle && ownes_image)
         vkDestroyImage(context->device.logical_device, image->handle, context->allocator);
 }

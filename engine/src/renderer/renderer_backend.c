@@ -6,12 +6,13 @@
 #include "vulkan/vulkan_renderstage.h"
 #include "vulkan/vulkan_rendertarget.h"
 #include "vulkan/vulkan_texture.h"
+#include "renderer_types.h"
 
 u64 box_render_format_size(box_render_format format) {
     u32 bits_index = (format >> 16) & 0xF;
     u32 channels   = (format >> 12) & 0xF;
 
-	return (u64)((bits_index + 1) << 3 * channels);
+	return (u64)((bits_index + 1) * 8 * channels);
 }
 
 b8 box_render_format_normalized(box_render_format format) {
@@ -23,32 +24,29 @@ u32 box_render_format_channel_count(box_render_format format) {
     return (format >> 12) & 0xF;
 }
 
-box_renderer_backend_config box_renderer_backend_default_config() {
-    box_renderer_backend_config configuration = {};
-    configuration.modes = RENDERER_MODE_GRAPHICS;
-    configuration.enable_validation = FALSE;
-	configuration.frames_in_flight = 3;
-
-#if BOX_ENABLE_VALIDATION
-    configuration.enable_validation = TRUE;
-#endif
-    return configuration;
+box_rendersurface_config box_rendersurface_default_config() {
+	box_rendersurface_config config = {};
+	return config;
 }
 
-b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, box_platform* plat_state, box_renderer_backend* out_renderer_backend) {
-    BX_ASSERT(config != NULL && starting_size.width > 0 && starting_size.height > 0 && application_name != NULL && out_renderer_backend != NULL && "Invalid arguments passed to box_renderer_backend_create");
-    
-	if (config->modes == 0 || config->frames_in_flight <= 0) {
-		BX_ERROR("Invalid box_platform passed to box_renderer_backend_create");
-		return FALSE;
-	}
-	
-	out_renderer_backend->plat_state = plat_state;
+box_renderer_backend_config box_renderer_backend_default_config() {
+    box_renderer_backend_config config = {};
+    config.modes = RENDERER_MODE_GRAPHICS;
+    config.enable_validation = FALSE;
+	config.frames_in_flight = 3;
+
+#if BOX_ENABLE_VALIDATION
+    config.enable_validation = TRUE;
+#endif
+    return config;
+}
+
+b8 box_renderer_backend_create(const char* application_name, box_renderer_backend_config* config, box_renderer_backend* out_renderer_backend) {
 
     if (config->api_type == RENDERER_BACKEND_TYPE_VULKAN) {
         out_renderer_backend->initialize      = vulkan_renderer_backend_initialize;
+		out_renderer_backend->connect_rendersurface = vulkan_renderer_backend_connect_rendersurface;
         out_renderer_backend->shutdown        = vulkan_renderer_backend_shutdown;
-		out_renderer_backend->create_rendertarget_on_platform = vulkan_renderer_backend_create_rendertarget_on_platform;
         out_renderer_backend->wait_until_idle = vulkan_renderer_backend_wait_until_idle;
         out_renderer_backend->resized         = vulkan_renderer_backend_on_resized;
 
@@ -77,7 +75,7 @@ b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starti
         return FALSE;
     }
 	
-    return out_renderer_backend->initialize(out_renderer_backend, config, starting_size, application_name);
+    return out_renderer_backend->initialize(out_renderer_backend, application_name, config);
 }
 
 void box_renderer_backend_destroy(box_renderer_backend* renderer_backend) {

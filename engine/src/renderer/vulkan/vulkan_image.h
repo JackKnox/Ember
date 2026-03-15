@@ -30,4 +30,5 @@ void vulkan_image_copy_from_buffer(
 
 void vulkan_image_destroy(
     vulkan_context* context,
-    vulkan_image* image);
+    vulkan_image* image,
+    b8 ownes_image);

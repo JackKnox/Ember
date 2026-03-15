@@ -141,9 +141,6 @@ typedef struct box_renderer_backend {
     /** @brief Backend-specific internal state. */
     void* internal_context;
 
-    /** @brief Platform state associated with this backend. */
-    box_platform* plat_state;
-
     /** @brief Renderer capabilities supported by this backend. */
     box_renderer_capabilities capabilities;
 
@@ -156,13 +153,16 @@ typedef struct box_renderer_backend {
      * @param application_name Name of the application.
      * @return True if initialization succeeded.
      */
-    b8 (*initialize)(struct box_renderer_backend* backend, box_renderer_backend_config* config,  uvec2 starting_size, const char* application_name);
+    b8 (*initialize)(struct box_renderer_backend* backend, const char* application_name, box_renderer_backend_config* config);
+
+    b8 (*connect_rendersurface)(struct box_renderer_backend* backend, box_rendersurface_config* config, box_rendersurface* out_rendersurface);
 
     /**
      * @brief Shuts down the renderer backend and releases resources.
      */
     void (*shutdown)(struct box_renderer_backend* backend);
 
+    // TODO: Remove as this doesn't really exist in other Graphics APIs
     /**
      * @brief Waits until all submitted work has completed.
      *
@@ -170,8 +170,6 @@ typedef struct box_renderer_backend {
      * @param timeout Timeout in nanoseconds.
      */
     void (*wait_until_idle)(struct box_renderer_backend* backend, u64 timeout);
-
-    b8 (*create_rendertarget_on_platform)(struct box_renderer_backend* backend, box_rendertarget** out_rendertarget);
 
     /**
      * @brief Notifies the backend of a framebuffer resize.
@@ -188,7 +186,7 @@ typedef struct box_renderer_backend {
      * @param delta_time Time elapsed since last frame.
      * @return True if frame preparation succeeded.
      */
-    b8 (*begin_frame)(struct box_renderer_backend* backend, f64 delta_time);
+    b8 (*begin_frame)(struct box_renderer_backend* backend, box_rendersurface* rendersurface, f64 delta_time);
 
     /**
      * @brief Executes a single render command.
@@ -210,9 +208,10 @@ typedef struct box_renderer_backend {
     /** @name Resource Management */
     /** @{ */
 
-    /** @brief Creates a render stage. */
+    /** @brief Creates a render stage with graphics configuration. */
     b8 (*create_graphicstage)(struct box_renderer_backend* backend, box_graphicstage_config* config, box_rendertarget* bound_rendertarget, box_renderstage* out_graphicstage);
 
+    /** @brief Creates a render stage with compute configuration. */
     b8 (*create_computestage)(struct box_renderer_backend* backend, box_computestage_config* config, box_renderstage* out_computestage);
 
     /**
@@ -271,14 +270,12 @@ typedef struct box_renderer_backend {
 /**
  * @brief Creates and initializes a renderer backend.
  *
- * @param config Backend configuration.
- * @param starting_size Initial framebuffer size.
  * @param application_name Application name.
- * @param plat_state Platform state.
+ * @param config Backend configuration.
  * @param out_renderer_backend Output backend instance.
  * @return True if creation succeeded.
  */
-b8 box_renderer_backend_create(box_renderer_backend_config* config, uvec2 starting_size, const char* application_name, box_platform* plat_state, box_renderer_backend* out_renderer_backend);
+b8 box_renderer_backend_create(const char* application_name, box_renderer_backend_config* config, box_renderer_backend* out_renderer_backend);
 
 /**
  * @brief Destroys a renderer backend instance.

@@ -47,8 +47,6 @@ VkResult vulkan_device_create(box_renderer_backend* backend) {
         if (!exists) {
             VkDeviceQueueCreateInfo* create_info = darray_push_empty(queue_create_info);
             create_info->sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            create_info->pNext            = NULL;
-            create_info->flags            = 0;
             create_info->queueFamilyIndex = family;
             create_info->queueCount       = 1;
             create_info->pQueuePriorities = &queue_priority;
@@ -56,7 +54,7 @@ VkResult vulkan_device_create(box_renderer_backend* backend) {
     }
 
     const char** required_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
-    if (backend->plat_state != NULL) darray_push(required_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    if (context->config.enable_platform_window) darray_push(required_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
     // Request device features.
     VkPhysicalDeviceFeatures device_features = {0};
@@ -255,7 +253,7 @@ b8 physical_device_meets_requirements(
 
     if (
         (!(context->config.modes & RENDERER_MODE_GRAPHICS) || ((context->config.modes & RENDERER_MODE_GRAPHICS) && out_queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != -1)) &&
-        (!(backend->plat_state != NULL)                    || ((backend->plat_state != NULL)                    && out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1)) &&
+        (!(context->config.enable_platform_window)         || ((context->config.enable_platform_window)         && out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1)) &&
         (!(context->config.modes & RENDERER_MODE_COMPUTE)  || ((context->config.modes & RENDERER_MODE_COMPUTE)  && out_queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index != -1)) &&
         (!(context->config.modes & RENDERER_MODE_TRANSFER) || ((context->config.modes & RENDERER_MODE_TRANSFER) && out_queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index != -1))) {
         
