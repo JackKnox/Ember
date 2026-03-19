@@ -23,64 +23,61 @@ b8 box_render_format_normalized(box_render_format format) {
 u32 box_render_format_channel_count(box_render_format format) {
     return (format >> 12) & 0xF;
 }
-
-box_rendersurface_config box_rendersurface_default_config() {
-	box_rendersurface_config config = {};
-	return config;
-}
-
 box_renderer_backend_config box_renderer_backend_default_config() {
-    box_renderer_backend_config config = {};
-    config.modes = RENDERER_MODE_GRAPHICS;
-    config.enable_validation = FALSE;
-	config.frames_in_flight = 3;
+    box_renderer_backend_config configuration = {};
+    configuration.modes = RENDERER_MODE_GRAPHICS;
+	configuration.frames_in_flight = 3;
 
 #if BOX_ENABLE_VALIDATION
-    config.enable_validation = TRUE;
+    configuration.enable_validation = TRUE;
 #endif
-    return config;
+    return configuration;
 }
 
-b8 box_renderer_backend_create(const char* application_name, box_renderer_backend_config* config, box_renderer_backend* out_renderer_backend) {
+b8 box_renderer_backend_create(box_renderer_backend* renderer_backend, box_renderer_backend_config* config, box_platform* platform) {
+	BX_ASSERT(renderer_backend != NULL && config != NULL && "Invalid arguments passed to box_renderer_backend_create");
+
+	if (platform->internal_renderer_state != NULL) {
+		BX_ERROR("Cannot attach second renderer backend to platform state");
+		return FALSE;
+	}
+
+	renderer_backend->platform = platform;
 
     if (config->api_type == RENDERER_BACKEND_TYPE_VULKAN) {
-        out_renderer_backend->initialize      = vulkan_renderer_backend_initialize;
-		out_renderer_backend->connect_rendersurface = vulkan_renderer_backend_connect_rendersurface;
-        out_renderer_backend->shutdown        = vulkan_renderer_backend_shutdown;
-        out_renderer_backend->wait_until_idle = vulkan_renderer_backend_wait_until_idle;
-        out_renderer_backend->resized         = vulkan_renderer_backend_on_resized;
+        renderer_backend->initialize      = vulkan_renderer_backend_initialize;
+        renderer_backend->shutdown        = vulkan_renderer_backend_shutdown;
+        renderer_backend->resized         = vulkan_renderer_backend_on_resized;
 
-        out_renderer_backend->begin_frame     = vulkan_renderer_backend_begin_frame;
-        out_renderer_backend->execute_command = vulkan_renderer_execute_command;
-        out_renderer_backend->end_frame       = vulkan_renderer_backend_end_frame;
+        renderer_backend->begin_frame     = vulkan_renderer_backend_begin_frame;
+        renderer_backend->execute_command = vulkan_renderer_execute_command;
+        renderer_backend->end_frame       = vulkan_renderer_backend_end_frame;
 
-        out_renderer_backend->create_graphicstage            = vulkan_renderstage_create_graphic;
-		out_renderer_backend->create_computestage            = vulkan_renderstage_create_compute;
-		out_renderer_backend->update_renderstage_descriptors = vulkan_renderstage_update_descriptors;
-        out_renderer_backend->destroy_renderstage            = vulkan_renderstage_destroy;
+        renderer_backend->create_graphicstage            = vulkan_renderstage_create_graphic;
+		renderer_backend->create_computestage            = vulkan_renderstage_create_compute;
+		renderer_backend->update_renderstage_descriptors = vulkan_renderstage_update_descriptors;
+        renderer_backend->destroy_renderstage            = vulkan_renderstage_destroy;
 
-        out_renderer_backend->create_renderbuffer            = vulkan_renderbuffer_create;
-        out_renderer_backend->upload_to_renderbuffer         = vulkan_renderbuffer_upload_data;
-        out_renderer_backend->destroy_renderbuffer           = vulkan_renderbuffer_destroy;
+        renderer_backend->create_renderbuffer            = vulkan_renderbuffer_create;
+        renderer_backend->upload_to_renderbuffer         = vulkan_renderbuffer_upload_data;
+        renderer_backend->destroy_renderbuffer           = vulkan_renderbuffer_destroy;
 
-        out_renderer_backend->create_texture       = vulkan_texture_create;
-		out_renderer_backend->upload_to_texture    = vulkan_texture_upload_data;
-        out_renderer_backend->destroy_texture      = vulkan_texture_destroy;
+        renderer_backend->create_texture       = vulkan_texture_create;
+		renderer_backend->upload_to_texture    = vulkan_texture_upload_data;
+        renderer_backend->destroy_texture      = vulkan_texture_destroy;
 
-   	 	out_renderer_backend->create_rendertarget  = vulkan_rendertarget_create;
-    	out_renderer_backend->destroy_rendertarget = vulkan_rendertarget_destroy;
+   	 	renderer_backend->create_rendertarget  = vulkan_rendertarget_create;
+    	renderer_backend->destroy_rendertarget = vulkan_rendertarget_destroy;
     }
     else {
         BX_ERROR("Unsupported renderer backend type (%i).", config->api_type);
         return FALSE;
     }
 	
-    return out_renderer_backend->initialize(out_renderer_backend, application_name, config);
+    return renderer_backend->initialize(renderer_backend, config);
 }
 
 void box_renderer_backend_destroy(box_renderer_backend* renderer_backend) {
-	renderer_backend->wait_until_idle(renderer_backend, UINT64_MAX);
-
     if (renderer_backend->shutdown != NULL) 
         renderer_backend->shutdown(renderer_backend);
     

@@ -14,17 +14,21 @@ box_renderer_mode queue_type_to_mode(vulkan_queue_type type) {
     return 0;
 }
 
-b8 select_physical_device(box_renderer_backend* backend);
+b8 select_physical_device(box_renderer_backend* backend, const char** required_extensions);
 b8 physical_device_meets_requirements(
     VkPhysicalDevice device,
     box_renderer_backend* backend,
+    const char** required_extensions,
     box_renderer_capabilities* out_capabilities,
-    vulkan_queue out_queue_support[]);
+    vulkan_queue* out_queue_support);
 
 VkResult vulkan_device_create(box_renderer_backend* backend) {
     vulkan_context* context = (vulkan_context*)backend->internal_context;
 
-    if (!select_physical_device(backend)) {
+    const char** required_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
+    if (backend->platform != NULL) darray_push(required_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    if (!select_physical_device(backend, required_extensions)) {
         BX_ERROR("Could not find device which supported requested GPU features.");
         return VK_ERROR_INITIALIZATION_FAILED;
     }
@@ -53,11 +57,8 @@ VkResult vulkan_device_create(box_renderer_backend* backend) {
         }
     }
 
-    const char** required_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
-    if (context->config.enable_platform_window) darray_push(required_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
     // Request device features.
-    VkPhysicalDeviceFeatures device_features = {0};
+    VkPhysicalDeviceFeatures device_features = {};
     device_features.samplerAnisotropy = context->config.sampler_anisotropy;  // Request anisotropy
 
     VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -128,7 +129,7 @@ void vulkan_device_destroy(box_renderer_backend* backend) {
     context->device.physical_device = 0;
 }
 
-b8 select_physical_device(box_renderer_backend* backend) {
+b8 select_physical_device(box_renderer_backend* backend, const char** required_extensions) {
     vulkan_context* context = (vulkan_context*)backend->internal_context;
 
     u32 physical_device_count = 0;
@@ -146,6 +147,7 @@ b8 select_physical_device(box_renderer_backend* backend) {
         b8 result = physical_device_meets_requirements(
             physical_devices[i],
             backend,
+            required_extensions,
             &capabilities,
             context->device.mode_queues);
 
@@ -170,8 +172,9 @@ b8 select_physical_device(box_renderer_backend* backend) {
 b8 physical_device_meets_requirements(
     VkPhysicalDevice device,
     box_renderer_backend* backend,
+    const char** required_extensions,
     box_renderer_capabilities* out_capabilities,
-    vulkan_queue out_queue_support[]) {
+    vulkan_queue* out_queue_support) {
     // Evaluate device properties to determine if it meets the needs of our applcation.
     vulkan_context* context = (vulkan_context*)backend->internal_context;
 
@@ -253,10 +256,34 @@ b8 physical_device_meets_requirements(
 
     if (
         (!(context->config.modes & RENDERER_MODE_GRAPHICS) || ((context->config.modes & RENDERER_MODE_GRAPHICS) && out_queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != -1)) &&
-        (!(context->config.enable_platform_window)         || ((context->config.enable_platform_window)         && out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1)) &&
+        (!(backend->platform != NULL)                      || ((backend->platform != NULL)                      && out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1)) &&
         (!(context->config.modes & RENDERER_MODE_COMPUTE)  || ((context->config.modes & RENDERER_MODE_COMPUTE)  && out_queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index != -1)) &&
         (!(context->config.modes & RENDERER_MODE_TRANSFER) || ((context->config.modes & RENDERER_MODE_TRANSFER) && out_queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index != -1))) {
-        
+
+        u32 supported_extension_count = 0;
+        vkEnumerateDeviceExtensionProperties(device, NULL, &supported_extension_count, NULL);
+
+        VkExtensionProperties* supported_extensions = darray_reserve(VkExtensionProperties, supported_extension_count, MEMORY_TAG_RENDERER);
+        vkEnumerateDeviceExtensionProperties(device, NULL, &supported_extension_count, supported_extensions);
+        darray_length_set(supported_extensions, supported_extension_count);
+
+        for (u32 i = 0; i < darray_length(required_extensions); ++i) {
+            b8 found = FALSE;
+            for (u32 j = 0; j < darray_length(required_extensions); ++j) {
+                if (strings_equal(required_extensions[i], supported_extensions[j].extensionName)) {
+                    found = TRUE;
+                    break;
+                }
+            }
+
+            if (!found) {
+                BX_INFO("Device does not support all required Vulkan extensions, skipping.");
+                return FALSE;
+            }
+        }
+
+        darray_destroy(supported_extensions);
+
         // Sampler anisotropy
         if (context->config.sampler_anisotropy && !features.samplerAnisotropy) {
             BX_INFO("Device does not support sampler anisotropy, skipping.");

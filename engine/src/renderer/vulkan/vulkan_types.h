@@ -6,13 +6,8 @@
 
 #include "platform/vulkan_platform.h"
 
-#if BOX_BUILD_DIST
-#define VK_CHECK(expr) BX_ASSERT(FALSE && "VK_CHECK found in Dist build" #expr) 
-#endif
-
 // Checks the given Vulkan expression for success and fatally aborts on failure.
 // Intended for calls that must never fail in a valid engine state.
-#ifndef VK_CHECK
 #define VK_CHECK(expr)                                    \
     {                                                     \
         VkResult r = expr;                                \
@@ -20,7 +15,6 @@
             BX_FATAL("VK_CHECK failed: (Line = %i) " __FILE__ "  (Error code: %s) ", \
                      __LINE__, vulkan_result_string(r, 1)); \
     }
-#endif
 
 // Checks a Vulkan call and logs an error on failure.
 // Intended for recoverable errors during initialization or runtime.
