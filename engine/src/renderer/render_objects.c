@@ -21,7 +21,7 @@ box_texture_config box_texture_default() {
 
 u64 box_texture_get_size_in_bytes(box_texture* texture) {
 	BX_ASSERT(texture != NULL && "Invalid arguments passed box_texture_get_size_in_bytes");
-	return texture->size.x * texture->size.y * box_render_format_channel_count(texture->image_format);
+	return texture->size.x * texture->size.y *  box_render_format_size(texture->image_format);
 }
 
 box_rendertarget_config box_rendertarget_default() {
