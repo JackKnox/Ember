@@ -138,7 +138,6 @@ VkResult vulkan_window_system_create(
 
     bfree(images, sizeof(VkImage) * out_window_system->image_count, MEMORY_TAG_RENDERER);
 
-	out_window_system->images_in_flight = darray_reserve(VkFence*, out_window_system->image_count, MEMORY_TAG_RENDERER);
 	out_window_system->image_available_semaphores = darray_reserve(VkSemaphore, context->config.frames_in_flight, MEMORY_TAG_RENDERER);
 
     for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
@@ -172,7 +171,6 @@ void vulkan_window_system_destroy(
     }
 
     darray_destroy(window_system->image_available_semaphores);
-    darray_destroy(window_system->images_in_flight);
 
     bfree(window_system->images, 
         sizeof(vulkan_image) * window_system->image_count, 

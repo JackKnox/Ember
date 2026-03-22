@@ -44,9 +44,9 @@ void* _darray_insert_at(void* array, u64 index, void* value_ptr);
     _darray_create(capacity, sizeof(type), NULL, tag)
 
 #define darray_from_data(type, length, data_ptr, tag) \
-    _darray_create(length, sizeof(type), data_ptr, tag);
+    _darray_create(length, sizeof(type), data_ptr, tag)
 
-#define darray_destroy(array) _darray_destroy(array);
+#define darray_destroy(array) _darray_destroy(array)
 
 #define darray_push(array, value)                        \
     do {                                                 \

@@ -196,10 +196,8 @@ b8 vulkan_renderer_backend_initialize(box_renderer_backend* backend, box_rendere
 		VkImageUsageFlags image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		VkImageAspectFlags image_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 
-		attachment.images = darray_reserve(vulkan_image, config->frames_in_flight, MEMORY_TAG_RENDERER);
+		attachment.images = ballocate(sizeof(vulkan_image) * config->frames_in_flight, MEMORY_TAG_RENDERER);
 		for (u32 i = 0; i < config->frames_in_flight; ++i) {
-			vulkan_image* attachment_image = darray_push_empty(attachment.images);
-
 			CHECK_VKRESULT(
 				vulkan_image_create(
 					context, 
@@ -209,7 +207,7 @@ b8 vulkan_renderer_backend_initialize(box_renderer_backend* backend, box_rendere
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
 					TRUE, 
 					image_aspect,
-					attachment_image),
+					&attachment.images[i]),
 				"Failed to create main rendertarget attachments in Vulkan backend");
 		}
 
@@ -226,6 +224,10 @@ b8 vulkan_renderer_backend_initialize(box_renderer_backend* backend, box_rendere
 			main_attachments, 
 			&backend->main_rendertarget), 
 		"Failed to create main rendertarget in Vulkan backend");
+
+	for (u32 i = 0; i < darray_length(main_attachments); ++i) 
+		bfree(main_attachments[i].images, sizeof(vulkan_image) * config->frames_in_flight, MEMORY_TAG_RENDERER);
+	darray_destroy(main_attachments);
     // --------------------------------------
 
 	context->in_flight_fences = darray_reserve(VkFence, config->frames_in_flight, MEMORY_TAG_RENDERER);

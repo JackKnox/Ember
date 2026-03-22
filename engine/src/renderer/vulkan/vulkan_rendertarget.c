@@ -71,6 +71,8 @@ b8 vulkan_rendertarget_create(
             darray_length(attachments), attachments, 
             out_rendertarget), 
         "Failed to create Vulkan rendertarget");
+
+    darray_destroy(attachments);
     return TRUE;
 }
 

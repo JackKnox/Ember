@@ -38,7 +38,7 @@ b8 box_renderer_backend_create(box_renderer_backend* renderer_backend, box_rende
 	BX_ASSERT(renderer_backend != NULL && config != NULL && config->application_name != NULL && (platform != NULL || config->main_attachments != NULL) && "Invalid arguments passed to box_renderer_backend_create");
 
 #if BOX_ENABLE_VALIDATION
-	if (platform->internal_renderer_state != NULL) {
+	if (platform && platform->internal_renderer_state != NULL) {
 		BX_ERROR("box_renderer_backend_create(): Cannot attach more than 1 renderer backend to the same platform");
 		return FALSE;
 	}

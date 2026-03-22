@@ -84,7 +84,6 @@ typedef struct vulkan_window_system {
     u32 image_count;
 
     VkSemaphore* image_available_semaphores;
-    VkFence** images_in_flight;
 
     VkSurfaceKHR surface;
     VkSurfaceCapabilitiesKHR capabilities;
