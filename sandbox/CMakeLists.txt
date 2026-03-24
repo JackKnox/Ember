@@ -9,7 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(stb)
 FetchContent_GetProperties(stb)
 
-target_link_libraries(Sandbox PUBLIC Boxel)
+target_link_libraries(Sandbox PRIVATE ember ember_gpu)
 target_include_directories(Sandbox PRIVATE ${stb_SOURCE_DIR})
 
 add_custom_command(TARGET Sandbox POST_BUILD

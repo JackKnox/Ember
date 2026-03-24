@@ -1,0 +1,298 @@
+#include "defines.h"
+#include "vulkan_device.h"
+
+#include "ember/core/string_utils.h"
+
+emgpu_device_mode queue_type_to_mode(vulkan_queue_type type) {
+    switch (type) {
+    case VULKAN_QUEUE_TYPE_GRAPHICS: return EMBER_DEVICE_MODE_GRAPHICS;
+    case VULKAN_QUEUE_TYPE_COMPUTE:  return EMBER_DEVICE_MODE_COMPUTE;
+    case VULKAN_QUEUE_TYPE_TRANSFER: return EMBER_DEVICE_MODE_TRANSFER;
+    }
+
+    return 0;
+}
+
+b8 select_physical_device(
+    emgpu_device* device,
+    const char** required_extensions);
+
+b8 physical_device_meets_requirements(
+    emgpu_device* device,
+    VkPhysicalDevice physical_device,
+    const char** required_extensions,
+    emgpu_device_capabilities* out_capabilities,
+    vulkan_queue* out_queue_support);
+
+VkResult vulkan_device_create(emgpu_device* device) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+
+    const char** required_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
+    if (device->window_context != NULL) darray_push(required_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    if (!select_physical_device(device, required_extensions)) {
+        EM_ERROR("Could not find device which supported requested GPU features.");
+        return VK_ERROR_INITIALIZATION_FAILED;
+    }
+
+    f32 queue_priority = 1.0f;
+    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, MEMORY_TAG_RENDERER);
+
+    for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
+        u32 family = context->device.mode_queues[i].family_index;
+        if (family == -1) continue;
+
+        b8 exists = FALSE;
+        for (u32 j = 0; j < darray_length(queue_create_info); ++j) {
+            if (queue_create_info[j].queueFamilyIndex == family) {
+                exists = TRUE;
+                break;
+            }
+        }
+
+        if (!exists) {
+            VkDeviceQueueCreateInfo* create_info = darray_push_empty(queue_create_info);
+            create_info->sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            create_info->queueFamilyIndex = family;
+            create_info->queueCount       = 1;
+            create_info->pQueuePriorities = &queue_priority;
+        }
+    }
+
+    // Request device features.
+    VkPhysicalDeviceFeatures device_features = {};
+    device_features.samplerAnisotropy = context->config.sampler_anisotropy;  // Request anisotropy
+
+    VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    device_create_info.queueCreateInfoCount = darray_length(queue_create_info);
+    device_create_info.pQueueCreateInfos = queue_create_info;
+    device_create_info.pEnabledFeatures = &device_features;
+    device_create_info.enabledExtensionCount = darray_length(required_extensions);
+    device_create_info.ppEnabledExtensionNames = required_extensions;
+
+    // Create the device.
+    VkResult result = vkCreateDevice(context->device.physical_device, &device_create_info, context->allocator, &context->device.logical_device);
+    if (!vulkan_result_is_success(result)) return result;
+
+    darray_destroy(required_extensions);
+    darray_destroy(queue_create_info);
+
+    // Create command pool for necessary queue.
+    for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
+        vulkan_queue* mode = &context->device.mode_queues[i];
+        if (!(context->config.enabled_modes & mode->supported_modes)) continue;
+
+        vkGetDeviceQueue(
+            context->device.logical_device,
+            mode->family_index,
+            0,
+            &mode->handle);
+
+        if (i == VULKAN_QUEUE_TYPE_PRESENT)
+            continue;
+        
+        VkCommandPoolCreateInfo pool_create_info = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+        pool_create_info.queueFamilyIndex = mode->family_index;
+        pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+        VkResult result = vkCreateCommandPool(context->device.logical_device, &pool_create_info, context->allocator, &mode->pool);
+        if (!vulkan_result_is_success(result)) return result;
+    }
+
+    return VK_SUCCESS;
+}
+
+void vulkan_device_destroy(emgpu_device* device) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    if (!context->device.logical_device) return;
+
+    for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
+        vulkan_queue* queue = &context->device.mode_queues[i];
+        queue->handle = VK_NULL_HANDLE;
+        queue->family_index = -1;
+        queue->supported_modes = 0;
+        
+        if (queue->pool) {
+            vkDestroyCommandPool(
+                context->device.logical_device,
+                queue->pool,
+                context->allocator);
+        }
+    }
+
+    // Destroy logical device
+    if (context->device.logical_device) {
+        vkDestroyDevice(context->device.logical_device, context->allocator);
+        context->device.logical_device = 0;
+    }
+
+    bfree(device->capabilities.device_name, string_length(device->capabilities.device_name) + 1, MEMORY_TAG_RENDERER);
+    context->device.physical_device = 0;
+}
+
+b8 select_physical_device(emgpu_device* device, const char** required_extensions) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+
+    u32 physical_device_count = 0;
+    VK_CHECK(vkEnumeratePhysicalDevices(context->instance, &physical_device_count, 0));
+    if (physical_device_count == 0) {
+        EM_ERROR("No devices which support Vulkan were found.");
+        return FALSE;
+    }
+
+    VkPhysicalDevice* physical_devices = darray_reserve(VkPhysicalDevice, physical_device_count, MEMORY_TAG_RENDERER);
+    VK_CHECK(vkEnumeratePhysicalDevices(context->instance, &physical_device_count, physical_devices));
+
+    for (u32 i = 0; i < physical_device_count; ++i) {
+        emgpu_device_capabilities capabilities = {};
+        b8 result = physical_device_meets_requirements(
+            device, 
+            physical_devices[i],
+            required_extensions,
+            &capabilities, 
+            context->device.mode_queues);
+
+        if (result) {
+            context->device.physical_device = physical_devices[i];
+            device->capabilities = capabilities;
+            break;
+        }
+    }
+
+    darray_destroy(physical_devices);
+
+    // Ensure a device was selected
+    if (!context->device.physical_device) {
+        EM_ERROR("No physical devices were found which meet the requirements.");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+b8 physical_device_meets_requirements(
+    emgpu_device* device,
+    VkPhysicalDevice physical_device,
+    const char** required_extensions,
+    emgpu_device_capabilities* out_capabilities,
+    vulkan_queue* out_queue_support) {
+    // Evaluate device properties to determine if it meets the needs of our applcation.
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+
+    for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
+        out_queue_support[i].family_index = -1;
+        out_queue_support[i].supported_modes = 0;
+    }
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
+
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(physical_device, &features);
+
+    VkPhysicalDeviceMemoryProperties memory;
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory);
+
+    out_capabilities->device_type = (emgpu_device_type)properties.deviceType;
+    out_capabilities->max_anisotropy = features.samplerAnisotropy;
+
+    if (out_capabilities->device_name)
+        bfree(out_capabilities->device_name, string_length(out_capabilities->device_name) + 1, MEMORY_TAG_RENDERER);
+
+    u64 str_length = string_length(properties.deviceName) + 1;
+    out_capabilities->device_name = ballocate(str_length, MEMORY_TAG_RENDERER);
+    bcopy_memory(out_capabilities->device_name, properties.deviceName, str_length);
+
+    // Discrete GPU?
+    if (context->config.discrete_gpu) {
+        if (properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            EM_INFO("Device is not a discrete GPU, and one is required. Skipping.");
+            return FALSE;
+        }
+    }
+
+    u32 queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, 0);
+    VkQueueFamilyProperties* queue_families = darray_reserve(VkQueueFamilyProperties, queue_family_count, MEMORY_TAG_RENDERER);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families);
+
+    // Look at each queue and see what queues it supports
+    u8 min_transfer_score = 255;
+    for (u32 i = 0; i < queue_family_count; ++i) {
+        u8 current_transfer_score = 0;
+
+        // Graphics queue?
+        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            out_queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index = i;
+            out_queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].supported_modes |= EMBER_DEVICE_MODE_GRAPHICS;
+            ++current_transfer_score;
+        }
+
+        // Compute queue?
+        if (queue_families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+            out_queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index = i;
+            out_queue_support[VULKAN_QUEUE_TYPE_COMPUTE].supported_modes |= EMBER_DEVICE_MODE_COMPUTE;
+            ++current_transfer_score;
+        }
+
+        // Transfer queue?
+        if (queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
+            // Take the index if it is the current lowest. This increases the
+            // liklihood that it is a dedicated transfer queue.
+            if (current_transfer_score <= min_transfer_score) {
+                min_transfer_score = current_transfer_score;
+                out_queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index = i;
+                out_queue_support[VULKAN_QUEUE_TYPE_TRANSFER].supported_modes |= EMBER_DEVICE_MODE_TRANSFER;
+            }
+        }
+
+        // Present queue?
+        if (vulkan_platform_presentation_support(context->instance, physical_device, i)) {
+            out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index = i;
+            out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].supported_modes |= EMBER_DEVICE_MODE_GRAPHICS;
+        }
+    }
+
+    darray_destroy(queue_families);
+
+    if (
+        (!(context->config.enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) || ((context->config.enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && out_queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != -1)) &&
+        (!(device->window_context != NULL)                             || ((device->window_context != NULL)                             && out_queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1)) &&
+        (!(context->config.enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  || ((context->config.enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && out_queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index != -1)) &&
+        (!(context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) || ((context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && out_queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index != -1))) {
+
+        u32 supported_extension_count = 0;
+        vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, NULL);
+
+        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, MEMORY_TAG_RENDERER);
+        vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, supported_extensions);
+
+        for (u32 i = 0; i < darray_length(required_extensions); ++i) {
+            b8 found = FALSE;
+            for (u32 j = 0; j < darray_length(supported_extensions); ++j) {
+                if (strings_equal(required_extensions[i], supported_extensions[j].extensionName)) {
+                    found = TRUE;
+                    break;
+                }
+            }
+
+            if (!found) {
+                EM_INFO("Device does not support all required Vulkan extensions, skipping.");
+                return FALSE;
+            }
+        }
+
+        darray_destroy(supported_extensions);
+
+        // Sampler anisotropy
+        if (context->config.sampler_anisotropy && !features.samplerAnisotropy) {
+            EM_INFO("Device does not support sampler anisotropy, skipping.");
+            return FALSE;
+        }
+
+        // Device meets all requirements.
+        return TRUE;
+    }
+
+    return FALSE;
+}
