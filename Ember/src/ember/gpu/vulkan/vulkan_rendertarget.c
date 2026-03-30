@@ -1,13 +1,11 @@
 #include "defines.h"
 #include "vulkan_rendertarget.h"
 
-#include "vulkan_image.h"
-
 b8 vulkan_rendertarget_create(
-    emgpu_device* device,
+	emgpu_device* device,
     emgpu_rendertarget_config* config,
     emgpu_rendertarget* out_rendertarget) {
-    EM_ASSERT(device != NULL && out_rendertarget != NULL && config->attachments != NULL && "Invalid arguments passed to vulkan_rendertarget_create");
+    EM_ASSERT(device != NULL && config != NULL && out_rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_create");
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
 #if EM_ENABLE_VALIDATION
@@ -22,131 +20,57 @@ b8 vulkan_rendertarget_create(
     }
 #endif
 
-    vulkan_rendertarget_attachment* attachments = darray_reserve(vulkan_rendertarget_attachment, config->attachment_count, MEMORY_TAG_RENDERER);
-
-    for (u32 i = 0; i < config->attachment_count; ++i) {
-		emgpu_rendertarget_attachment* front_attachment = &config->attachments[i];
-
-		vulkan_rendertarget_attachment attachment = {};
-		attachment.type     = front_attachment->type;
-		attachment.format   = format_to_vulkan_type(front_attachment->format);
-		attachment.samples  = VK_SAMPLE_COUNT_1_BIT; // TODO: Push to frontend renderer backend
-		attachment.load_op  = load_op_to_vulkan_type(front_attachment->load_op);
-		attachment.store_op = store_op_to_vulkan_type(front_attachment->store_op);
-		attachment.stencil_load_op  = load_op_to_vulkan_type(front_attachment->stencil_load_op);
-		attachment.stencil_store_op = store_op_to_vulkan_type(front_attachment->stencil_store_op);
-
-		// TODO: ...
-		attachment.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		VkImageUsageFlags image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		VkImageAspectFlags image_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-
-		attachment.images = darray_reserve(vulkan_image, context->config.frames_in_flight, MEMORY_TAG_RENDERER);
-		for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
-			vulkan_image* attachment_image = darray_push_empty(attachment.images);
-
-			CHECK_VKRESULT(
-				vulkan_image_create(
-					context, 
-					config->size, 
-					attachment.format, 
-					image_usage, 
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-					TRUE, 
-					image_aspect,
-					attachment_image),
-				"Failed to create rendertarget attachments in Vulkan backend");
-		}
-
-		darray_push(attachments, attachment);
-	}
-
-    CHECK_VKRESULT(
-        vulkan_rendertarget_create_internal(
-            context, 
-            FALSE, 
-            config->origin, config->size, 
-            darray_length(attachments), attachments, 
-            out_rendertarget), 
-        "Failed to create Vulkan rendertarget");
-
-    darray_destroy(attachments);
-    return TRUE;
-}
-
-VkResult vulkan_rendertarget_create_internal(
-    vulkan_context* context,
-    b8 window_dest,
-    uvec2 origin, uvec2 size,
-    u32 attachment_count,
-    vulkan_rendertarget_attachment* attachments,
-    emgpu_rendertarget* out_rendertarget) {
-    EM_ASSERT(context != NULL && attachments != NULL && out_rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_create_external");
-
-    out_rendertarget->window_dest = window_dest;
-    out_rendertarget->origin = origin;    
-    out_rendertarget->size = size;
-    out_rendertarget->attachment_count = attachment_count;
-
-    // Allocate internal data.
     out_rendertarget->internal_data = ballocate(sizeof(internal_vulkan_rendertarget), MEMORY_TAG_RENDERER);
     internal_vulkan_rendertarget* internal_rendertarget = (internal_vulkan_rendertarget*)out_rendertarget->internal_data;
 
-    internal_rendertarget->attachments = ballocate(sizeof(vulkan_image) * out_rendertarget->attachment_count * context->config.frames_in_flight, MEMORY_TAG_RENDERER);
-
-    // Allocate framebuffer storage.
-    internal_rendertarget->framebuffers = darray_reserve(VkFramebuffer,
-                                                        context->config.frames_in_flight,
-                                                        MEMORY_TAG_RENDERER);
+    out_rendertarget->attachment_count = config->attachment_count;
+    out_rendertarget->origin = config->origin;
+    out_rendertarget->size = config->size;
 
     //
     // Render pass setup
     //
 
     VkAttachmentReference* colour_attachments  = NULL;
-    VkAttachmentDescription* attachments_descs = darray_reserve(VkAttachmentDescription,
-                                                               out_rendertarget->attachment_count,
-                                                               MEMORY_TAG_RENDERER);
+    VkAttachmentDescription* attachments_descs = darray_reserve(VkAttachmentDescription, out_rendertarget->attachment_count, MEMORY_TAG_RENDERER);
 
     // Main subpass.
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
     for (u32 i = 0; i < out_rendertarget->attachment_count; ++i) {
-        const vulkan_rendertarget_attachment* attachment = &attachments[i];
-        bcopy_memory(&internal_rendertarget->attachments[i * context->config.frames_in_flight], attachments[i].images, sizeof(vulkan_image) * context->config.frames_in_flight);
-
+        const emgpu_rendertarget_attachment* attachment = &config->attachments[i];
+        
         VkAttachmentDescription* attachment_desc = darray_push_empty(attachments_descs);
-        attachment_desc->format         = attachment->format;
-        attachment_desc->samples        = attachment->samples;
-        attachment_desc->loadOp         = attachment->load_op;
-        attachment_desc->storeOp        = attachment->store_op;
-        attachment_desc->stencilLoadOp  = attachment->stencil_load_op;
-        attachment_desc->stencilStoreOp = attachment->stencil_store_op;
-        attachment_desc->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachment_desc->finalLayout    = attachment->final_layout;
+        attachment_desc->format = format_to_vulkan_type(attachment->format);
+        attachment_desc->samples = VK_SAMPLE_COUNT_1_BIT;
+        attachment_desc->loadOp = load_op_to_vulkan_type(attachment->load_op);
+        attachment_desc->storeOp = store_op_to_vulkan_type(attachment->store_op);
+        attachment_desc->stencilLoadOp = load_op_to_vulkan_type(attachment->stencil_load_op);
+        attachment_desc->stencilStoreOp = store_op_to_vulkan_type(attachment->stencil_store_op);
+
+        attachment_desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachment_desc->finalLayout = attachment_type_to_image_layout(attachment->type);
 
         switch (attachment->type) {
             case EMBER_ATTACHMENT_TYPE_COLOR:
-            //case EMBER_ATTACHMENT_DEPTH: 
-            //case EMBER_ATTACHMENT_STENCIL: 
-            //case EMBER_ATTACHMENT_DEPTH_STENCIL:
+            case EMBER_ATTACHMENT_TYPE_WINDOW_SURFACE:
                 if (!colour_attachments)
                     colour_attachments = darray_create(VkAttachmentReference, MEMORY_TAG_RENDERER);
 
                 VkAttachmentReference* reference = darray_push_empty(colour_attachments);
                 reference->attachment = i;
-                reference->layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // TODO: Change based on attachment type
+                reference->layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 break;
-
+            
             default:
-                EM_ASSERT(FALSE && "Unsupported attachment type");
+                EM_ASSERT(FALSE && "Unsupported attachment type in rendertarget");
                 continue;
         }
     }
 
     subpass.colorAttachmentCount = colour_attachments ? darray_length(colour_attachments) : 0;
-    subpass.pColorAttachments    = colour_attachments;
+    subpass.pColorAttachments = colour_attachments;
 
     //
     // Subpass dependency
@@ -160,10 +84,6 @@ VkResult vulkan_rendertarget_create_internal(
     dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     dependency.dependencyFlags = 0;
-
-    //
-    // Render pass creation
-    //
 
     VkRenderPassCreateInfo render_pass_create_info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
     render_pass_create_info.attachmentCount = darray_length(attachments_descs);
@@ -181,51 +101,59 @@ VkResult vulkan_rendertarget_create_internal(
             &internal_rendertarget->handle),
         "Failed to create internal Vulkan renderpass");
 
-    // Cleanup temporary arrays.
+    // Cleanup temp arrays...
     darray_destroy(attachments_descs);
     if (colour_attachments) darray_destroy(colour_attachments);
 
-    //
-    // Framebuffer creation
-    //
-
+    internal_rendertarget->framebuffers = darray_reserve(VkFramebuffer, context->config.frames_in_flight, MEMORY_TAG_RENDERER);
     for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
-        VkImageView* views = darray_reserve(VkImageView,
-                                            out_rendertarget->attachment_count,
-                                            MEMORY_TAG_RENDERER);
+        VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+        framebuffer_create_info.renderPass = internal_rendertarget->handle;
+        framebuffer_create_info.width = out_rendertarget->size.width;
+        framebuffer_create_info.height = out_rendertarget->size.height;
+        framebuffer_create_info.layers = 1;
 
+        VkImageView* views = darray_reserve(VkImageView, out_rendertarget->attachment_count, MEMORY_TAG_RENDERER);
         for (u32 j = 0; j < out_rendertarget->attachment_count; ++j) {
-            darray_push(
-                views,
-                internal_rendertarget->attachments[i + j * context->config.frames_in_flight].view);
+            internal_vulkan_texture* attachment_texture = (internal_vulkan_texture*)config->attachments[j].textures[i].internal_data;
+            darray_push(views, attachment_texture->view);
         }
 
-        VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-        framebuffer_create_info.renderPass      = internal_rendertarget->handle;
-        framebuffer_create_info.attachmentCount = out_rendertarget->attachment_count;
-        framebuffer_create_info.pAttachments    = views;
-        framebuffer_create_info.width           = out_rendertarget->size.width;
-        framebuffer_create_info.height          = out_rendertarget->size.height;
-        framebuffer_create_info.layers          = 1;
+        framebuffer_create_info.attachmentCount = darray_length(views);
+        framebuffer_create_info.pAttachments = views;
 
         VkFramebuffer* framebuffer = darray_push_empty(internal_rendertarget->framebuffers);
-
-        VkResult result = vkCreateFramebuffer(context->device.logical_device, &framebuffer_create_info, context->allocator, framebuffer);
-        if (!vulkan_result_is_success(result)) return result;
+        CHECK_VKRESULT(
+            vkCreateFramebuffer(
+                context->device.logical_device, 
+                &framebuffer_create_info, 
+                context->allocator, 
+                framebuffer), 
+            "Failed to create framebuffer for Vulkan rendertarget");
 
         darray_destroy(views);
     }
 
-    return VK_SUCCESS;
+    return TRUE;
+}
+
+b8 vulkan_rendertarget_resize(
+	emgpu_device* device,
+    emgpu_rendertarget* rendertarget,
+    uvec2 new_size) {
+    EM_ASSERT(device != NULL && rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_resize");
+
+
 }
 
 void vulkan_rendertarget_begin(
     vulkan_context* context,
-    vulkan_command_buffer* command_buffer, 
+    vulkan_command_buffer* command_buffer,
     emgpu_rendertarget* rendertarget,
     b8 set_viewport, b8 set_scissor) {
+    EM_ASSERT(context != NULL && command_buffer != NULL && rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_begin");
     internal_vulkan_rendertarget* internal_rendertarget = (internal_vulkan_rendertarget*)rendertarget->internal_data;
-
+    
     if (set_viewport) {
 		VkViewport viewport = {};
         viewport.x = (f32)rendertarget->origin.x;
@@ -270,44 +198,37 @@ void vulkan_rendertarget_end(
     vulkan_context* context,
     vulkan_command_buffer* command_buffer, 
     emgpu_rendertarget* rendertarget) {
+    EM_ASSERT(context != NULL && command_buffer != NULL && rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_end");
     vkCmdEndRenderPass(command_buffer->handle);
 }
 
 void vulkan_rendertarget_destroy(
-    emgpu_device* device, 
+	emgpu_device* device,
     emgpu_rendertarget* rendertarget) {
     EM_ASSERT(device != NULL && rendertarget != NULL && "Invalid arguments passed to vulkan_rendertarget_destroy");
     vulkan_context* context = (vulkan_context*)device->internal_context;
-	if (context->device.logical_device) vkDeviceWaitIdle(context->device.logical_device);
+    if (context->device.logical_device) vkDeviceWaitIdle(context->device.logical_device);
 
     internal_vulkan_rendertarget* internal_rendertarget = (internal_vulkan_rendertarget*)rendertarget->internal_data;
 
     if (internal_rendertarget != NULL) {
-        for (u32 i = 0; i < rendertarget->attachment_count * context->config.frames_in_flight; ++i) {
-            u32 attachment = i % rendertarget->attachment_count;
-            u32 frame = i / rendertarget->attachment_count;
 
-            vulkan_image_destroy(context, &internal_rendertarget->attachments[i], !rendertarget->window_dest);
+        if (internal_rendertarget->framebuffers != NULL) {
+            for (u32 i = 0; i < darray_length(internal_rendertarget->framebuffers); ++i) {
+                if (!internal_rendertarget->framebuffers[i]) continue;
 
-            if (attachment == 0 && internal_rendertarget->framebuffers[frame]) {
                 vkDestroyFramebuffer(
-                    context->device.logical_device, 
-                    internal_rendertarget->framebuffers[frame], 
+                    context->device.logical_device,
+                    internal_rendertarget->framebuffers[i],
                     context->allocator);
             }
-        }
 
-        if (internal_rendertarget->framebuffers) darray_destroy(internal_rendertarget->framebuffers);
-
-        if (internal_rendertarget->attachments) {
-            bfree(internal_rendertarget->attachments, 
-                sizeof(vulkan_image) * rendertarget->attachment_count * context->config.frames_in_flight, 
-                MEMORY_TAG_RENDERER);
+            darray_destroy(internal_rendertarget->framebuffers);
         }
 
         if (internal_rendertarget->handle)
             vkDestroyRenderPass(context->device.logical_device, internal_rendertarget->handle, context->allocator);
-        
+
         bfree(internal_rendertarget, sizeof(internal_vulkan_rendertarget), MEMORY_TAG_RENDERER);
     }
 }

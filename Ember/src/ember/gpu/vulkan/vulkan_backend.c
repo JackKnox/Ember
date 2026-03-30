@@ -9,7 +9,6 @@
 #include "vulkan_renderstage.h"
 #include "vulkan_rendertarget.h"
 #include "vulkan_texture.h"
-#include "vulkan_image.h"
 #include "vulkan_window_system.h"
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
@@ -144,11 +143,8 @@ b8 vulkan_device_initialize(emgpu_device* device, emgpu_device_config* config) {
 		"Failed to create Vulkan device");
     // --------------------------------------
 
-	
-    // Vulkan window system / main rendertarget code.
+	// Vulkan window system code.
     // --------------------------------------
-	vulkan_rendertarget_attachment* main_attachments = darray_reserve(vulkan_rendertarget_attachment, config->main_attachment_count, MEMORY_TAG_RENDERER);
-
 	if (device->window_context != NULL) {
 		EM_ASSERT(device->window_context->internal_renderer_state == NULL && "Invalid state reached: Platform state already has renderer attached!");
 	
@@ -158,71 +154,7 @@ b8 vulkan_device_initialize(emgpu_device* device, emgpu_device_config* config) {
 		CHECK_VKRESULT(
 			vulkan_window_system_create(device, window_system),
 			"Failed to create internal Vulkan window surface / swapchain");
-		
-		vulkan_rendertarget_attachment swapchain_attachment = {
-			.type = EMBER_ATTACHMENT_TYPE_COLOR,
-			.images = window_system->images,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.format = window_system->swapchain_format.format,
-			.load_op = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			.store_op = VK_ATTACHMENT_STORE_OP_STORE,
-			.stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-			.stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			.final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		};
-
-		darray_push(main_attachments, swapchain_attachment);
 	}
-
-	for (u32 i = 0; i < config->main_attachment_count; ++i) {
-		emgpu_rendertarget_attachment* front_attachment = &config->main_attachments[i];
-
-		vulkan_rendertarget_attachment attachment = {};
-		attachment.type = front_attachment->type;
-		attachment.format = format_to_vulkan_type(front_attachment->format);
-		attachment.samples = VK_SAMPLE_COUNT_1_BIT; // TODO: Push to frontend renderer backend
-		attachment.load_op = load_op_to_vulkan_type(front_attachment->load_op);
-		attachment.store_op = store_op_to_vulkan_type(front_attachment->store_op);
-		attachment.stencil_load_op = load_op_to_vulkan_type(front_attachment->stencil_load_op);
-		attachment.stencil_store_op = store_op_to_vulkan_type(front_attachment->stencil_store_op);
-
-		// TODO: ...
-		attachment.final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		VkImageUsageFlags image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		VkImageAspectFlags image_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-
-		attachment.images = ballocate(sizeof(vulkan_image) * config->frames_in_flight, MEMORY_TAG_RENDERER);
-		for (u32 i = 0; i < config->frames_in_flight; ++i) {
-			CHECK_VKRESULT(
-				vulkan_image_create(
-					context, 
-					config->size, 
-					attachment.format, 
-					image_usage, 
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-					TRUE, 
-					image_aspect,
-					&attachment.images[i]),
-				"Failed to create main rendertarget attachments in Vulkan backend");
-		}
-
-		darray_push(main_attachments, attachment);
-	}
-
-	CHECK_VKRESULT(
-		vulkan_rendertarget_create_internal(
-			context, 
-			TRUE, 
-			(uvec2) { 0, 0 }, 
-			config->size, 
-			darray_length(main_attachments),
-			main_attachments, 
-			&device->main_rendertarget), 
-		"Failed to create main rendertarget in Vulkan backend");
-
-	for (u32 i = 0; i < darray_length(main_attachments); ++i) 
-		bfree(main_attachments[i].images, sizeof(vulkan_image) * config->frames_in_flight, MEMORY_TAG_RENDERER);
-	darray_destroy(main_attachments);
     // --------------------------------------
 
 	context->in_flight_fences = darray_reserve(VkFence, config->frames_in_flight, MEMORY_TAG_RENDERER);
@@ -357,12 +289,10 @@ void vulkan_device_shutdown(emgpu_device* device) {
 		darray_destroy(context->in_flight_fences);
 	}
 
-	vulkan_rendertarget_destroy(device, &device->main_rendertarget);
-
 	if (device->window_context && device->window_context->internal_renderer_state) {
 		vulkan_window_system* window_system = (vulkan_window_system*)device->window_context->internal_renderer_state;
 		vulkan_window_system_destroy(device, window_system);
-		//bfree(window_system, sizeof(vulkan_window_system), MEMORY_TAG_RENDERER);
+		bfree(window_system, sizeof(vulkan_window_system), MEMORY_TAG_RENDERER);
 	}
 
 	vulkan_device_destroy(device);
@@ -387,6 +317,16 @@ void vulkan_device_resized(emgpu_device* device, uvec2 new_size) {
 	// TODO: Swapchain recreation.
 }
 
+b8 vulkan_device_window_textures(emgpu_device* device, emgpu_texture** out_textures) {
+	if (!device->window_context || !device->window_context->internal_renderer_state) {
+		EM_ERROR("Rendering device has no window context attached.");
+		return FALSE;
+	}
+
+	vulkan_window_system* window_system = (vulkan_window_system*)device->window_context->internal_renderer_state;
+	*out_textures = window_system->swapchain_images;
+	return TRUE;
+}
 
 b8 vulkan_device_update_descriptors(
 	emgpu_device* device,
@@ -440,8 +380,8 @@ b8 vulkan_device_update_descriptors(
 
                     VkDescriptorImageInfo* image_info = darray_push_empty(image_infos);
                     image_info->sampler     = texture->sampler;
-                    image_info->imageView   = texture->image.view;
-                    image_info->imageLayout = texture->image.layout;
+                    image_info->imageView   = texture->view;
+                    image_info->imageLayout = texture->layout;
                     descriptor_write->pImageInfo = image_info;
 					break;
 

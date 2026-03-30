@@ -33,10 +33,6 @@ typedef enum emgpu_device_mode {
     EMBER_DEVICE_MODE_TRANSFER = 1 << 2,  /**< Data transfer operations */
 } emgpu_device_mode;
 
-#define EMGPU_FORMAT_FLAG_SRGB       1 << 1
-//#define EMGPU_FORMAT_FLAG_DEPTH    1 << 2
-//#define EMGPU_FORMAT_FLAG_STENCIL  1 << 3
-
 /**
  * @brief Describes a data format used by the ember_gpu subsystem.
  * Any other format values outside this enum is not supported by 
@@ -112,10 +108,24 @@ typedef enum emgpu_format {
     /**
      * @brief sRGB formats
      */
-    EMGPU_FORMAT_R8_SRGB    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 1, EMGPU_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RG8_SRGB   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 2, EMGPU_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RGB8_SRGB  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMGPU_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RGBA8_SRGB = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMGPU_FORMAT_FLAG_SRGB),
+    EMGPU_FORMAT_R8_SRGB    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 1, EMBER_FORMAT_FLAG_SRGB),
+    EMGPU_FORMAT_RG8_SRGB   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 2, EMBER_FORMAT_FLAG_SRGB),
+    EMGPU_FORMAT_RGB8_SRGB  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_SRGB),
+    EMGPU_FORMAT_RGBA8_SRGB = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_SRGB),
+
+    /**
+     * @brief BGR formats
+     */
+    EMGPU_FORMAT_BGR8_UNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGR8_SNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGR8_UINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGR8_SINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGR8_SRGB   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_SRGB | EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGRA8_UNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGRA8_SNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGRA8_UINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGRA8_SINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, EMBER_FORMAT_FLAG_BGRA),
+    EMGPU_FORMAT_BGRA8_SRGB  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_SRGB | EMBER_FORMAT_FLAG_BGRA),
 } emgpu_format;
 
 /**
@@ -146,6 +156,7 @@ typedef enum emgpu_texture_usage {
  * Defines the logical purpose of an attachment within a render target.
  */
 typedef enum emgpu_attachment_type {
+    EMBER_ATTACHMENT_TYPE_WINDOW_SURFACE,
     EMBER_ATTACHMENT_TYPE_COLOR,   /**< Color render target (RGBA output) */
     EMBER_ATTACHMENT_TYPE_DEPTH,   /**< Depth-only attachment */
     EMBER_ATTACHMENT_TYPE_STENCIL, /**< Stencil-only attachment */
@@ -230,35 +241,6 @@ typedef enum emgpu_address_mode {
 } emgpu_address_mode;
 
 /**
- * @brief Describes a single render target attachment.
- */
-typedef struct emgpu_rendertarget_attachment {
-    /** Logical attachment type (color, depth, stencil, etc.). */
-    emgpu_attachment_type type;
-
-    /** Engine-defined pixel format. Must be compatible with the attachment type. */
-    emgpu_format format;
-
-    /** Load operation for color or depth aspect. */
-    emgpu_load_op load_op;
-
-    /** Store operation for color or depth aspect. */
-    emgpu_store_op store_op;
-
-    /**
-     * Load operation for stencil aspect.
-     * Only relevant for stencil or depth-stencil attachments.
-     */
-    emgpu_load_op stencil_load_op;
-
-    /**
-     * Store operation for stencil aspect.
-     * Only relevant for stencil or depth-stencil attachments.
-     */
-    emgpu_store_op stencil_store_op;
-} emgpu_rendertarget_attachment;
-
-/**
  * @brief Describes a single descriptor binding.
  */
 typedef struct emgpu_descriptor_desc {
@@ -312,9 +294,6 @@ typedef struct emgpu_device_config {
     /** @brief Prefer or require a discrete GPU. */
     b8 discrete_gpu;
 
-    /** @brief Number of attachments in @ref main_attachments. */
-    u32 main_attachment_count;
-
     /**
      * @brief Number of frames processed concurrently.
      *
@@ -333,9 +312,6 @@ typedef struct emgpu_device_config {
 
     /** @brief Name of the application. */
     const char* application_name;
-
-    /** @brief Array of attachments for the main render target. */
-    emgpu_rendertarget_attachment* main_attachments;
 } emgpu_device_config;
 
 /**

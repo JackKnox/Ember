@@ -2,7 +2,7 @@
 #include "vulkan_window_system.h"
 
 #include "vulkan_rendertarget.h"
-#include "vulkan_image.h"
+#include "vulkan_texture.h"
 
 VkResult query_support_info(
     vulkan_context* context, 
@@ -43,17 +43,12 @@ VkResult vulkan_window_system_create(
 
     result = query_support_info(context, out_window_system);
     if (!vulkan_result_is_success(result)) return result;
-    
-    out_window_system->swapchain_format = out_window_system->formats[0];
-    for (u32 i = 0; i < darray_length(out_window_system->formats); ++i) {
-        VkSurfaceFormatKHR format = out_window_system->formats[i];
-        // Preferred formats
-        if (format.format == VK_FORMAT_B8G8R8A8_UNORM &&
-            format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            out_window_system->swapchain_format = format;
-            break;
-        }
-    }
+
+    // TODO: Detect swapchain format based on system.
+    emgpu_format default_format = EMGPU_FORMAT_BGRA8_UNORM;
+
+    out_window_system->swapchain_format.format = format_to_vulkan_type(default_format);
+    out_window_system->swapchain_format.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
     VkExtent2D min = out_window_system->capabilities.minImageExtent;
     VkExtent2D max = out_window_system->capabilities.maxImageExtent;
@@ -109,26 +104,19 @@ VkResult vulkan_window_system_create(
     VkImage* images = (VkImage*)ballocate(sizeof(VkImage) * out_window_system->image_count, MEMORY_TAG_RENDERER);
     vkGetSwapchainImagesKHR(context->device.logical_device, out_window_system->swapchain, &out_window_system->image_count, images);
 
-    out_window_system->images = (vulkan_image*)ballocate(sizeof(vulkan_image) * out_window_system->image_count, MEMORY_TAG_RENDERER);
-
+    out_window_system->swapchain_images = (emgpu_texture*)ballocate(sizeof(emgpu_texture) * out_window_system->image_count, MEMORY_TAG_RENDERER);
     for (u32 i = 0; i < out_window_system->image_count; ++i) {
-        out_window_system->images[i].handle = images[i];
+        emgpu_texture_config swapchain_texture_config = emgpu_texture_default();
+        swapchain_texture_config.size = context->config.size;
+        swapchain_texture_config.image_format = default_format;
+        swapchain_texture_config.usage = 0;
 
-        VkImageViewCreateInfo view_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-        view_info.image = out_window_system->images[i].handle;
-        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        view_info.format = out_window_system->swapchain_format.format;
-        view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        view_info.subresourceRange.baseMipLevel = 0;
-        view_info.subresourceRange.levelCount = 1;
-        view_info.subresourceRange.baseArrayLayer = 0;
-        view_info.subresourceRange.layerCount = 1;
-
-        result = vkCreateImageView(
-                context->device.logical_device, 
-                &view_info, 
-                context->allocator, 
-                &out_window_system->images[i].view);
+        result = vulkan_texture_create_internal(
+                context, 
+                &swapchain_texture_config,
+                images[i], 
+                FALSE, FALSE,
+                &out_window_system->swapchain_images[i]);
         if (!vulkan_result_is_success(result)) return result;
     }
 
@@ -149,7 +137,7 @@ VkResult vulkan_window_system_create(
         if (!vulkan_result_is_success(result)) return result;
     }
 
-    return TRUE;
+    return VK_SUCCESS;
 }
 
 void vulkan_window_system_destroy(
@@ -168,8 +156,11 @@ void vulkan_window_system_destroy(
 
     darray_destroy(window_system->image_available_semaphores);
 
-    bfree(window_system->images, 
-        sizeof(vulkan_image) * window_system->image_count, 
+    for (u32 i = 0; i < window_system->image_count; ++i)
+        vulkan_texture_destroy(device, &window_system->swapchain_images[i]);
+
+    bfree(window_system->swapchain_images, 
+        sizeof(emgpu_texture) * window_system->image_count, 
         MEMORY_TAG_RENDERER);
 
     vkDestroySwapchainKHR(context->device.logical_device, window_system->swapchain, context->allocator);

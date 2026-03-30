@@ -130,22 +130,12 @@ b8 vulkan_renderstage_create_graphic(
     internal_vulkan_rendertarget* vulkan_rendertarget = (internal_vulkan_rendertarget*)bound_rendertarget->internal_data;
     pipeline_create_info.renderPass = vulkan_rendertarget->handle;
     pipeline_create_info.layout = internal_renderstage->layout;
-
-    // Recieve viewport/scissor from renderpass
-    VkViewport viewport = {};
-    viewport.x = (f32)bound_rendertarget->origin.x;
-    viewport.y = (f32)(bound_rendertarget->origin.y + bound_rendertarget->size.height);
-    viewport.width  = (f32)bound_rendertarget->size.width;
-    viewport.height = -(f32)bound_rendertarget->size.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    // Scissor
-    VkRect2D scissor = {};
-    scissor.offset.x = bound_rendertarget->origin.x;
-    scissor.offset.y = bound_rendertarget->origin.y;
-    scissor.extent.width  = bound_rendertarget->size.width;
-    scissor.extent.height = bound_rendertarget->size.height;
+    
+    VkDynamicState dynamic_states[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+      //VK_DYNAMIC_STATE_LINE_WIDTH
+    };
 
     // Vertex input configuration
     // Calculate total vertex stride and fill attribute descriptions.   
@@ -186,10 +176,10 @@ b8 vulkan_renderstage_create_graphic(
 
     // Viewport state
     VkPipelineViewportStateCreateInfo viewport_state = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
-    viewport_state.viewportCount = 1;
-    viewport_state.pViewports    = &viewport;
-    viewport_state.scissorCount  = 1;
-    viewport_state.pScissors     = &scissor;
+    viewport_state.viewportCount = 0;
+    viewport_state.pViewports    = NULL;
+    viewport_state.scissorCount  = 0;
+    viewport_state.pScissors     = NULL;
 
     // Rasterization state
     VkPipelineRasterizationStateCreateInfo rasterizer = { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
@@ -220,11 +210,10 @@ b8 vulkan_renderstage_create_graphic(
     color_blending.logicOp         = VK_LOGIC_OP_COPY;
     color_blending.attachmentCount = 1;
     color_blending.pAttachments    = &colorBlendAttachment;
-
-    // TODO: Take a closer look at this...
+    
     VkPipelineDynamicStateCreateInfo dynamic_state = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
-    dynamic_state.dynamicStateCount = 0;
-    dynamic_state.pDynamicStates    = NULL;
+    dynamic_state.dynamicStateCount = EM_ARRAYSIZE(dynamic_states);
+    dynamic_state.pDynamicStates    = dynamic_states;
 
     // Vertex input state
     VkPipelineVertexInputStateCreateInfo vertex_input_state = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };

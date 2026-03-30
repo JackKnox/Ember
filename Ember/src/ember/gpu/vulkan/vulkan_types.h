@@ -61,14 +61,12 @@ typedef struct vulkan_command_buffer {
 // Low level configuration for a attachment to a Vulkan-based rendertarget.
 typedef struct vulkan_rendertarget_attachment {
     emgpu_attachment_type type;
-    vulkan_image* images;
+    VkImage* images;
     VkFormat format;
-    VkSampleCountFlags samples;
     VkAttachmentLoadOp load_op;
     VkAttachmentStoreOp store_op;
     VkAttachmentLoadOp stencil_load_op;
     VkAttachmentStoreOp stencil_store_op;
-    VkImageLayout final_layout;
 } vulkan_rendertarget_attachment;
 
 // Represents a logical Vulkan device and associated resources.
@@ -80,7 +78,7 @@ typedef struct vulkan_device {
 
 // Represents a connection to a platform surface with swapcahin and synchronization primitives.
 typedef struct vulkan_window_system {
-    vulkan_image* images;
+    emgpu_texture* swapchain_images;
     u32 image_count;
 
     VkSemaphore* image_available_semaphores;
@@ -120,14 +118,18 @@ typedef struct internal_vulkan_renderstage {
 
 // Internal Vulkan implementation of a emgpu_texture.
 typedef struct internal_vulkan_texture {
-    vulkan_image image;
+    VkImage handle;
+    VkDeviceMemory memory;
+    VkImageView view;
     VkSampler sampler;
+
+    b8 ownes_vk_image;
+    VkImageLayout layout;
 } internal_vulkan_texture;
 
 // Internal Vulkan implementation of a emgpu_rendertarget.
 typedef struct internal_vulkan_rendertarget {
     VkRenderPass handle;
-    vulkan_image* attachments;
     VkFramebuffer* framebuffers;
 } internal_vulkan_rendertarget;
 
@@ -193,6 +195,9 @@ VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op);
 
 // Converts engine store op format to a Vulkan format.
 VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op);
+
+// Converts engine attachment to a final image layout of a rendertarget attachment.
+VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type);
 
 // Returns a human-readable string for a Vulkan result code.
 const char* vulkan_result_string(VkResult result, b8 get_extended);

@@ -86,12 +86,6 @@ VkFormat format_to_vulkan_type(emgpu_format format) {
         case EMGPU_FORMAT_RGBA8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
         case EMGPU_FORMAT_RGBA8_SNORM: return VK_FORMAT_R8G8B8A8_SNORM;
 
-        /* sRGB */
-        case EMGPU_FORMAT_R8_SRGB:    return VK_FORMAT_R8_SRGB;
-        case EMGPU_FORMAT_RG8_SRGB:   return VK_FORMAT_R8G8_SRGB;
-        case EMGPU_FORMAT_RGB8_SRGB:  return VK_FORMAT_R8G8B8_SRGB;
-        case EMGPU_FORMAT_RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
-
         /* 16-bit */
         case EMGPU_FORMAT_R16_UINT:    return VK_FORMAT_R16_UINT;
         case EMGPU_FORMAT_R16_SINT:    return VK_FORMAT_R16_SINT;
@@ -126,6 +120,24 @@ VkFormat format_to_vulkan_type(emgpu_format format) {
         case EMGPU_FORMAT_RGBA32_SINT:  return VK_FORMAT_R32G32B32A32_SINT;
         case EMGPU_FORMAT_RGBA32_FLOAT: return VK_FORMAT_R32G32B32A32_SFLOAT;
 
+        /* sRGB */
+        case EMGPU_FORMAT_R8_SRGB:    return VK_FORMAT_R8_SRGB;
+        case EMGPU_FORMAT_RG8_SRGB:   return VK_FORMAT_R8G8_SRGB;
+        case EMGPU_FORMAT_RGB8_SRGB:  return VK_FORMAT_R8G8B8_SRGB;
+        case EMGPU_FORMAT_RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
+
+        /* 8-bit normalized (BGRA) */
+        case EMGPU_FORMAT_BGR8_UNORM:  return VK_FORMAT_B8G8R8_UNORM;
+        case EMGPU_FORMAT_BGR8_SNORM:  return VK_FORMAT_B8G8R8_SNORM;
+        case EMGPU_FORMAT_BGR8_UINT:   return VK_FORMAT_B8G8R8_UINT;
+        case EMGPU_FORMAT_BGR8_SINT:   return VK_FORMAT_B8G8R8_SINT;
+        case EMGPU_FORMAT_BGR8_SRGB:   return VK_FORMAT_B8G8R8_SRGB;
+        case EMGPU_FORMAT_BGRA8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
+        case EMGPU_FORMAT_BGRA8_SNORM: return VK_FORMAT_B8G8R8A8_SNORM;
+        case EMGPU_FORMAT_BGRA8_UINT:  return VK_FORMAT_B8G8R8A8_UINT;
+        case EMGPU_FORMAT_BGRA8_SINT:  return VK_FORMAT_B8G8R8A8_SINT;
+        case EMGPU_FORMAT_BGRA8_SRGB:  return VK_FORMAT_B8G8R8A8_SRGB;
+
         default:
             EM_ASSERT(FALSE && "Unsupported render format!");
             return VK_FORMAT_UNDEFINED;
@@ -152,6 +164,17 @@ VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op) {
     default:
         EM_ASSERT(FALSE && "Unsupported store op!");
         return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    }
+}
+
+VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type) {
+    switch (type) {
+    case EMBER_ATTACHMENT_TYPE_COLOR: return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case EMBER_ATTACHMENT_TYPE_WINDOW_SURFACE: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    default:
+        EM_ASSERT(FALSE && "Unsupported attachment type!");
+        return VK_IMAGE_LAYOUT_GENERAL;
     }
 }
 

@@ -172,7 +172,15 @@ typedef struct emgpu_device {
      * @note This would be used instead of calling `device->resize_rendertarget(main_rendertarget)`
      */
     void (*resized)(struct emgpu_device* device, uvec2 new_size);
-    
+    /**
+     * @brief Retrieves frames-in-flight attachted to internal window surface.
+     *
+     * @param device Pointer to the backend instance.
+     * @param out_textures Refrence to output pointer of a managed array.
+     * @return True if initialization succeeded.
+     */
+    b8 (*window_textures)(struct emgpu_device* device, emgpu_texture** out_textures);
+
     /**
      * @brief Updates one or more descriptor bindings for a renderstage.
      *
@@ -256,6 +264,9 @@ typedef struct emgpu_device {
 
     /** @brief Creates a rendertarget. */
     b8 (*create_rendertarget)(struct emgpu_device* device, emgpu_rendertarget_config* config, emgpu_rendertarget* out_rendertarget);
+
+    /** @brief Resize a rendertarget lazyilly to `new_size` */
+    b8 (*resize_rendertarget)(struct emgpu_device* device, emgpu_rendertarget* rendertarget, uvec2 new_size);
 
     /** @brief Destroys a rendertarget. */
     void (*destroy_rendertarget)(struct emgpu_device* device, emgpu_rendertarget* rendertarget);

@@ -182,6 +182,8 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define EMBER_DATA_TYPE_BOOL  3
 
 #define EMBER_FORMAT_FLAG_NORMALIZED 1 << 0
+#define EMBER_FORMAT_FLAG_BGRA       1 << 1
+#define EMBER_FORMAT_FLAG_SRGB       1 << 2
 
 #define EMBER_FORMAT_MAKE(type, bytes, channels, flags) \
     (((flags)              << 24)  | \

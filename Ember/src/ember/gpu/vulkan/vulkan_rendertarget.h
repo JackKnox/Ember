@@ -9,13 +9,10 @@ b8 vulkan_rendertarget_create(
     emgpu_rendertarget_config* config,
     emgpu_rendertarget* out_rendertarget);
 
-VkResult vulkan_rendertarget_create_internal(
-    vulkan_context* context,
-    b8 window_dest,
-    uvec2 origin, uvec2 size,
-    u32 attachment_count,
-    vulkan_rendertarget_attachment* attachments,
-    emgpu_rendertarget* out_rendertarget);
+b8 vulkan_rendertarget_resize(
+	emgpu_device* device,
+    emgpu_rendertarget* rendertarget,
+    uvec2 new_size);
 
 void vulkan_rendertarget_begin(
     vulkan_context* context,

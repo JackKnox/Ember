@@ -176,6 +176,37 @@ emgpu_texture_config emgpu_texture_default();
 u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
 
 /**
+ * @brief Describes a single render target attachment.
+ */
+typedef struct emgpu_rendertarget_attachment {
+    /** @brief Logical attachment type (color, depth, stencil, etc.). */
+    emgpu_attachment_type type;
+
+    /** @brief Engine-defined pixel format. Must be compatible with the attachment type. */
+    emgpu_format format;
+
+    emgpu_texture* textures;
+
+    /** @brief Load operation for color or depth aspect. */
+    emgpu_load_op load_op;
+
+    /** @brief Store operation for color or depth aspect. */
+    emgpu_store_op store_op;
+
+    /**
+     * @brief Load operation for stencil aspect.
+     * Only relevant for stencil or depth-stencil attachments.
+     */
+    emgpu_load_op stencil_load_op;
+
+    /**
+     * @brief Store operation for stencil aspect.
+     * Only relevant for stencil or depth-stencil attachments.
+     */
+    emgpu_store_op stencil_store_op;
+} emgpu_rendertarget_attachment;
+
+/**
  * @brief Configuration for a rendertarget.
  *
  * Contains attachments, image layout transitions
@@ -203,9 +234,6 @@ typedef struct emgpu_rendertarget_config {
  * offscreen render target (such as a framebuffer or texture).
  */
 typedef struct emgpu_rendertarget {
-    /** @brief Indicates whetever rendertarget connects to a platform surface. */
-    b8 window_dest;
-
     /** @brief Clear colour value used when beginning a render pass. */
     u32 clear_colour;
 

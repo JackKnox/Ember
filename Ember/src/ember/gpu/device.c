@@ -5,7 +5,7 @@
 
 b8 emgpu_device_init(emgpu_device_config* config, emplat_window* window, emgpu_device* out_device) {
     EM_ASSERT(config != NULL && out_device != NULL && "Invalid arguments passed to emgpu_device_init");
-    EM_ASSERT(config->application_name != NULL && (window != NULL || config->main_attachments != NULL) && "Malformed data in emgpu_device_config");
+    EM_ASSERT(config->application_name != NULL && "Malformed data in emgpu_device_config");
 
 #if EM_ENABLE_VALIDATION
     if (window->internal_renderer_state != NULL) {
@@ -17,11 +17,6 @@ b8 emgpu_device_init(emgpu_device_config* config, emplat_window* window, emgpu_d
 		EM_ERROR("emgpu_device_init(): Must create renderer backend with at least 1 frame(s) in flight: %u", config->frames_in_flight);
 		return FALSE;
 	}
-
-	if (!window && config->main_attachment_count == 0) {
-		EM_ERROR("emgpu_device_init(): Cannot set zero attachments without platform state attached to renderer");
-		return FALSE;
-	}
 #endif
 
     out_device->window_context = window;
@@ -31,7 +26,9 @@ b8 emgpu_device_init(emgpu_device_config* config, emplat_window* window, emgpu_d
         out_device->shutdown        = vulkan_device_shutdown;
 
         out_device->resized         = vulkan_device_resized;
-		out_device->update_descriptors = vulkan_device_update_descriptors;
+		out_device->window_textures = vulkan_device_window_textures;
+        out_device->update_descriptors = vulkan_device_update_descriptors;
+
         out_device->begin_frame     = vulkan_device_begin_frame;
         out_device->execute_command = vulkan_device_execute_command;
         out_device->end_frame       = vulkan_device_end_frame;
@@ -49,20 +46,48 @@ b8 emgpu_device_init(emgpu_device_config* config, emplat_window* window, emgpu_d
         out_device->destroy_texture      = vulkan_texture_destroy;
 
    	 	out_device->create_rendertarget  = vulkan_rendertarget_create;
+        out_device->resize_rendertarget  = vulkan_rendertarget_resize;
     	out_device->destroy_rendertarget = vulkan_rendertarget_destroy;
     }
     else {
         EM_ERROR("Unsupported renderer backend type (%i).", config->api_type);
         return FALSE;
     }
+
+    if (!out_device->initialize(out_device, config))
+        return FALSE;
+
+    emgpu_texture* window_textures = NULL;
+    if (!out_device->window_textures(out_device, &window_textures))
+        return FALSE;
+
+    emgpu_rendertarget_attachment attachments[] = {
+        {
+            .type = EMBER_ATTACHMENT_TYPE_WINDOW_SURFACE,
+            .format = window_textures->image_format,
+            .textures = window_textures,
+			.load_op = EMBER_LOAD_OP_CLEAR,
+			.store_op = EMBER_STORE_OP_STORE,
+			.stencil_load_op = EMBER_LOAD_OP_DONT_CARE,
+			.stencil_store_op = EMBER_STORE_OP_DONT_CARE,
+        }
+    };
     
-    return out_device->initialize(out_device, config);
+    emgpu_rendertarget_config main_rendertarget_config = emgpu_rendertarget_default();
+    main_rendertarget_config.origin = (uvec2) { 0, 0 };
+    main_rendertarget_config.size = config->size;
+    main_rendertarget_config.attachment_count = EM_ARRAYSIZE(attachments);
+    main_rendertarget_config.attachments = attachments;
+    return out_device->create_rendertarget(out_device, &main_rendertarget_config, &out_device->main_rendertarget);
 }
 
 void emgpu_device_shutdown(emgpu_device* device) {
     EM_ASSERT(device != NULL && "Invalid arguments passed to emgpu_device_shutdown");
-    if (device->shutdown != NULL) 
+    if (device->shutdown) {
+        device->destroy_rendertarget(device, &device->main_rendertarget);
+
         device->shutdown(device);
+    }
     
     bzero_memory(device, sizeof(emgpu_device));
 }
