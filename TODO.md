@@ -4,12 +4,12 @@ This items in thi lst are not in any particular order. This list will be updated
 ## Ember core
 - [x] CMake build system
     - [x] Seperate modules into different targets
-    - [ ] (**ember_gpu**) Sepereate GAPIs into diferrent modules
+    - [ ] Sepereate GAPIs into diferrent modules
     - [ ] Versioning
     - [ ] Configuration flags
     - [ ] CMake test to flip features on/off
 - [ ] Semantic versioning across the library 
-- [ ] Error codes
+- [x] Error codes
 - [ ] Documentation website (Doxygen)
 - [x] Math library (vector, math ops, etc.)
 - [x] Memory subsystem
@@ -18,19 +18,45 @@ This items in thi lst are not in any particular order. This list will be updated
     - [x] Burst allocator
     - [x] `freelist` allocator
     - [x] `darray` object
-    - [] Pool allocator
+    - [ ] Pool allocator
 - [x] Subsystems
     - [x] `ember_platform` — windowing, input, time, and system info
     - [x] `ember_gpu` — low-level graphics API abstraction
     - [ ] `ember_net` — networking utilities
     - [ ] `ember_audio` — audio abstraction
 
+## supported platforms
+- [ ] Windows 7 and later
+    - [ ] Win32 (windowing / input)
+    - [ ] XInput (gamepads)
+    - [ ] DirectX 12 (gpu interface)
+    - [ ] Winsock (network)
+    - [ ] WASAPI (audio)
+- [ ] macOS 11 and later
+    - [ ] Cocoa (windowing /input)
+    - [ ] Game Controller Framework (gamepads)
+    - [ ] Metal (4) (gpu interface)
+    - [ ] POSIX (network)
+    - [ ] Core Audio (audio)
+- [ ] Linux  (Ubuntu, Debian, Arch, Fedora)
+    - [ ] X11 (windowing /input)
+    - [ ] XInput2 (gamepads)
+    - [ ] Vulkan (gpu interface)
+    - [ ] POSIX (network)
+    - [ ] ALSA (audio)
+
+### Planned platforms for other releases
+    - [ ] Wayland
+    - [ ] DirectX11
+    - [ ] OpenGL
+    - [ ] PulseAudio/PipeWire
+    - [ ] Android
+    - [ ] Website runtime
+    - [ ] steamOS & Proton
+    - [ ] iOS / iPadOS
+
 ## ember_platform
-- [x] Basic platform layer (Linux - X11)
-    - [ ] Windows support
-    - [ ] macOS support
-    - [ ] Wayland support  
-    - [ ] (Optional) mobile runtime support
+- [x] Basic platform layer
 - [x] Time subsystem 
     - [ ] Clock abstraction
     - [ ] Current time
@@ -42,11 +68,6 @@ This items in thi lst are not in any particular order. This list will be updated
 
 ## ember_gpu
 - [x] Vtable-based abstraction
-- [x] Supported backends
-    - [x] Vulkan backend
-    - [ ] OpenGL backend
-    - [ ] DX11/12 backend
-    - [ ] Metal backend
 - [x] Render command structure
 - [x] Export device capabilities from backend
 - [x] Render format enum
@@ -56,7 +77,7 @@ This items in thi lst are not in any particular order. This list will be updated
     - [x] `emgpu_renderstage`
     - [x] `emgpu_renderbuffer`
     - [x] `emgpu_commandbuf`
-    - [ ] Frame abstraction instead of command buffers
+    - [x] Frame abstraction instead of command buffers
 - [ ] Per-frame allocators (Scratch)
 - [ ] Resource tracking across a frame
 - [ ] Depth / stencil buffer
