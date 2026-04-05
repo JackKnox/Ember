@@ -46,14 +46,14 @@ This items in thi lst are not in any particular order. This list will be updated
     - [ ] ALSA (audio)
 
 ### Planned platforms for other releases
-    - [ ] Wayland
-    - [ ] DirectX11
-    - [ ] OpenGL
-    - [ ] PulseAudio/PipeWire
-    - [ ] Android
-    - [ ] Website runtime
-    - [ ] steamOS & Proton
-    - [ ] iOS / iPadOS
+- [ ] Wayland
+- [ ] DirectX11
+- [ ] OpenGL
+- [ ] PulseAudio/PipeWire
+- [ ] Android
+- [ ] Website runtime
+- [ ] steamOS & Proton
+- [ ] iOS / iPadOS
 
 ## ember_platform
 - [x] Basic platform layer
