@@ -74,8 +74,8 @@ This items in thi lst are not in any particular order. This list will be updated
 - [ ] Mutil-window applications
 - [x] Resource types
     - [x] `emgpu_rendertarget`
-    - [x] `emgpu_renderstage`
-    - [x] `emgpu_renderbuffer`
+    - [x] `emgpu_pipeline`
+    - [x] `emgpu_buffer`
     - [x] `emgpu_commandbuf`
     - [x] Frame abstraction instead of command buffers
 - [ ] Per-frame allocators (Scratch)

@@ -2,7 +2,6 @@
 #include <ember/platform/global.h>
 
 #include <ember/gpu/device.h>
-#include <ember/gpu/commandbuf.h>
 
 int main(int argc, char** argv) {
 	emplat_window_config window_config = emplat_window_default();
@@ -10,54 +9,64 @@ int main(int argc, char** argv) {
 	window_config.title = "Test Window";
 
 	emgpu_device_config device_config = emgpu_device_default();
+	device_config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
 	device_config.application_name = window_config.title;
-	device_config.size = window_config.size;
 
 	emplat_window window = {};
-	if (!emplat_window_start(&window_config, &window)) {
+	if (emplat_window_start(&window_config, &window) != EMBER_RESULT_OK) {
         emc_console_write("Failed to open window\n");
         goto failed_init;
 	}
-
+	
 	emgpu_device device = {};
-	if (!emgpu_device_init(&device_config, &window, &device)) {
+	if (emgpu_device_init(&device_config, &device) != EMBER_RESULT_OK) {
 		emc_console_write("Failed to create rendering device\n");
 		goto failed_init;
 	}
 
-	device.main_rendertarget.clear_colour = 0x1f1f1fff;
+	emgpu_surface surface = {};
+	if (device.create_surface(&device, &window, &surface) != EMBER_RESULT_OK) {
+		emc_console_write("Failed to create window surface\n");
+		goto failed_init;
+	}
+
+	emgpu_attachment_config attachments[] = {
+		{
+			.type = EMBER_ATTACHMENT_TYPE_PRESENT,
+			.format = surface.pixel_format,
+			.load_op = EMBER_LOAD_OP_CLEAR,
+			.store_op = EMBER_STORE_OP_STORE,
+			.stencil_load_op = EMBER_LOAD_OP_DONT_CARE,
+			.stencil_store_op = EMBER_STORE_OP_DONT_CARE,
+		}
+	};
+
+	emgpu_present_target_config rendertarget_config = emgpu_rendertarget_default_present();
+	rendertarget_config.surface = &surface;
+	rendertarget_config.attachments = attachments;
+	rendertarget_config.attachment_count = EM_ARRAYSIZE(attachments);
+
+	emgpu_rendertarget surface_target = {};
+	if (device.create_present_target(&device, &rendertarget_config, &surface_target) != EMBER_RESULT_OK) {
+		emc_console_write("Failed to create main rendertarget (present)\n");
+		goto failed_init;
+	}
 
 	show_memory_stats();
-
-	emgpu_commandbuf commandbuf = {};
-
-	f64 last_delta_time = 0;
 
 	f64 last_time = emplat_current_time();
 	while (!emplat_window_should_close(&window)) {
 		f64 now = emplat_current_time();
 		f64 delta_time = now - last_time;
 		last_time = now;
-		
-		if (abs(last_delta_time - delta_time) > 4.0f) {
-			EM_TRACE("FPS %.2f", 1000.0f / delta_time);
-			last_delta_time = delta_time;
-		}
 
-		if (device.begin_frame(&device, delta_time)) {
+		emgpu_frame frame = {};
+		if (emgpu_frame_init(&frame) == EMBER_RESULT_OK) {		
 			// ------------------
-			emgpu_commandbuf_begin(&commandbuf);
-			emgpu_commandbuf_bind_rendertarget(&commandbuf, &device.main_rendertarget);
-			emgpu_commandbuf_end(&commandbuf);
-			// ------------------
+			emgpu_frame_bind_rendertarget(&frame, &surface_target);
 
-			if (!emgpu_device_submit_commandbuf(&device, &commandbuf)) {
-				emc_console_write("Failed to submit command buffer\n");
-				goto failed_init;
-			}
-
-			if (!device.end_frame(&device)) {
-				emc_console_write("Failed to end frame\n");
+			if (device.submit_frame(&device, &frame) != EMBER_RESULT_OK) {
+				emc_console_write("Failed to end submit device frame\n");
 				goto failed_init;
 			}
 		}
@@ -65,9 +74,9 @@ int main(int argc, char** argv) {
 		emplat_window_pump_messages(&window); 
 	}
 
-	emgpu_commandbuf_destroy(&commandbuf);
-
 failed_init:
+	device.destroy_rendertarget(&device, &surface_target);
+	device.destroy_surface(&device, &surface);
 	emgpu_device_shutdown(&device);
 	emplat_window_close(&window);
 
