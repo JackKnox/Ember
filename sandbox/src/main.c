@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
 	emgpu_device_config device_config = emgpu_device_default();
 	device_config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
 	device_config.application_name = window_config.title;
+	device_config.enable_validation = TRUE;
 
 	emplat_window window = {};
 	if (emplat_window_start(&window_config, &window) != EMBER_RESULT_OK) {
@@ -24,11 +25,16 @@ int main(int argc, char** argv) {
 		goto failed_init;
 	}
 
+	if (device_config.enable_validation)
+		emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
+
 	emgpu_surface surface = {};
 	if (device.create_surface(&device, &window, &surface) != EMBER_RESULT_OK) {
 		emc_console_write("Failed to create window surface\n");
 		goto failed_init;
 	}
+
+	goto failed_init;
 
 	emgpu_attachment_config attachments[] = {
 		{
@@ -75,11 +81,11 @@ int main(int argc, char** argv) {
 	}
 
 failed_init:
-	device.destroy_rendertarget(&device, &surface_target);
+	//device.destroy_rendertarget(&device, &surface_target);
 	device.destroy_surface(&device, &surface);
 	emgpu_device_shutdown(&device);
 	emplat_window_close(&window);
 
-	memory_shutdown();
+	memory_leaks();
 	return 0;
 }

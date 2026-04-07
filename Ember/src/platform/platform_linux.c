@@ -64,7 +64,7 @@ void emplat_system_library_unload(emplat_library lib) {
 }
 
 void GLFWErrorCallback(int error, const char* description) {
-	EM_ERROR("%s", description);
+	EM_ERROR("Platform" "%s", description);
 }
 
 emplat_window_config emplat_window_default() {
@@ -76,11 +76,11 @@ emplat_window_config emplat_window_default() {
 }
 
 em_result emplat_window_start(
-    emplat_window_config* config, 
+    const emplat_window_config* config, 
     emplat_window* out_window) {
     glfwSetErrorCallback(GLFWErrorCallback);
 	if (glfwInit() == 0) {
-		EM_ERROR("platform_start(): Failed initializing GLFW.");
+		EM_ERROR("Platform", "Failed to initialize GLFW.");
 		return EMBER_RESULT_UNKNOWN;
 	}
 
@@ -97,13 +97,13 @@ em_result emplat_window_start(
 	}
 
 	if (window_pos.x > monitorX + mode->width || window_pos.y > monitorY + mode->height) {
-		EM_ERROR("platform_start(): Specififed window position is outside range of monitior");
+		EM_ERROR("Platform", "Specififed window position is outside range of monitior.");
 		return EMBER_RESULT_INVALID_VALUE;
 	}
 
 	if (config->size.width >= mode->width || config->size.height >= mode->height) {
-		EM_ERROR("platform_start(): Specififed window size is larger than size of monitior");
-		return EMBER_RESULT_INVALID_VALUE;;
+		EM_ERROR("Platform", "Specififed window size is larger than size of monitior.");
+		return EMBER_RESULT_INVALID_VALUE;
 	}
 
 	glfwWindowHint(GLFW_MAXIMIZED, config->window_mode == EMBER_WINDOW_MODE_MAXIMIZED);
@@ -111,13 +111,17 @@ em_result emplat_window_start(
 	glfwWindowHint(GLFW_POSITION_Y, window_pos.y);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+	EM_INFO("Platform", "Creating window '%s' (%i, %i)", config->title, config->size.width, config->size.height);
+
 	out_window->glfw.handle = glfwCreateWindow(config->size.width, config->size.height, config->title, config->window_mode == EMBER_WINDOW_MODE_FULLSCREEN ? monitor : NULL, NULL);
 	if (!out_window->glfw.handle) {
-		EM_ERROR("platform_start(): Failed creating application window.");
+		EM_ERROR("Platform", "Failed to create window.");
 		return EMBER_RESULT_UNKNOWN;
 	}
 
-    return TRUE;
+	out_window->size = config->size;
+	out_window->title = config->title;
+    return EMBER_RESULT_OK;
 }
 
 void emplat_window_close(emplat_window* window) {

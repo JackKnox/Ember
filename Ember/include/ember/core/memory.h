@@ -2,32 +2,20 @@
 
 #include "ember/core.h"
 
-typedef enum {
-	MEMORY_TAG_UNKNOWN,
-	MEMORY_TAG_ENGINE,
-	MEMORY_TAG_PLATFORM,
-	MEMORY_TAG_CORE,
-	MEMORY_TAG_RESOURCES,
-	MEMORY_TAG_RENDERER,
+typedef enum memory_tag {
+	MEMORY_TAG_CORE,     /**< Allocated by ember core */
+	MEMORY_TAG_PLATFORM, /**< Allocated by ember plat */
+	MEMORY_TAG_RENDERER, /**< Allocated by ember gpu */
+	MEMORY_TAG_DEVICE,   /**< Internal memory used by internal systems */
 	MEMORY_TAG_MAX_TAGS,
 } memory_tag;
 
-void memory_shutdown();
-
-void* ballocate(u64 size, memory_tag tag);
-
-void bfree(void* block, u64 size, memory_tag tag);
-
-void breport(u64 size, memory_tag tag);
-
-void breport_free(u64 size, memory_tag tag);
-
-void* bzero_memory(void* block, u64 size);
-
-void* bcopy_memory(void* dest, const void* source, u64 size);
-
-void* bset_memory(void* dest, i32 value, u64 size);
-
-b8 bcmp_memory(void* buf1, void* buf2, u64 size);
-
 void show_memory_stats();
+
+void memory_leaks();
+
+void* mem_allocate(u64 size, memory_tag tag);
+
+void mem_free(void* block, u64 size, memory_tag tag);
+
+void mem_report(i64 size, memory_tag tag);

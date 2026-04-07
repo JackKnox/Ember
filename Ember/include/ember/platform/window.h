@@ -51,6 +51,12 @@ typedef struct emplat_window {
     /** @brief Renderer-specific state (e.g., swapchain, surface). */
 	void* internal_renderer_state;
 
+    /** @brief Current size of the window, changes when resizing. */
+    uvec2 size;
+
+    /** @brief Current title of the window, updates when renaming. */
+    const char* title;
+
     /** @brief Platform-specific window state. */
 	EMBER_PLATFORM_WINDOW_STATE
 } emplat_window;
@@ -72,7 +78,7 @@ emplat_window_config emplat_window_default();
  * @param out_window Pointer to the window to initialise.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds..
  */
-em_result emplat_window_start(emplat_window_config* config, emplat_window* out_window);
+em_result emplat_window_start(const emplat_window_config* config, emplat_window* out_window);
 
 /**
  * @brief Closes and destroys a window.

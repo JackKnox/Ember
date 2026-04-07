@@ -27,6 +27,9 @@ typedef struct emgpu_buffer {
     /** @brief Total size of the buffer in bytes. */
     u64 buffer_size;
 
+    /** @brief Current usage of the buffer. */
+    emgpu_buffer_usage usage;
+
     /** @brief Backend-specific buffer state/handle. */
     void* internal_data;
 } emgpu_buffer;
@@ -239,8 +242,11 @@ typedef struct emgpu_rendertarget {
     /** @brief Indicates whetever the rendertarget renders to a platform surface. */
     b8 is_present;
 
-    /** @brief Clear colour value used when beginning a render pass. */
+    /** @brief Clear colour value used when beginning a render target. */
     u32 clear_colour;
+
+    /** @brief Current index of the image just processed by the device. */
+    u32 image_index;
 
     /** @brief Number of attachments attached to the rendertarget. */
     u32 attachment_count;

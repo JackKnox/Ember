@@ -11,69 +11,47 @@ typedef struct memory_stats {
 } memory_stats;
 
 static const char* tag_strings[] = {
-    "UNKNOWN   ",
-	"ENGINE    ",
-	"PLATFORM  ",
-	"CORE      ",
-	"RESOURCES ",
-	"RENDERER  ",
-	"TOTAL     "};
+	"CORE    ",
+	"PLATFORM",
+	"RENDERER",
+	"DEVICE  "
+	"TOTAL   "};
 
 static b8 is_initialized = FALSE;
 static memory_stats stats = { 0 };
 #endif
 
-void memory_shutdown() {
+void memory_leaks() {
 #if EM_ENABLE_DIAGNOSTICS
 	if (stats.total_allocated == 0) return;
 	for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS; ++i) {
 		if (!stats.allocation_count[i]) continue;
-		EM_ERROR("Unfreed %llu bytes on MEMORY_TAG_%s", stats.tagged_allocations[i], tag_strings[i]);
-		EM_ERROR("%i unfreed allocations on tag...", stats.allocation_count[i]);
+		EM_ERROR("Core", "Unfreed %llu bytes on MEMORY_TAG_%s", stats.tagged_allocations[i], tag_strings[i]);
+		EM_ERROR("Core", "%i unfreed allocations on tag...", stats.allocation_count[i]);
 	}
 #endif
 }
 
-void* ballocate(u64 size, memory_tag tag) {
-	breport(size, tag);
-	return bzero_memory(emc_malloc(size, FALSE), size);
+void* mem_allocate(u64 size, memory_tag tag) {
+	mem_report(size, tag);
+	return emc_memset(emc_malloc(size, FALSE), 0, size);
 }
 
-void bfree(void* block, u64 size, memory_tag tag) {
-	breport_free(size, tag);
+void mem_free(void* block, u64 size, memory_tag tag) {
+	mem_report(-(i64)size, tag);
 	emc_free(block, FALSE);
 }
 
-void breport(u64 size, memory_tag tag) {
+void mem_report(i64 size, memory_tag tag) {
 #if EM_ENABLE_DIAGNOSTICS
 	stats.total_allocated += size;
 	stats.tagged_allocations[tag] += size;
-	stats.allocation_count[tag]++;
+
+	if (size > 0)
+		stats.allocation_count[tag]++;
+	else
+		stats.allocation_count[tag]--;
 #endif
-}
-
-void breport_free(u64 size, memory_tag tag) {
-#if EM_ENABLE_DIAGNOSTICS
-	stats.total_allocated -= size;
-	stats.tagged_allocations[tag] -= size;		
-	stats.allocation_count[tag]--;
-#endif
-}
-
-void* bzero_memory(void* block, u64 size) {
-	return bset_memory(block, 0, size);
-}
-
-void* bcopy_memory(void* dest, const void* source, u64 size) {
-	return emc_memcpy(dest, source, size);
-}
-
-void* bset_memory(void* dest, i32 value, u64 size) {
-	return emc_memset(dest, value, size);
-}
-
-b8 bcmp_memory(void* buf1, void* buf2, u64 size) {
-	return emc_memcmp(buf1, buf2, size);
 }
 
 void show_memory_stats() {
@@ -84,8 +62,8 @@ void show_memory_stats() {
 	const u64 mib = 1024 * 1024;
 	const u64 kib = 1024;
 
-	EM_TRACE("System memory use (tagged):");
-	EM_TRACE(" TAG          BYTES     COUNT");
+	EM_TRACE("Core", "System memory use (tagged):");
+	EM_TRACE("Core", " TAG          BYTES     COUNT");
 	for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS + 1; ++i) {
 		u64 raw_amount = i < MEMORY_TAG_MAX_TAGS ? stats.tagged_allocations[i] : total;
 		total += raw_amount;

@@ -2,6 +2,8 @@
 
 #include "ember/core.h"
 
+#include "ember/gpu/format.h"
+
 /**
  * @brief Supported rendering APIs.
  */
@@ -12,15 +14,24 @@ typedef enum emgpu_device_backend {
 } emgpu_device_backend;
 
 /**
+ * @brief Util function for converting `emgpu_device_backend` to a string representation.
+ * 
+ * @param device_backend Enum type to convert.
+ */
+const char* emgpu_backend_type_string(emgpu_device_backend device_backend);
+
+/**
  * @brief Type of logical rendering device.
  */
 typedef enum emgpu_device_type {
     EMBER_DEVICE_TYPE_OTHER,           /**< Unknown or generic device */
-    EMBER_DEVICE_TYPE_DISCRETE_GPU,    /**< Dedicated graphics card */
-    EMBER_DEVICE_TYPE_CPU,             /**< CPU-based rendering device */
     EMBER_DEVICE_TYPE_INTEGRATED_GPU,  /**< Integrated GPU (shared memory) */
+    EMBER_DEVICE_TYPE_DISCRETE_GPU,    /**< Dedicated graphics card */
     EMBER_DEVICE_TYPE_VIRTUAL_GPU,     /**< Virtualized GPU (e.g. VM) */
+    EMBER_DEVICE_TYPE_CPU,             /**< CPU-based rendering device */
 } emgpu_device_type;
+
+const char* emgpu_device_type_string(emgpu_device_type device_type);
 
 /**
  * @brief Operating modes supported by the renderer.
@@ -33,101 +44,6 @@ typedef enum emgpu_device_mode {
     EMBER_DEVICE_MODE_TRANSFER = 1 << 2,  /**< Data transfer operations */
     EMBER_DEVICE_MODE_PRESENT  = 1 << 3,  /**< Presentation to a platform surface */
 } emgpu_device_mode;
-
-/**
- * @brief Describes a data format used by the ember_gpu subsystem.
- * Any other format values outside this enum is not supported by 
- * the subsystem.
- *
- * Used for vertex attributes, textures, and general GPU data.
- */
-typedef enum emgpu_format {
-    EMGPU_FORMAT_UNDEFINED = 0,
-
-    /**
-     * @brief 8-bit integer formats
-     */
-    EMGPU_FORMAT_R8_UINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 1, 0),
-    EMGPU_FORMAT_RG8_UINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 2, 0),
-    EMGPU_FORMAT_RGB8_UINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, 0),
-    EMGPU_FORMAT_RGBA8_UINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, 0),
-
-    EMGPU_FORMAT_R8_SINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 1, 0),
-    EMGPU_FORMAT_RG8_SINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 2, 0),
-    EMGPU_FORMAT_RGB8_SINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, 0),
-    EMGPU_FORMAT_RGBA8_SINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, 0),
-
-    /**
-     * @brief 8-bit normalized formats
-     */
-    EMGPU_FORMAT_R8_UNORM    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 1, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RG8_UNORM   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 2, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RGB8_UNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RGBA8_UNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED),
-
-    EMGPU_FORMAT_R8_SNORM    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 1, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RG8_SNORM   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 2, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RGB8_SNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED),
-    EMGPU_FORMAT_RGBA8_SNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED),
-
-    /**
-     * @brief 16-bit formats
-     */
-    EMGPU_FORMAT_R16_UINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 16, 1, 0),
-    EMGPU_FORMAT_RG16_UINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 16, 2, 0),
-    EMGPU_FORMAT_RGB16_UINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 16, 3, 0),
-    EMGPU_FORMAT_RGBA16_UINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 16, 4, 0),
-
-    EMGPU_FORMAT_R16_SINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 16, 1, 0),
-    EMGPU_FORMAT_RG16_SINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 16, 2, 0),
-    EMGPU_FORMAT_RGB16_SINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 16, 3, 0),
-    EMGPU_FORMAT_RGBA16_SINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 16, 4, 0),
-
-    EMGPU_FORMAT_R16_FLOAT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 16, 1, 0),
-    EMGPU_FORMAT_RG16_FLOAT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 16, 2, 0),
-    EMGPU_FORMAT_RGB16_FLOAT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 16, 3, 0),
-    EMGPU_FORMAT_RGBA16_FLOAT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 16, 4, 0),
-
-    /**
-     * @brief 32-bit formats
-     */
-    EMGPU_FORMAT_R32_UINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT,  32, 1, 0),
-    EMGPU_FORMAT_RG32_UINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT,  32, 2, 0),
-    EMGPU_FORMAT_RGB32_UINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT,  32, 3, 0),
-    EMGPU_FORMAT_RGBA32_UINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT,  32, 4, 0),
-
-    EMGPU_FORMAT_R32_SINT    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT,  32, 1, 0),
-    EMGPU_FORMAT_RG32_SINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT,  32, 2, 0),
-    EMGPU_FORMAT_RGB32_SINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT,  32, 3, 0),
-    EMGPU_FORMAT_RGBA32_SINT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT,  32, 4, 0),
-
-    EMGPU_FORMAT_R32_FLOAT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 32, 1, 0),
-    EMGPU_FORMAT_RG32_FLOAT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 32, 2, 0),
-    EMGPU_FORMAT_RGB32_FLOAT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 32, 3, 0),
-    EMGPU_FORMAT_RGBA32_FLOAT = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_FLOAT, 32, 4, 0),
-
-    /**
-     * @brief sRGB formats
-     */
-    EMGPU_FORMAT_R8_SRGB    = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 1, EMBER_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RG8_SRGB   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 2, EMBER_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RGB8_SRGB  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_SRGB),
-    EMGPU_FORMAT_RGBA8_SRGB = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_SRGB),
-
-    /**
-     * @brief BGR formats
-     */
-    EMGPU_FORMAT_BGR8_UNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGR8_SNORM  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGR8_UINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGR8_SINT   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 3, EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGR8_SRGB   = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 3, EMBER_FORMAT_FLAG_SRGB | EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGRA8_UNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGRA8_SNORM = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, EMBER_FORMAT_FLAG_NORMALIZED | EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGRA8_UINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGRA8_SINT  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_SINT, 8, 4, EMBER_FORMAT_FLAG_BGRA),
-    EMGPU_FORMAT_BGRA8_SRGB  = EMBER_FORMAT_MAKE(EMBER_DATA_TYPE_UINT, 8, 4, EMBER_FORMAT_FLAG_SRGB | EMBER_FORMAT_FLAG_BGRA),
-} emgpu_format;
 
 /**
  * @brief Intended usage of a GPU buffer.
@@ -168,7 +84,7 @@ typedef enum emgpu_attachment_type {
  * @brief Attachment load operation at the start of a render target.
  *
  * Determines how existing attachment contents are treated
- * when the render pass begins.
+ * when the render target begins.
  */
 typedef enum emgpu_load_op {
     EMBER_LOAD_OP_LOAD,     /**< Preserve existing contents of the attachment */
@@ -177,14 +93,14 @@ typedef enum emgpu_load_op {
 } emgpu_load_op;
 
 /**
- * @brief Attachment store operation at the end of a render pass.
+ * @brief Attachment store operation at the end of a render target.
  *
  * Determines whether attachment contents are preserved
- * after the render pass completes.
+ * after the render target completes.
  */
 typedef enum emgpu_store_op {
     EMBER_STORE_OP_STORE,      /**< Store the results for later use */
-    EMBER_STORE_OP_DONT_CARE,  /**< Contents become undefined after the pass completes */
+    EMBER_STORE_OP_DONT_CARE,  /**< Contents become undefined after the target completes */
 } emgpu_store_op;
 
 /**
@@ -272,14 +188,26 @@ typedef struct emgpu_shader_src {
  * @brief Describes the capabilities of the active relevent device.
  */
 typedef struct emgpu_device_capabilities {
-    /** @brief Maximum supported anisotropic filtering level. */
-    f32 max_anisotropy;
+    /** @brief Internal graphics API used by the device. */
+    emgpu_device_backend api_type;
 
     /** @brief Device classification. */
     emgpu_device_type device_type;
 
+    /** @brief Version of the internal API used by the device. */
+    em_version internal_api_version;
+
+    /** @brief Version of the OS driver used by the device. */
+    em_version driver_version;
+
+    /** @brief Maximum supported anisotropic filtering level. */
+    f32 max_anisotropy;
+
+    /** @brief Human-readable name for driver vendor. */
+    const char* vendor_name;
+
     /** @brief Human-readable device name. */
-    char* device_name;
+    char device_name[32];
 } emgpu_device_capabilities;
 
 /**

@@ -128,35 +128,35 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 // Platform detection
 #if defined(_WIN32)
-#define EM_PLATFORM_WINDOWS 1
-#if !defined(_WIN64)
-#error "64-bit Windows is required!"
-#endif
+#   define EM_PLATFORM_WINDOWS 1
+#   if !defined(_WIN64)
+#       error "64-bit Windows is required!"
+#   endif
 #elif defined(__APPLE__) && defined(__MACH__)
-#define EM_PLATFORM_APPLE 1
-#include <TargetConditionals.h>
-#if TARGET_IPHONE_SIMULATOR
-    #define EM_PLATFORM_IOS 1
-    #define EM_PLATFORM_IOS_SIMULATOR 1
-#elif TARGET_OS_IPHONE
-    #define EM_PLATFORM_IOS 1
-#elif TARGET_OS_MAC
-    #define EM_PLATFORM_MACOS 1
-#else
-    #error "Unknown Apple platform"
+#   define EM_PLATFORM_APPLE 1
+#   include <TargetConditionals.h>
+#   if TARGET_IPHONE_SIMULATOR
+#       define EM_PLATFORM_IOS 1
+#       define EM_PLATFORM_IOS_SIMULATOR 1
+#   elif TARGET_OS_IPHONE
+#       define EM_PLATFORM_IOS 1
+#   elif TARGET_OS_MAC
+#       define EM_PLATFORM_MACOS 1
+#   else
+#       error "Unknown Apple platform"
 #endif
 #elif defined(__ANDROID__)
-#define EM_PLATFORM_ANDROID 1
-#define EM_PLATFORM_LINUX 1 
-#define EM_PLATFORM_POSIX 1
+#   define EM_PLATFORM_ANDROID 1
+#   define EM_PLATFORM_LINUX 1 
+#   define EM_PLATFORM_POSIX 1
 #elif defined(__linux__)
-#define EM_PLATFORM_LINUX 1
-#define EM_PLATFORM_POSIX 1
+#   define EM_PLATFORM_LINUX 1
+#   define EM_PLATFORM_POSIX 1
 #elif defined(__unix__) || defined(__unix)
-#define EM_PLATFORM_UNIX 1
-#define EM_PLATFORM_POSIX 1
+#   define EM_PLATFORM_UNIX 1
+#   define EM_PLATFORM_POSIX 1
 #else
-#error "Unknown platform!"
+#   error "Unknown platform!"
 #endif
 
 #if defined(EMBER_BUILD_DEV)
@@ -175,6 +175,15 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #   define EM_ENABLE_DIAGNOSTICS 0
 #   define EM_ENABLE_VALIDATION 0
 #endif
+
+typedef u32 em_version;
+
+#define EM_API_MAKE_VERSION(major, minor, patch) \
+    ((((u32)(major)) << 22U) | (((u32)(minor)) << 12U) | ((u32)(patch)))
+
+#define EM_API_VERSION_MAJOR(version) ((u32)(version) >> 22U)
+#define EM_API_VERSION_MINOR(version) (((u32)(version) >> 12U) & 0x3FFU)
+#define EM_API_VERSION_PATCH(version) ((u32)(version) & 0xFFFU)
 
 /**
  * @brief Result codes returned by Ember functions.
@@ -209,6 +218,8 @@ const char* em_result_string(em_result result, b8 get_extended);
 #define EMBER_FORMAT_FLAG_NORMALIZED 1 << 0
 #define EMBER_FORMAT_FLAG_BGRA       1 << 1
 #define EMBER_FORMAT_FLAG_SRGB       1 << 2
+#define EMBER_FORMAT_FLAG_DEPTH      1 << 3
+#define EMBER_FORMAT_FLAG_STENCIL    1 << 4
 
 #define EMBER_FORMAT_MAKE(type, bytes, channels, flags) \
     (((flags)              << 24)  | \
@@ -222,18 +233,9 @@ const char* em_result_string(em_result result, b8 get_extended);
 #define EMBER_FORMAT_CHANNELS(format)  (((format)  >> 12)  & 0xF)
 #define EMBER_FORMAT_SIZE(format)      (EMBER_FORMAT_BYTES(format) * EMBER_FORMAT_CHANNELS(format))
 
-#define EM_OFFSETOF(s, m) (&(((s*)0)->m))
-
-#define EM_CLAMP(value, min, max) ((value <= min) ? min : (value >= max) ? max : value)
-
-#define EM_MIN(x, y) (x < y ? x : y)
-#define EM_MAX(x, y) (x > y ? x : y)
-
 #define EM_ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
 
-inline static u64 alignment(u64 v, u64 align) {
-    return (v + (align - 1)) & ~(align - 1);
-}
+#define EM_OFFSETOF(s, m) (&(((s*)0)->m))
 
 #include "ember/core/logger.h"
 #include "ember/core/memory.h"

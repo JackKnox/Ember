@@ -9,6 +9,10 @@ typedef struct freelist_header {
 } freelist_header;
 #pragma pack(pop)
 
+u64 alignment(u64 v, u64 align) {
+    return (v + (align - 1)) & ~(align - 1);
+}
+
 void* get_user_memory(freelist* list, void* internal_block) {
     EM_ASSERT(list != NULL && internal_block != NULL && "Invalid arguments passed to get_user_memory");
     return (u8*)internal_block + sizeof(freelist_header);
@@ -36,7 +40,7 @@ void freelist_destroy(freelist* list) {
 
     if (list->memory) {
         EM_ASSERT(list->capacity > 0 && "Allocated memory in freelist but not recorded capacity");
-        bfree(list->memory, list->capacity, list->tag);
+        mem_free(list->memory, list->capacity, list->tag);
         list->memory = NULL;
     }
 
@@ -61,12 +65,12 @@ void freelist_resize(freelist* list, u64 new_size) {
         u64 new_capacity = (list->capacity == 0) ? 8 : list->capacity;
         while (new_capacity < new_size) new_capacity *= 2;
 
-        void* new_buffer = ballocate(new_capacity, list->tag);
+        void* new_buffer = mem_allocate(new_capacity, list->tag);
 
         if (list->memory) {
             // copy only the used bytes
-            bcopy_memory(new_buffer, list->memory, list->size);
-            bfree(list->memory, list->capacity, list->tag);
+            emc_memcpy(new_buffer, list->memory, list->size);
+            mem_free(list->memory, list->capacity, list->tag);
         }
 
         list->memory = new_buffer;
@@ -79,14 +83,14 @@ void freelist_reset(freelist* list, b8 zero_memory, b8 free_memory) {
     list->size = 0;
 
     if (free_memory) {
-        bfree(list->memory, list->capacity, list->tag);
+        mem_free(list->memory, list->capacity, list->tag);
         list->memory = NULL;
         list->capacity = 0;
         return;
     }
 
     if (zero_memory) {
-        bzero_memory(list->memory, list->capacity);
+        emc_memset(list->memory, 0, list->capacity);
     }
 }
 
@@ -107,7 +111,7 @@ void* freelist_push(freelist* list, u64 block_size, void* memory) {
     u8* user_ptr = internal_block + sizeof(freelist_header);
 
     if (memory != NULL) {
-        bcopy_memory(user_ptr, memory, block_size);
+        emc_memcpy(user_ptr, memory, block_size);
     }
 
     list->size = aligned_pos + sizeof(freelist_header) + block_size;
@@ -153,12 +157,12 @@ b8 freelist_next_block(freelist* list, u8** cursor) {
 
 void* _darray_create(u64 stride, u32 capacity, memory_tag memtag) {
     u64 size = stride * capacity;
-    darray_header* new_array = ballocate(sizeof(darray_header) + size, memtag);
+    darray_header* new_array = mem_allocate(sizeof(darray_header) + size, memtag);
     new_array->capacity = capacity;
     new_array->length = 0;
     new_array->memtag = memtag;
     new_array->stride = stride;
-    return bzero_memory(new_array + 1, size);
+    return emc_memset(new_array + 1, 0, size);
 }
 
 void* _darry_from_data(u64 stride, u32 length, void* from_data, memory_tag memtag) {
@@ -166,13 +170,13 @@ void* _darry_from_data(u64 stride, u32 length, void* from_data, memory_tag memta
     _darray_header(new_array)->length = length;
 
     if (from_data)
-        bcopy_memory(new_array, from_data, stride * length);
+        emc_memcpy(new_array, from_data, stride * length);
     return new_array;
 }
 
 void darray_destroy(void* array) {
     darray_header* hdr = _darray_header(array);
-    bfree(hdr, sizeof(darray_header) + hdr->stride * hdr->capacity, hdr->memtag);
+    mem_free(hdr, sizeof(darray_header) + hdr->stride * hdr->capacity, hdr->memtag);
 }
 
 void* _darray_push(void** out_array, void* value_ptr) {
@@ -183,7 +187,7 @@ void* _darray_push(void** out_array, void* value_ptr) {
         u64 new_capacity = (hdr->capacity ? hdr->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY);
 
         void* new_array = _darray_create(hdr->stride, new_capacity, hdr->memtag);
-        bcopy_memory(new_array, *out_array, hdr->length * hdr->stride);
+        emc_memcpy(new_array, *out_array, hdr->length * hdr->stride);
 
         _darray_header(new_array)->length = hdr->length;
         darray_destroy(*out_array);
@@ -195,7 +199,7 @@ void* _darray_push(void** out_array, void* value_ptr) {
     // Write new element
     void* addr = (u8*)(*out_array) + (hdr->length * hdr->stride);
     if (value_ptr)
-        bcopy_memory(addr, value_ptr, hdr->stride);
+        emc_memcpy(addr, value_ptr, hdr->stride);
 
     hdr->length += 1;
     return addr;
@@ -205,10 +209,10 @@ void darray_pop_at(void* array, u32 index, void* dest) {
     darray_header* hdr = _darray_header(array);
 
     u8* addr = (u8*)array + index * hdr->stride;
-    if (dest) bcopy_memory(dest, (void*)addr, hdr->stride);
+    if (dest) emc_memcpy(dest, (void*)addr, hdr->stride);
 
     if (index != hdr->length - 1) {
-        bcopy_memory(
+        emc_memcpy(
             addr,
             addr + hdr->stride,
             hdr->stride * (hdr->length - index));

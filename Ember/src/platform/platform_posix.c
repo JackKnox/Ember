@@ -135,7 +135,7 @@ static void* _thrd_wrapper_function(void* aArg) {
     arg = ti->mArg;
 
     // The thread is responsible for freeing the startup information
-    bfree(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
+    mem_free(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
 
     // Call the actual client thread function
     res = fun(arg);
@@ -145,7 +145,7 @@ static void* _thrd_wrapper_function(void* aArg) {
 
 b8 emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
     // Fill out the thread startup information (passed to the thread wrapper, which will eventually free it)
-    _thread_start_info* ti = (_thread_start_info*)ballocate(sizeof(_thread_start_info), MEMORY_TAG_PLATFORM);
+    _thread_start_info* ti = (_thread_start_info*)mem_allocate(sizeof(_thread_start_info), MEMORY_TAG_PLATFORM);
     ti->mFunction = func;
     ti->mArg = arg;
 
@@ -155,7 +155,7 @@ b8 emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
 
     // Did we fail to create the thread?
     if (!*thr) {
-        bfree(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
+        mem_free(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
         return FALSE;
     }
 

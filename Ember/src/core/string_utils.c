@@ -41,7 +41,7 @@ b8 char_is_whitespace(char c) {
 
 char* string_duplicate(const char* str) {
     if (!str) {
-        EM_WARN("string_duplicate called with an empty string. 0/null will be returned.");
+        EM_WARN("Core", "string_duplicate called with an empty string. 0/null will be returned.");
         return 0;
     }
 
