@@ -35,6 +35,11 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     vulkan_context* context = (vulkan_context*)device->internal_context;
     context->config = *config;
 
+    // * NOTE: This value is kind of a lie as each frame waits for the next one
+    // *       in the future this should act as a trade between memory and performance.
+    // *       (docs-assets.developer.apple.com/published/e75ecc44a7f513ac9322a840d37e2995/drawing-a-triangle-with-metal-4-1~dark%402x.png)
+    /** config->frames_in_flight ... */
+
     // Global Vulkan init code
     // --------------------------------------
     u32 platform_extension_count = 0;
@@ -207,10 +212,10 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             }
         }
 
-        if (!((!(config->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) || ((config->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != -1)) &&
-            (!(config->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  || ((config->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  != -1)) &&
-            (!(config->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) || ((config->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index != -1)) &&
-            (!(config->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  || ((config->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  && queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index  != -1)))) {
+        if (((config->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index == -1) ||
+            ((config->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  == -1) ||
+            ((config->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index == -1) ||
+            ((config->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  && queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index  == -1)) {
             continue;
         }
 

@@ -3,6 +3,18 @@
 
 #include <ember/gpu/device.h>
 
+#define LOG_OUTPUT(level, message, ...) log_output(level, "Sandbox", message __VA_OPT__(,) __VA_ARGS__)
+
+#define CHECK_FUNC(func, message)                          \
+    {                                                      \
+        em_result result = func;                           \
+        if (result != EMBER_RESULT_OK) {                   \
+            LOG_OUTPUT(LOG_LEVEL_ERROR, message ": %s",    \
+					em_result_string(result, EM_ENABLE_VALIDATION)); \
+            goto failed_init;                             \
+        }                                                 \
+    }
+
 int main(int argc, char** argv) {
 	emplat_window_config window_config = emplat_window_default();
 	window_config.size = (uvec2) { 640, 640 };
@@ -14,27 +26,27 @@ int main(int argc, char** argv) {
 	device_config.enable_validation = TRUE;
 
 	emplat_window window = {};
-	if (emplat_window_start(&window_config, &window) != EMBER_RESULT_OK) {
-        emc_console_write("Failed to open window\n");
-        goto failed_init;
-	}
+	CHECK_FUNC(
+		emplat_window_start(&window_config, &window), 
+		"Failed to open window");
 	
 	emgpu_device device = {};
-	if (emgpu_device_init(&device_config, &device) != EMBER_RESULT_OK) {
-		emc_console_write("Failed to create rendering device\n");
-		goto failed_init;
-	}
+	CHECK_FUNC(
+		emgpu_device_init(&device_config, &device), 
+		"Failed to create rendering device");
 
 	if (device_config.enable_validation)
 		emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
 
-	emgpu_surface surface = {};
-	if (device.create_surface(&device, &window, &surface) != EMBER_RESULT_OK) {
-		emc_console_write("Failed to create window surface\n");
-		goto failed_init;
-	}
+	emgpu_surface_config surface_config = emgpu_surface_default();
+	surface_config.window = &window;
+	surface_config.prefered_format = EMGPU_FORMAT_BGRA8_UNORM;
+	surface_config.force_format = FALSE;
 
-	goto failed_init;
+	emgpu_surface surface = {};
+	CHECK_FUNC(
+		device.create_surface(&device, &surface_config, &surface),
+		"Failed to create window surface");
 
 	emgpu_attachment_config attachments[] = {
 		{
@@ -53,10 +65,9 @@ int main(int argc, char** argv) {
 	rendertarget_config.attachment_count = EM_ARRAYSIZE(attachments);
 
 	emgpu_rendertarget surface_target = {};
-	if (device.create_present_target(&device, &rendertarget_config, &surface_target) != EMBER_RESULT_OK) {
-		emc_console_write("Failed to create main rendertarget (present)\n");
-		goto failed_init;
-	}
+	CHECK_FUNC(
+		device.create_present_target(&device, &rendertarget_config, &surface_target), 
+		"Failed to create main rendertarget (present)");
 
 	show_memory_stats();
 
@@ -71,10 +82,9 @@ int main(int argc, char** argv) {
 			// ------------------
 			emgpu_frame_bind_rendertarget(&frame, &surface_target);
 
-			if (device.submit_frame(&device, &frame) != EMBER_RESULT_OK) {
-				emc_console_write("Failed to end submit device frame\n");
-				goto failed_init;
-			}
+			CHECK_FUNC(
+				device.submit_frame(&device, &frame), 
+				"Failed to submit device frame");
 		}
 
 		emplat_window_pump_messages(&window); 
