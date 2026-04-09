@@ -54,7 +54,8 @@ typedef enum emgpu_buffer_usage {
     EMBER_BUFFER_USAGE_VERTEX  = 1 << 0, /**< Vertex buffer */
     EMBER_BUFFER_USAGE_INDEX   = 1 << 1, /**< Index buffer */
     EMBER_BUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
-    EMBER_BUFFER_USAGE_CPU_VISIBLE = 1 << 3, /**< CPU-coherent buffer */
+    EMBER_BUFFER_USAGE_TRANSFER_SRC = 1 << 3, /**< Transfer from this buffer */
+    EMBER_BUFFER_USAGE_CPU_VISIBLE = 1 << 4,  /**< CPU-coherent buffer */
 } emgpu_buffer_usage;
 
 /**
@@ -63,8 +64,10 @@ typedef enum emgpu_buffer_usage {
  * Usage flags may be combined as bit flags.
  */
 typedef enum emgpu_texture_usage {
-    EMBER_TEXTURE_USAGE_STORAGE = 1 << 0, /**< Storage image */
-    EMBER_TEXTURE_USAGE_SAMPLED = 1 << 1, /**< Texture created with sampler */
+    EMBER_TEXTURE_USAGE_STORAGE = 1 << 0,      /**< Storage image */
+    EMBER_TEXTURE_USAGE_SAMPLED = 1 << 1,      /**< Texture created with sampler */
+    EMBER_TEXTURE_USAGE_TRANSFER_SRC = 1 << 2, /**< Transfer from this texture */
+    EMBER_TEXTURE_USAGE_ATTACHMENT_DST = 1 << 4, /**< Used as a texture in a rendertarget */
 } emgpu_texture_usage;
 
 /**
@@ -73,10 +76,11 @@ typedef enum emgpu_texture_usage {
  * Defines the logical purpose of an attachment within a render target.
  */
 typedef enum emgpu_attachment_type {
+    // TODO: Remove this attachment type as a window surface may not be colour.
     EMBER_ATTACHMENT_TYPE_PRESENT,  /**< Surface attachment (implictly colour) */
-    EMBER_ATTACHMENT_TYPE_COLOR,   /**< Color render target (RGBA output) */
-    EMBER_ATTACHMENT_TYPE_DEPTH,   /**< Depth-only attachment */
-    EMBER_ATTACHMENT_TYPE_STENCIL, /**< Stencil-only attachment */
+    EMBER_ATTACHMENT_TYPE_COLOUR,   /**< Colour render target (RGBA output) */
+    EMBER_ATTACHMENT_TYPE_DEPTH,    /**< Depth-only attachment */
+    EMBER_ATTACHMENT_TYPE_STENCIL,  /**< Stencil-only attachment */
     EMBER_ATTACHMENT_TYPE_DEPTH_STENCIL, /**< Combined depth-stencil attachment */
 } emgpu_attachment_type;
 
@@ -153,7 +157,7 @@ typedef enum emgpu_address_mode {
     EMBER_ADDRESS_MODE_REPEAT,               /**< Repeat texture coordinates */
     EMBER_ADDRESS_MODE_MIRRORED_REPEAT,      /**< Mirrored repeat */
     EMBER_ADDRESS_MODE_CLAMP_TO_EDGE,        /**< Clamp to edge */
-    EMBER_ADDRESS_MODE_CLAMP_TO_BORDER,      /**< Clamp to border color */
+    EMBER_ADDRESS_MODE_CLAMP_TO_BORDER,      /**< Clamp to border colour */
     EMBER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE, /**< Mirror then clamp to edge */
 } emgpu_address_mode;
 

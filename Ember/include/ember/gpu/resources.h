@@ -134,11 +134,14 @@ typedef struct emgpu_texture_config {
     /** @brief Intended usage of texture after creation. */
     emgpu_texture_usage usage;
 
-    /** @brief Max anisotropy of attached sampler in backend, ignored if texture is not sampled. */
-    f32 max_anisotropy;
-
     /** @brief Dimensions of the texture in pixels. */
     uvec2 size;
+
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
+    /** @brief Max anisotropy of attached sampler in backend, ignored if texture is not sampled. */
+    f32 max_anisotropy;
 } emgpu_texture_config;
 
 /**
@@ -176,16 +179,16 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
  * @brief Describes a single render target attachment.
  */
 typedef struct emgpu_attachment_config {
-    /** @brief Logical attachment type (color, depth, stencil, etc.). */
+    /** @brief Logical attachment type (colour, depth, stencil, etc.). */
     emgpu_attachment_type type;
 
     /** @brief Engine-defined pixel format. Must be compatible with the attachment type. */
     emgpu_format format;
 
-    /** @brief Load operation for color or depth aspect. */
+    /** @brief Load operation for colour or depth aspect. */
     emgpu_load_op load_op;
 
-    /** @brief Store operation for color or depth aspect. */
+    /** @brief Store operation for colour or depth aspect. */
     emgpu_store_op store_op;
 
     /**
@@ -225,7 +228,7 @@ typedef struct emgpu_rendertarget_config {
      * 
      * These textures are now owned by the rendertarget, automatically recreates when resizing.
      * 
-     * @note The texture array must be in the format of `[attachment][frame] (f0 -> a0, a1, f1 -> a0, a1 ...)`
+     * @note The texture array must be in the format of `[frame][attachment] (a0 -> f0, f1, a1 -> f0, f1 ...)`
      *       and the size must be `device.frame_in_flight * attachment_count`.
      */
     emgpu_texture* existing_textures;

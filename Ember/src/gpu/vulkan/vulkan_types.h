@@ -54,16 +54,12 @@ typedef struct vulkan_command_buffer {
 
 // Internal Vulkan implementation of a emgpu_surface.
 typedef struct internal_vulkan_surface {
-    emgpu_texture* swapchain_images;
-    u32 image_count;
-
     VkSurfaceKHR surface;
     VkSurfaceCapabilitiesKHR capabilities;
-    VkSurfaceFormatKHR* formats;
-    VkPresentModeKHR* present_modes;
+    VkColorSpaceKHR colour_space;
 
     VkSwapchainKHR swapchain;
-    VkSurfaceFormatKHR swapchain_format;
+    emgpu_texture* swapchain_images;
 } internal_vulkan_surface;
 
 // Internal Vulkan implementation of a emgpu_buffer.
@@ -90,11 +86,35 @@ typedef struct internal_vulkan_pipeline {
     };
 } internal_vulkan_pipeline;
 
+// Internal Vulkan implementation of a emgpu_buffer.
+typedef struct internal_vulkan_buffer {
+    VkBuffer handle;
+    VkDeviceMemory memory;
+} internal_vulkan_buffer;
+
+// Structure for extra texture configuration specific to this backend.
+typedef struct vulkan_texture_ext_config {
+    VkImage existing_image;
+    b8 ownes_provided_image;
+} vulkan_texture_ext_config;
+
+// Internal Vulkan implementation of a emgpu_texture.
+typedef struct internal_vulkan_texture {
+    VkImage handle;
+    emgpu_texture_usage usage;
+    VkDeviceMemory memory;
+    
+    VkImageView view;
+    VkSampler sampler;
+
+    VkImageLayout curr_layout;
+    b8 ownes_image;
+} internal_vulkan_texture;
+
 // Represents the global Vulkan backend context.
 // Owns the Vulkan instance, device, swapchain, synchronization primitives, and per-frame resources.
 typedef struct vulkan_context {
     emgpu_device_config config;
-    u32 image_index;
 
     VkInstance instance;
     VkAllocationCallbacks* allocator;
@@ -105,12 +125,17 @@ typedef struct vulkan_context {
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
     
     VkFence* in_flight_fences;
-    VkPipelineCache pipeline_cache;
     vulkan_command_buffer graphics_command_ring, compute_command_ring;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.
 i32 find_memory_index(vulkan_context* context, u32 type_filter, VkMemoryPropertyFlags property_flags);
+
+// Finds the necessary usage flags for a texture config.
+VkImageUsageFlags vulkan_texture_usage(vulkan_context* context, const emgpu_texture_config* config);
+
+// Finds the necessary usage flags for a buffer config.
+VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buffer_config* config);
 
 // Converts engine shader stage flags to Vulkan shader stage flags.
 VkShaderStageFlags shader_type_to_vulkan_type(emgpu_shader_stage_type type);
@@ -126,6 +151,9 @@ VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address);
 
 // Converts engine render format to a Vulkan format.
 VkFormat format_to_vulkan_type(emgpu_format format);
+
+// Converts Vulkan format to engine render format, use sparingly.
+emgpu_format vulkan_format_to_engine(VkFormat format);
 
 // Converts engine load op format to a Vulkan format.
 VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op);

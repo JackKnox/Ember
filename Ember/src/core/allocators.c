@@ -95,7 +95,7 @@ void freelist_reset(freelist* list, b8 zero_memory, b8 free_memory) {
 }
 
 void* freelist_push(freelist* list, u64 block_size, void* memory) {
-    EM_ASSERT(list != NULL && list->memory != NULL && block_size > 0 && "Invalid arguments passed to freelist_push");
+    EM_ASSERT(list != NULL && block_size > 0 && "Invalid arguments passed to freelist_push");
 
     u64 aligned_pos = alignment(list->size, 8ULL);
     u64 padding = aligned_pos - list->size;

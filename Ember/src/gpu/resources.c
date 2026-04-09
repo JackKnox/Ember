@@ -48,6 +48,12 @@ emgpu_rendertarget_config emgpu_rendertarget_default() {
     return config;
 }
 
+emgpu_surface_config emgpu_surface_default() {
+    emgpu_surface_config config = {};
+    config.prefered_format = EMGPU_FORMAT_BGR8_UNORM; // Most common in vulkan and vulkan is the most common API.
+	config.force_format = TRUE;
+    return config;
+}
 
 emgpu_present_target_config emgpu_rendertarget_default_present() {
     emgpu_present_target_config config = {};

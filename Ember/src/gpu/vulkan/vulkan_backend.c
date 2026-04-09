@@ -375,7 +375,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 			"Failed to create Vulkan sync objects");
 	}
 
-    EM_INFO("Vulkan", "Rendering device initiailized.");
+    EM_INFO("Vulkan", "Rendering device fully initiailized.");
     return EMBER_RESULT_OK;
 }
 
@@ -391,8 +391,44 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
         VkPhysicalDeviceProperties properties;
         vkGetPhysicalDeviceProperties(context->physical_device, &properties);
 
+        // --- Extended driver properties (Vulkan 1.1+)
+        VkPhysicalDeviceDriverProperties driver_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
+
+        VkPhysicalDeviceProperties2 extended_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+        extended_props.pNext = &driver_props;
+        vkGetPhysicalDeviceProperties2(context->physical_device, &extended_props);
+
         device->capabilities = (emgpu_device_capabilities*)mem_allocate(sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
         emc_memcpy(device->capabilities->device_name, properties.deviceName, sizeof(device->capabilities->device_name));
+
+        switch (driver_props.driverID) {
+            case VK_DRIVER_ID_AMD_PROPRIETARY:
+            case VK_DRIVER_ID_AMD_OPEN_SOURCE:
+                device->capabilities->vendor_name = "AMD";
+                break;
+            case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
+                device->capabilities->vendor_name = "NVIDIA";
+                break;
+            case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
+            case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
+                device->capabilities->vendor_name = "Intel";
+                break;
+            case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+                device->capabilities->vendor_name = "Imagination Technologies";
+                break;
+            case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
+                device->capabilities->vendor_name = "Qualcomm";
+                break;
+            case VK_DRIVER_ID_ARM_PROPRIETARY:
+                device->capabilities->vendor_name = "ARM";
+                break;
+            case VK_DRIVER_ID_MOLTENVK:
+                device->capabilities->vendor_name = "MoltenVK";
+                break;
+            case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
+                device->capabilities->vendor_name = "Samsung";
+                break;
+        }
 
         // Populate capability fields
         device->capabilities->api_type = EMBER_DEVICE_BACKEND_VULKAN;

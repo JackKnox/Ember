@@ -14,8 +14,7 @@ static const char* tag_strings[] = {
 	"CORE    ",
 	"PLATFORM",
 	"RENDERER",
-	"DEVICE  "
-	"TOTAL   "};
+	"DEVICE  "};
 
 static b8 is_initialized = FALSE;
 static memory_stats stats = { 0 };
@@ -63,8 +62,8 @@ void show_memory_stats() {
 	const u64 kib = 1024;
 
 	EM_TRACE("Core", "System memory use (tagged):");
-	EM_TRACE("Core", " TAG          BYTES     COUNT");
-	for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS + 1; ++i) {
+	EM_TRACE("Core", " TAG      BYTES     COUNT");
+	for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS; ++i) {
 		u64 raw_amount = i < MEMORY_TAG_MAX_TAGS ? stats.tagged_allocations[i] : total;
 		total += raw_amount;
 
@@ -84,7 +83,7 @@ void show_memory_stats() {
 			amount = raw_amount / (double)kib;
 		}
 
-		EM_TRACE("  %s | %.2f%s | %.3i", tag_strings[i], amount, unit, stats.allocation_count[i]);
+		EM_TRACE("Core", " %s  | %.2f%s | %.3i", tag_strings[i], amount, unit, stats.allocation_count[i]);
 	}
 #endif
 }

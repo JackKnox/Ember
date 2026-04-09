@@ -17,6 +17,27 @@ i32 find_memory_index(vulkan_context *context, u32 type_filter, VkMemoryProperty
     return -1;
 }
 
+
+VkImageUsageFlags vulkan_texture_usage(vulkan_context* context, const emgpu_texture_config* config) {
+	VkImageUsageFlags image_usage = 0;
+    if (config->usage & EMBER_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (config->usage & EMBER_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+	if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    return image_usage;
+}
+
+VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buffer_config* config) {
+    VkBufferUsageFlags buffer_usage = 0;
+	if (config->usage & EMBER_BUFFER_USAGE_VERTEX)  buffer_usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	if (config->usage & EMBER_BUFFER_USAGE_INDEX)   buffer_usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	if (config->usage & EMBER_BUFFER_USAGE_STORAGE) buffer_usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	if (config->usage & EMBER_BUFFER_USAGE_CPU_VISIBLE) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    
+    return buffer_usage;
+}
+
 VkShaderStageFlags shader_type_to_vulkan_type(emgpu_shader_stage_type type) {
     switch (type) {
     case EMBER_SHADER_STAGE_TYPE_VERTEX:  return VK_SHADER_STAGE_VERTEX_BIT;
@@ -91,8 +112,11 @@ VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op) {
 
 VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type) {
     switch (type) {
-    case EMBER_ATTACHMENT_TYPE_COLOR: return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    case EMBER_ATTACHMENT_TYPE_PRESENT: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    case EMBER_ATTACHMENT_TYPE_PRESENT:  return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    case EMBER_ATTACHMENT_TYPE_COLOUR:   return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case EMBER_ATTACHMENT_TYPE_DEPTH:    return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    case EMBER_ATTACHMENT_TYPE_STENCIL:  return VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+    case EMBER_ATTACHMENT_TYPE_DEPTH_STENCIL: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     default:
         EM_ASSERT(FALSE && "Unsupported attachment type!");
@@ -102,81 +126,188 @@ VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type) {
 
 VkFormat format_to_vulkan_type(emgpu_format format) {
     switch (format) {
-        /* 8-bit integer  */
+        // --- 8-bit UINT ---
         case EMGPU_FORMAT_R8_UINT:    return VK_FORMAT_R8_UINT;
-        case EMGPU_FORMAT_R8_SINT:    return VK_FORMAT_R8_SINT;
         case EMGPU_FORMAT_RG8_UINT:   return VK_FORMAT_R8G8_UINT;
-        case EMGPU_FORMAT_RG8_SINT:   return VK_FORMAT_R8G8_SINT;
         case EMGPU_FORMAT_RGB8_UINT:  return VK_FORMAT_R8G8B8_UINT;
-        case EMGPU_FORMAT_RGB8_SINT:  return VK_FORMAT_R8G8B8_SINT;
         case EMGPU_FORMAT_RGBA8_UINT: return VK_FORMAT_R8G8B8A8_UINT;
+
+        // --- 8-bit SINT ---
+        case EMGPU_FORMAT_R8_SINT:    return VK_FORMAT_R8_SINT;
+        case EMGPU_FORMAT_RG8_SINT:   return VK_FORMAT_R8G8_SINT;
+        case EMGPU_FORMAT_RGB8_SINT:  return VK_FORMAT_R8G8B8_SINT;
         case EMGPU_FORMAT_RGBA8_SINT: return VK_FORMAT_R8G8B8A8_SINT;
 
-        /* 8-bit normalized */
+        // --- 8-bit UNORM ---
         case EMGPU_FORMAT_R8_UNORM:    return VK_FORMAT_R8_UNORM;
-        case EMGPU_FORMAT_R8_SNORM:    return VK_FORMAT_R8_SNORM;
         case EMGPU_FORMAT_RG8_UNORM:   return VK_FORMAT_R8G8_UNORM;
-        case EMGPU_FORMAT_RG8_SNORM:   return VK_FORMAT_R8G8_SNORM;
         case EMGPU_FORMAT_RGB8_UNORM:  return VK_FORMAT_R8G8B8_UNORM;
-        case EMGPU_FORMAT_RGB8_SNORM:  return VK_FORMAT_R8G8B8_SNORM;
         case EMGPU_FORMAT_RGBA8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
+
+        // --- 8-bit SNORM ---
+        case EMGPU_FORMAT_R8_SNORM:    return VK_FORMAT_R8_SNORM;
+        case EMGPU_FORMAT_RG8_SNORM:   return VK_FORMAT_R8G8_SNORM;
+        case EMGPU_FORMAT_RGB8_SNORM:  return VK_FORMAT_R8G8B8_SNORM;
         case EMGPU_FORMAT_RGBA8_SNORM: return VK_FORMAT_R8G8B8A8_SNORM;
 
-        /* 16-bit */
+        // --- 16-bit UINT ---
         case EMGPU_FORMAT_R16_UINT:    return VK_FORMAT_R16_UINT;
-        case EMGPU_FORMAT_R16_SINT:    return VK_FORMAT_R16_SINT;
-        case EMGPU_FORMAT_R16_FLOAT:   return VK_FORMAT_R16_SFLOAT;
-
         case EMGPU_FORMAT_RG16_UINT:   return VK_FORMAT_R16G16_UINT;
-        case EMGPU_FORMAT_RG16_SINT:   return VK_FORMAT_R16G16_SINT;
-        case EMGPU_FORMAT_RG16_FLOAT:  return VK_FORMAT_R16G16_SFLOAT;
-
         case EMGPU_FORMAT_RGB16_UINT:  return VK_FORMAT_R16G16B16_UINT;
-        case EMGPU_FORMAT_RGB16_SINT:  return VK_FORMAT_R16G16B16_SINT;
-        case EMGPU_FORMAT_RGB16_FLOAT: return VK_FORMAT_R16G16B16_SFLOAT;
+        case EMGPU_FORMAT_RGBA16_UINT: return VK_FORMAT_R16G16B16A16_UINT;
 
-        case EMGPU_FORMAT_RGBA16_UINT:  return VK_FORMAT_R16G16B16A16_UINT;
-        case EMGPU_FORMAT_RGBA16_SINT:  return VK_FORMAT_R16G16B16A16_SINT;
+        // --- 16-bit SINT ---
+        case EMGPU_FORMAT_R16_SINT:    return VK_FORMAT_R16_SINT;
+        case EMGPU_FORMAT_RG16_SINT:   return VK_FORMAT_R16G16_SINT;
+        case EMGPU_FORMAT_RGB16_SINT:  return VK_FORMAT_R16G16B16_SINT;
+        case EMGPU_FORMAT_RGBA16_SINT: return VK_FORMAT_R16G16B16A16_SINT;
+
+        // --- 16-bit FLOAT ---
+        case EMGPU_FORMAT_R16_FLOAT:    return VK_FORMAT_R16_SFLOAT;
+        case EMGPU_FORMAT_RG16_FLOAT:   return VK_FORMAT_R16G16_SFLOAT;
+        case EMGPU_FORMAT_RGB16_FLOAT:  return VK_FORMAT_R16G16B16_SFLOAT;
         case EMGPU_FORMAT_RGBA16_FLOAT: return VK_FORMAT_R16G16B16A16_SFLOAT;
 
-        /* 32-bit */
+        // --- 32-bit UINT ---
         case EMGPU_FORMAT_R32_UINT:    return VK_FORMAT_R32_UINT;
-        case EMGPU_FORMAT_R32_SINT:    return VK_FORMAT_R32_SINT;
-        case EMGPU_FORMAT_R32_FLOAT:   return VK_FORMAT_R32_SFLOAT;
-
         case EMGPU_FORMAT_RG32_UINT:   return VK_FORMAT_R32G32_UINT;
-        case EMGPU_FORMAT_RG32_SINT:   return VK_FORMAT_R32G32_SINT;
-        case EMGPU_FORMAT_RG32_FLOAT:  return VK_FORMAT_R32G32_SFLOAT;
-
         case EMGPU_FORMAT_RGB32_UINT:  return VK_FORMAT_R32G32B32_UINT;
-        case EMGPU_FORMAT_RGB32_SINT:  return VK_FORMAT_R32G32B32_SINT;
-        case EMGPU_FORMAT_RGB32_FLOAT: return VK_FORMAT_R32G32B32_SFLOAT;
+        case EMGPU_FORMAT_RGBA32_UINT: return VK_FORMAT_R32G32B32A32_UINT;
 
-        case EMGPU_FORMAT_RGBA32_UINT:  return VK_FORMAT_R32G32B32A32_UINT;
-        case EMGPU_FORMAT_RGBA32_SINT:  return VK_FORMAT_R32G32B32A32_SINT;
+        // --- 32-bit SINT ---
+        case EMGPU_FORMAT_R32_SINT:    return VK_FORMAT_R32_SINT;
+        case EMGPU_FORMAT_RG32_SINT:   return VK_FORMAT_R32G32_SINT;
+        case EMGPU_FORMAT_RGB32_SINT:  return VK_FORMAT_R32G32B32_SINT;
+        case EMGPU_FORMAT_RGBA32_SINT: return VK_FORMAT_R32G32B32A32_SINT;
+
+        // --- 32-bit FLOAT ---
+        case EMGPU_FORMAT_R32_FLOAT:    return VK_FORMAT_R32_SFLOAT;
+        case EMGPU_FORMAT_RG32_FLOAT:   return VK_FORMAT_R32G32_SFLOAT;
+        case EMGPU_FORMAT_RGB32_FLOAT:  return VK_FORMAT_R32G32B32_SFLOAT;
         case EMGPU_FORMAT_RGBA32_FLOAT: return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        /* sRGB */
+        // --- SRGB ---
         case EMGPU_FORMAT_R8_SRGB:    return VK_FORMAT_R8_SRGB;
         case EMGPU_FORMAT_RG8_SRGB:   return VK_FORMAT_R8G8_SRGB;
         case EMGPU_FORMAT_RGB8_SRGB:  return VK_FORMAT_R8G8B8_SRGB;
         case EMGPU_FORMAT_RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
 
-        /* 8-bit normalized (BGRA) */
+        // --- BGRA / BGR ---
         case EMGPU_FORMAT_BGR8_UNORM:  return VK_FORMAT_B8G8R8_UNORM;
         case EMGPU_FORMAT_BGR8_SNORM:  return VK_FORMAT_B8G8R8_SNORM;
         case EMGPU_FORMAT_BGR8_UINT:   return VK_FORMAT_B8G8R8_UINT;
         case EMGPU_FORMAT_BGR8_SINT:   return VK_FORMAT_B8G8R8_SINT;
         case EMGPU_FORMAT_BGR8_SRGB:   return VK_FORMAT_B8G8R8_SRGB;
+
         case EMGPU_FORMAT_BGRA8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
         case EMGPU_FORMAT_BGRA8_SNORM: return VK_FORMAT_B8G8R8A8_SNORM;
         case EMGPU_FORMAT_BGRA8_UINT:  return VK_FORMAT_B8G8R8A8_UINT;
         case EMGPU_FORMAT_BGRA8_SINT:  return VK_FORMAT_B8G8R8A8_SINT;
         case EMGPU_FORMAT_BGRA8_SRGB:  return VK_FORMAT_B8G8R8A8_SRGB;
 
+        // --- Depth / Stencil ---
+        case EMGPU_FORMAT_D16_UNORM:         return VK_FORMAT_D16_UNORM;
+        case EMGPU_FORMAT_D24_UNORM:         return VK_FORMAT_X8_D24_UNORM_PACK32;
+        case EMGPU_FORMAT_D32_FLOAT:         return VK_FORMAT_D32_SFLOAT;
+        case EMGPU_FORMAT_D24_UNORM_S8_UINT: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case EMGPU_FORMAT_D32_FLOAT_S8_UINT: return VK_FORMAT_D32_SFLOAT_S8_UINT;
+
         default:
-            EM_ASSERT(FALSE && "Unsupported render format!");
             return VK_FORMAT_UNDEFINED;
+    }
+}
+
+emgpu_format vulkan_format_to_engine(VkFormat format) {
+    switch (format) {
+        // --- 8-bit UINT ---
+        case VK_FORMAT_R8_UINT:          return EMGPU_FORMAT_R8_UINT;
+        case VK_FORMAT_R8G8_UINT:        return EMGPU_FORMAT_RG8_UINT;
+        case VK_FORMAT_R8G8B8_UINT:      return EMGPU_FORMAT_RGB8_UINT;
+        case VK_FORMAT_R8G8B8A8_UINT:    return EMGPU_FORMAT_RGBA8_UINT;
+
+        // --- 8-bit SINT ---
+        case VK_FORMAT_R8_SINT:          return EMGPU_FORMAT_R8_SINT;
+        case VK_FORMAT_R8G8_SINT:        return EMGPU_FORMAT_RG8_SINT;
+        case VK_FORMAT_R8G8B8_SINT:      return EMGPU_FORMAT_RGB8_SINT;
+        case VK_FORMAT_R8G8B8A8_SINT:    return EMGPU_FORMAT_RGBA8_SINT;
+
+        // --- 8-bit UNORM ---
+        case VK_FORMAT_R8_UNORM:         return EMGPU_FORMAT_R8_UNORM;
+        case VK_FORMAT_R8G8_UNORM:       return EMGPU_FORMAT_RG8_UNORM;
+        case VK_FORMAT_R8G8B8_UNORM:     return EMGPU_FORMAT_RGB8_UNORM;
+        case VK_FORMAT_R8G8B8A8_UNORM:   return EMGPU_FORMAT_RGBA8_UNORM;
+
+        // --- 8-bit SNORM ---
+        case VK_FORMAT_R8_SNORM:         return EMGPU_FORMAT_R8_SNORM;
+        case VK_FORMAT_R8G8_SNORM:       return EMGPU_FORMAT_RG8_SNORM;
+        case VK_FORMAT_R8G8B8_SNORM:     return EMGPU_FORMAT_RGB8_SNORM;
+        case VK_FORMAT_R8G8B8A8_SNORM:   return EMGPU_FORMAT_RGBA8_SNORM;
+
+        // --- SRGB ---
+        case VK_FORMAT_R8_SRGB:          return EMGPU_FORMAT_R8_SRGB;
+        case VK_FORMAT_R8G8_SRGB:        return EMGPU_FORMAT_RG8_SRGB;
+        case VK_FORMAT_R8G8B8_SRGB:      return EMGPU_FORMAT_RGB8_SRGB;
+        case VK_FORMAT_R8G8B8A8_SRGB:    return EMGPU_FORMAT_RGBA8_SRGB;
+
+        // --- BGRA / BGR ---
+        case VK_FORMAT_B8G8R8_UNORM:     return EMGPU_FORMAT_BGR8_UNORM;
+        case VK_FORMAT_B8G8R8_SNORM:     return EMGPU_FORMAT_BGR8_SNORM;
+        case VK_FORMAT_B8G8R8_UINT:      return EMGPU_FORMAT_BGR8_UINT;
+        case VK_FORMAT_B8G8R8_SINT:      return EMGPU_FORMAT_BGR8_SINT;
+        case VK_FORMAT_B8G8R8_SRGB:      return EMGPU_FORMAT_BGR8_SRGB;
+
+        case VK_FORMAT_B8G8R8A8_UNORM:   return EMGPU_FORMAT_BGRA8_UNORM;
+        case VK_FORMAT_B8G8R8A8_SNORM:   return EMGPU_FORMAT_BGRA8_SNORM;
+        case VK_FORMAT_B8G8R8A8_UINT:    return EMGPU_FORMAT_BGRA8_UINT;
+        case VK_FORMAT_B8G8R8A8_SINT:    return EMGPU_FORMAT_BGRA8_SINT;
+        case VK_FORMAT_B8G8R8A8_SRGB:    return EMGPU_FORMAT_BGRA8_SRGB;
+
+        // --- 16-bit UINT ---
+        case VK_FORMAT_R16_UINT:         return EMGPU_FORMAT_R16_UINT;
+        case VK_FORMAT_R16G16_UINT:      return EMGPU_FORMAT_RG16_UINT;
+        case VK_FORMAT_R16G16B16_UINT:   return EMGPU_FORMAT_RGB16_UINT;
+        case VK_FORMAT_R16G16B16A16_UINT:return EMGPU_FORMAT_RGBA16_UINT;
+
+        // --- 16-bit SINT ---
+        case VK_FORMAT_R16_SINT:         return EMGPU_FORMAT_R16_SINT;
+        case VK_FORMAT_R16G16_SINT:      return EMGPU_FORMAT_RG16_SINT;
+        case VK_FORMAT_R16G16B16_SINT:   return EMGPU_FORMAT_RGB16_SINT;
+        case VK_FORMAT_R16G16B16A16_SINT:return EMGPU_FORMAT_RGBA16_SINT;
+
+        // --- 16-bit FLOAT ---
+        case VK_FORMAT_R16_SFLOAT:         return EMGPU_FORMAT_R16_FLOAT;
+        case VK_FORMAT_R16G16_SFLOAT:      return EMGPU_FORMAT_RG16_FLOAT;
+        case VK_FORMAT_R16G16B16_SFLOAT:   return EMGPU_FORMAT_RGB16_FLOAT;
+        case VK_FORMAT_R16G16B16A16_SFLOAT:return EMGPU_FORMAT_RGBA16_FLOAT;
+
+        // --- 32-bit UINT ---
+        case VK_FORMAT_R32_UINT:         return EMGPU_FORMAT_R32_UINT;
+        case VK_FORMAT_R32G32_UINT:      return EMGPU_FORMAT_RG32_UINT;
+        case VK_FORMAT_R32G32B32_UINT:   return EMGPU_FORMAT_RGB32_UINT;
+        case VK_FORMAT_R32G32B32A32_UINT:return EMGPU_FORMAT_RGBA32_UINT;
+
+        // --- 32-bit SINT ---
+        case VK_FORMAT_R32_SINT:         return EMGPU_FORMAT_R32_SINT;
+        case VK_FORMAT_R32G32_SINT:      return EMGPU_FORMAT_RG32_SINT;
+        case VK_FORMAT_R32G32B32_SINT:   return EMGPU_FORMAT_RGB32_SINT;
+        case VK_FORMAT_R32G32B32A32_SINT:return EMGPU_FORMAT_RGBA32_SINT;
+
+        // --- 32-bit FLOAT ---
+        case VK_FORMAT_R32_SFLOAT:         return EMGPU_FORMAT_R32_FLOAT;
+        case VK_FORMAT_R32G32_SFLOAT:      return EMGPU_FORMAT_RG32_FLOAT;
+        case VK_FORMAT_R32G32B32_SFLOAT:   return EMGPU_FORMAT_RGB32_FLOAT;
+        case VK_FORMAT_R32G32B32A32_SFLOAT:return EMGPU_FORMAT_RGBA32_FLOAT;
+
+        // --- Depth / Stencil ---
+        case VK_FORMAT_D16_UNORM:           return EMGPU_FORMAT_D16_UNORM;
+        case VK_FORMAT_X8_D24_UNORM_PACK32: return EMGPU_FORMAT_D24_UNORM;
+        case VK_FORMAT_D32_SFLOAT:          return EMGPU_FORMAT_D32_FLOAT;
+        case VK_FORMAT_D24_UNORM_S8_UINT:   return EMGPU_FORMAT_D24_UNORM_S8_UINT;
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:  return EMGPU_FORMAT_D32_FLOAT_S8_UINT;
+
+        // --- Unsupported / Unknown ---
+        default:
+            return EMGPU_FORMAT_UNDEFINED;
     }
 }
 

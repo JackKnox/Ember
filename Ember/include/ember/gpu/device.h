@@ -8,6 +8,26 @@
 #include <ember/platform/window.h>
 
 /**
+ * @brief Configuration for a surface that connects to 
+ * a platform window.
+ * 
+ * Defines a refrence to a window and a prefered/required 
+ * format for the surface.
+ */
+typedef struct emgpu_surface_config {
+    emplat_window* window;
+    emgpu_format prefered_format;
+    b8 force_format;
+} emgpu_surface_config;
+
+/**
+ * @brief Creates a default surface configuration.
+ *
+ * @return A default-initialized emgpu_surface_config.
+ */
+emgpu_surface_config emgpu_surface_default();
+
+/**
  * @brief Backend-agnostic GPU surface objects.
  *
  * Represents a backend-agnsotic object that connectes a platform surface.
@@ -38,7 +58,6 @@ typedef struct emgpu_present_target_config {
     u32 attachment_count;
 
     /** @brief Attachments created within the rendertarget. */
-
     emgpu_attachment_config* attachments;
 
     /** 
@@ -46,7 +65,7 @@ typedef struct emgpu_present_target_config {
      * 
      * These textures are now owned by the rendertarget, automatically recreates when resizing.
      * 
-     * @note The texture array must be in the format of `[attachment][frame] (f0 -> a0, a1, f1 -> a0, a1 ...)`
+     * @note The texture array must be in the format of `[frame][attachment] (a0 -> f0, f1, a1 -> f0, f1 ...)`
      *       and the size must be `surface.image_count * attachment_count`.
      */
     emgpu_texture* existing_textures;
@@ -117,11 +136,11 @@ typedef struct emgpu_device {
      * @brief Creates a rendering surface for a window.
      *
      * @param device Pointer to the device instance.
-     * @param window Platform window handle.
+     * @param config Surface configuration.
      * @param out_surface Output surface.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_surface)(struct emgpu_device* device, emplat_window* window, emgpu_surface* out_surface);
+    em_result (*create_surface)(struct emgpu_device* device, const emgpu_surface_config* config, emgpu_surface* out_surface);
 
     /**
      * @brief Destroys a rendering surface.
