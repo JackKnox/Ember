@@ -67,7 +67,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 		}
 
 		if (!found) {
-			EM_ERROR("Required Vulkan validation layer is missing: %s.", required_validation_layers[i]);
+			EM_ERROR("Vulkan", "Required Vulkan validation layer is missing: %s.", required_validation_layers[i]);
 			return FALSE;
 		}
 	}
