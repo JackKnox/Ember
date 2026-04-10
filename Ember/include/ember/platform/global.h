@@ -20,14 +20,6 @@ f64 emplat_current_time();
 void emplat_sleep_ms(f64 ms);
 
 /**
- * @brief Retrieves the name of the current operating system.
- *
- * @return Pointer to a constant string representing the system name.
- *         The returned pointer must not be freed.
- */
-const char* emplat_system_name();
-
-/**
  * @brief Gets the value of an environment variable.
  *
  * @param name The name of the environment variable.
@@ -62,7 +54,7 @@ u32 emplat_system_get_pid();
  * @param command Null-terminated string containing the command to execute.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-b8 emplat_system_execute(const char* command);
+em_result emplat_system_execute(const char* command);
 
 /**
  * @brief Opaque handle to a dynamically loaded library.
@@ -99,3 +91,87 @@ void* emplat_system_library_symbol(emplat_library lib, const char* name);
  * @note After unloading, the handle becomes invalid and must not be used.
  */
 void emplat_system_library_unload(emplat_library lib);
+
+/**
+ * @brief Put UTF-8 text into the clipboard.
+ *
+ * @param text The text to store in the clipboard.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_set_clipboard_text(const char* text);
+
+/**
+ * @brief Get UTF-8 text from the clipboard.
+ *
+ * @return the clipboard text on success, or NULL on failure.
+ * 
+ * @note The returned string must be freed manually using `emc_free`.
+ */
+char* emplat_get_clipboard_text();
+
+/**
+ * @brief Query whether the clipboard exists and contains a non-empty text string.
+ *
+ * @return true if the clipboard has text, or false if it does not.
+ */
+b8 emplat_has_clipboard_text();
+
+/**
+ * @brief Get the number of logical CPU cores available.
+ *
+ * @return The total number of logical CPU cores. On CPUs that include
+ *         technologies such as hyperthreading, the number of logical cores
+ *         may be more than the number of physical cores.
+ */
+u32 emplat_get_cpu_cores();
+
+/**
+ * @brief Determine the L1 cache line size of the CPU.
+ *
+ * This is useful for determining multi-threaded structure padding or SIMD
+ * prefetch sizes.
+ *
+ * @return The L1 cache line size of the CPU, in bytes.
+ */
+u32 emplat_get_cache_line_size();
+
+/**
+ * Get the amount of RAM configured in the system.
+ *
+ * @return The amount of RAM configured in the system in MiB.
+ */
+u32 emplat_get_system_ram();
+
+/**
+ * The basic state for the system's power supply.
+ */
+typedef enum emplat_powerstate {
+    EMBER_POWERSTATE_ERROR = -1,  /**< Error determining power status */
+    EMBER_POWERSTATE_UNKNOWN,     /**< Cannot determine power status */
+    EMBER_POWERSTATE_ON_BATTERY,  /**< Not plugged in, running on the battery */
+    EMBER_POWERSTATE_NO_BATTERY,  /**< Plugged in, no battery available */
+    EMBER_POWERSTATE_CHARGING,    /**< Plugged in, charging battery */
+    EMBER_POWERSTATE_CHARGED      /**< Plugged in, battery charged */
+} emplat_powerstate;
+
+/**
+ * @brief Get the current power supply details.
+ *
+ * You should not take this function as absolute truth. Batteries
+ * (especially failing batteries) are delicate hardware, and the values
+ * reported here are best estimates based on what that hardware reports.
+ *
+ * On some platforms, retrieving power supply details might be expensive. If
+ * you want to display continuous status you could call this function every
+ * minute or so.
+ *
+ * @param seconds A pointer filled in with the seconds of battery life left.
+ *                This will be filled in with -1 if it can't determine a value or there is no battery.
+ * @param percent A pointer filled in with the percentage of battery life, between 0 and 100. 
+ *                This will be filled in with -1 when we can't determine a value or there is no battery.
+ * @return The current battery state or `SDL_POWERSTATE_ERROR` on failure.
+ * 
+ * @note It's possible a platform can only report battery percentage or time left
+ * but not both.
+ */
+emplat_powerstate emplat_get_powerinfo(i32* seconds, i32* percent);

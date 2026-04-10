@@ -3,64 +3,16 @@
 #ifdef EM_PLATFORM_LINUX
 #include "ember/platform/global.h"
 #include "ember/platform/window.h"
-#include "ember/platform/internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>       
 
-#include <sys/wait.h>       
-#include <dlfcn.h>
+#include <time.h>
+#include <unistd.h>
 
 f64 emplat_current_time() {
     return 1000.0f * glfwGetTime();
-}
-
-const char* emplat_system_name() {
-    return "linux-x11";
-}
-
-const char* emplat_system_get_env(const char* name) {
-    return getenv(name);
-}
-
-em_result emplat_system_set_env(const char* name, const char* value) {
-    return setenv(name, value, 1) == 0 ? EMBER_RESULT_OK : EMBER_RESULT_UNKNOWN;
-}
-
-u32 emplat_system_get_pid() {
-    return getpid();
-}
-
-b8 emplat_system_execute(const char* command) {
-	pid_t new_pid = fork();
-	if (new_pid < 0) return FALSE;
-
-	if (new_pid == 0) {
-        execl("/bin/sh", "sh", "-c", command, (char*)0);
-        _exit(127);
-    }
-
-    int status;
-    if (waitpid(new_pid, &status, 0) < 0) {
-        return FALSE;
-    }
-
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-}
-
-emplat_library emplat_system_library_load(const char* path) {
-	return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
-}
-
-void* emplat_system_library_symbol(emplat_library lib, const char* name) {
-    return dlsym(lib, name);
-}
-
-void emplat_system_library_unload(emplat_library lib) {
-	dlclose(lib);
 }
 
 void GLFWErrorCallback(int error, const char* description) {
@@ -113,8 +65,8 @@ em_result emplat_window_start(
 
 	EM_INFO("Platform", "Creating window '%s' (%i, %i)", config->title, config->size.width, config->size.height);
 
-	out_window->glfw.handle = glfwCreateWindow(config->size.width, config->size.height, config->title, config->window_mode == EMBER_WINDOW_MODE_FULLSCREEN ? monitor : NULL, NULL);
-	if (!out_window->glfw.handle) {
+	out_window->wayland.handle = glfwCreateWindow(config->size.width, config->size.height, config->title, config->window_mode == EMBER_WINDOW_MODE_FULLSCREEN ? monitor : NULL, NULL);
+	if (!out_window->wayland.handle) {
 		EM_ERROR("Platform", "Failed to create window.");
 		return EMBER_RESULT_UNKNOWN;
 	}
@@ -125,7 +77,7 @@ em_result emplat_window_start(
 }
 
 void emplat_window_close(emplat_window* window) {
-    glfwDestroyWindow(window->glfw.handle);
+    glfwDestroyWindow(window->wayland.handle);
     glfwTerminate();
 }
 
@@ -134,7 +86,7 @@ b8 emplat_window_pump_messages(emplat_window* window) {
 }
 
 b8 emplat_window_should_close(emplat_window* window) {
-    return glfwWindowShouldClose(window->glfw.handle);
+    return glfwWindowShouldClose(window->wayland.handle);
 }
 
 #endif

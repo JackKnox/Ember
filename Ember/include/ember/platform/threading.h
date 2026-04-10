@@ -2,138 +2,191 @@
 
 #include "ember/core.h"
 
-// Generic includes
-#include <time.h>
+#include "ember/platform/internal.h"
 
-// Platform-specific includes
-#if defined(EM_PLATFORM_POSIX)
-#   include <pthread.h>
-#elif defined(EM_PLATFORM_WINDOWS)
-#   ifndef WIN32_LEAN_AND_MEAN
-#       define WIN32_LEAN_AND_MEAN
-#   endif
-#   ifndef NOMINMAX
-#       define NOMINMAX
-#   endif
-#   include <windows.h>
-#endif
+/**
+ * @brief Platform-specific thread handle.
+ */
+typedef EMBER_PLATFORM_THREAD_STATE emplat_thread;
 
-// If TIME_UTC is missing, provide it and provide a wrapper for timespec_get.
-#ifndef TIME_UTC
-#define TIME_UTC 1
-#define EM_EMULATE_TIMESPEC_GET
+/**
+ * @typedef PFN_thread_start
+ * @brief Thread entry point function type.
+ *
+ * @param arg User-provided argument.
+ * @return Non-descriptive code for any system.
+ */
+typedef u32 (*PFN_thread_start)(void* arg);
 
-#if defined(EM_PLATFORM_WINDOWS)
-struct _tthread_timespec {
-    time_t tv_sec;
-    long   tv_nsec;
-};
-#define timespec _tthread_timespec
-#endif
+/**
+ * @brief Creates a new thread.
+ *
+ * @param thr Pointer to store the created thread handle.
+ * @param func Entry function for the thread.
+ * @param arg Argument passed to the thread function.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg);
 
-int _tthread_timespec_get(struct timespec* ts, int base);
-#define timespec_get _tthread_timespec_get
-#endif
-
-// Mutex types
-typedef enum emplat_mutex_type {
-    EMBER_MUTEX_TYPE_PLAIN,
-    EMBER_MUTEX_TYPE_TIMED,
-    EMBER_MUTEX_TYPE_RECURSIVE,
-} emplat_mutex_type;
-
-// Mutexs
-#if defined(EM_PLATFORM_WINDOWS)
-typedef struct emplat_mutex {
-    union {
-        CRITICAL_SECTION cs;
-        HANDLE mut;         
-    } mHandle;
-    emplat_mutex_type mType;
-    int mAlreadyLocked;
-} emplat_mutex;
-#else
-typedef pthread_mutex_t emplat_mutex;
-#endif
-
-// Create a mutex object.
-b8 emplat_mutex_init(emplat_mutex* mtx, emplat_mutex_type type);
-
-//  Release any resources used by the given mutex.
-void emplat_mutex_destroy(emplat_mutex* mtx);
-
-// Lock the given mutex. Blocks until the given mutex can be locked.
-b8 emplat_mutex_lock(emplat_mutex* mtx);
-
-// Lock the given mutex, or block until a specific point in time.
-b8 emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts);
-
-// Try to lock the given mutex.
-b8 emplat_mutex_trylock(emplat_mutex* mtx);
-
-// Unlock the given mutex.
-b8 emplat_mutex_unlock(emplat_mutex* mtx);
-
-// Condition variable
-#if defined(EM_PLATFORM_WINDOWS)
-typedef struct emplat_cond {
-    HANDLE mEvents[2];
-    unsigned int mWaitersCount;
-    CRITICAL_SECTION mWaitersCountLock;
-} emplat_cond;
-#else
-typedef pthread_cond_t emplat_cond;
-#endif
-
-// Create a condition variable object.
-b8 emplat_cond_init(emplat_cond* cond);
-
-// Release any resources used by the given condition variable.
-void emplat_cond_destroy(emplat_cond* cond);
-
-// Signal a condition variable.
-b8 emplat_cond_signal(emplat_cond* cond);
-
-// Broadcast a condition variable.
-b8 emplat_cond_broadcast(emplat_cond* cond);
-
-// Wait for a condition variable to become signaled.
-b8 emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx);
-
-// Wait for a condition variable to become signaled.
-// The function atomically unlocks the given mutex and endeavors to block until
-// the given condition variable is signaled by a call to cnd_signal or to
-// cnd_broadcast, or until after the specified time. When the calling thread
-// becomes unblocked it locks the mutex before it returns.
-b8 emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts);
-
-// Thread
-#if defined(EM_PLATFORM_WINDOWS)
-typedef HANDLE emplat_thread;
-#else
-typedef pthread_t emplat_thread;
-#endif
-
-// Thread start function.
-typedef b8 (*PFN_thread_start)(void* arg);
-
-// Create a new thread.
-b8 emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg);
-
-// Identify the calling thread.
+/**
+ * @brief Retrieves the calling thread identifier.
+ *
+ * @return Handle representing the current thread.
+ */
 emplat_thread emplat_thread_current();
 
-// Dispose of any resources allocated to the thread when that thread exits.
-b8 emplat_thread_detach(emplat_thread thr);
-
-// Compare two thread identifiers.
+/**
+ * @brief Compares two thread identifiers.
+ *
+ * @param thr0 First thread.
+ * @param thr1 Second thread.
+ * @return True if equal, false if not equal.
+ */
 b8 emplat_thread_equal(emplat_thread thr0, emplat_thread thr1);
 
-// Terminate execution of the calling thread.
-EM_NORETURN void emplat_thread_exit(int res);
+/**
+ * @brief Waits for a thread to terminate.
+ *
+ * Blocks the calling thread until the specified thread exits.
+ *
+ * @param thr Thread to join.
+ * @param res Optional pointer to store the thread's return value.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_thread_join(emplat_thread thr, u32* res);
 
-// Wait for a thread to terminate. The function joins the given thread with the current thread by blocking until the other thread has terminated.
-b8 emplat_thread_join(emplat_thread thr, int* res);
+/**
+ * @brief Defines the type of mutex to be created.
+ */
+typedef enum emplat_mutex_type {
+    EMBER_MUTEX_TYPE_PLAIN,     /**< Standard non-recursive mutex */
+    EMBER_MUTEX_TYPE_TIMED,     /**< Mutex supporting timed locking operations */
+    EMBER_MUTEX_TYPE_RECURSIVE, /**< Recursive mutex allowing the same thread to lock multiple times */
+} emplat_mutex_type;
 
-// Yield execution to another thread. Permit other threads to run, even if the current thread would ordinarily continue to run.
-void emplat_thread_yield();
+/**
+ * @brief Platform-specific mutex object.
+ */
+typedef EMBER_PLATFORM_MUTEX_STATE emplat_mutex;
+
+/**
+ * @brief Initializes a mutex.
+ *
+ * @param type The type of mutex to create.
+ * @param mtx Pointer to the mutex to initialize.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_mutex_init(emplat_mutex_type type, emplat_mutex* mtx);
+
+/**
+ * @brief Destroys a mutex and releases its resources.
+ *
+ * @param mtx Pointer to the mutex to destroy.
+ */
+void emplat_mutex_destroy(emplat_mutex* mtx);
+
+/**
+ * @brief Locks a mutex.
+ *
+ * Blocks the calling thread until the mutex becomes available.
+ *
+ * @param mtx Pointer to the mutex to lock.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_mutex_lock(emplat_mutex* mtx);
+
+/**
+ * @brief Locks a mutex with a timeout.
+ *
+ * Blocks until the mutex is acquired or the specified time is reached.
+ *
+ * @param mtx Pointer to the mutex to lock.
+ * @param ts Absolute timeout (UTC-based timespec).
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts);
+
+/**
+ * @brief Attempts to lock a mutex without blocking.
+ *
+ * @param mtx Pointer to the mutex to lock.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_mutex_trylock(emplat_mutex* mtx);
+
+/**
+ * @brief Unlocks a mutex.
+ *
+ * @param mtx Pointer to the mutex to unlock.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_mutex_unlock(emplat_mutex* mtx);
+
+/**
+ * @typedef emplat_cond
+ * @brief Platform-specific condition variable.
+ */
+typedef EMBER_PLATFORM_COND_STATE emplat_cond;
+
+/**
+ * @brief Initializes a condition variable.
+ *
+ * @param cond Pointer to the condition variable to initialize.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_cond_init(emplat_cond* cond);
+
+/**
+ * @brief Destroys a condition variable.
+ *
+ * @param cond Pointer to the condition variable to destroy.
+ */
+void emplat_cond_destroy(emplat_cond* cond);
+
+/**
+ * @brief Signals one waiting thread.
+ *
+ * Unblocks one thread waiting on the condition variable.
+ *
+ * @param cond Pointer to the condition variable.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_cond_signal(emplat_cond* cond);
+
+/**
+ * @brief Signals all waiting threads.
+ *
+ * Unblocks all threads waiting on the condition variable.
+ *
+ * @param cond Pointer to the condition variable.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_cond_broadcast(emplat_cond* cond);
+
+/**
+ * @brief Waits for a condition variable.
+ *
+ * Atomically unlocks the mutex and blocks until the condition is signaled.
+ * Upon wake-up, the mutex is re-acquired before returning.
+ *
+ * @param cond Pointer to the condition variable.
+ * @param mtx Pointer to the associated mutex.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx);
+
+/**
+ * @brief Waits for a condition variable with a timeout.
+ *
+ * Atomically unlocks the mutex and blocks until:
+ * - The condition variable is signaled, or
+ * - The specified timeout is reached.
+ *
+ * The mutex is re-acquired before returning.
+ *
+ * @param cond Pointer to the condition variable.
+ * @param mtx Pointer to the associated mutex.
+ * @param ts Absolute timeout (UTC-based timespec).
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts);

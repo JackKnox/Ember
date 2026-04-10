@@ -1,13 +1,58 @@
 #include "ember/core.h"
 
 #ifdef EM_PLATFORM_POSIX
+#include "ember/platform/global.h"
 #include "ember/platform/threading.h"
 
 #include <unistd.h>
+#include <time.h>
 
 #include <sched.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <dlfcn.h>
 #include <errno.h>
+
+const char* emplat_system_get_env(const char* name) {
+    return getenv(name);
+}
+
+em_result emplat_system_set_env(const char* name, const char* value) {
+    return setenv(name, value, 1) == 0 ? EMBER_RESULT_OK : EMBER_RESULT_UNKNOWN;
+}
+
+u32 emplat_system_get_pid() {
+    return getpid();
+}
+
+em_result emplat_system_execute(const char* command) {
+	pid_t new_pid = fork();
+	if (new_pid < 0) return EMBER_RESULT_UNKNOWN;
+
+	if (new_pid == 0) {
+        execl("/bin/sh", "sh", "-c", command, (char*)0);
+        _exit(127);
+    }
+
+    int status;
+    if (waitpid(new_pid, &status, 0) < 0) {
+        return EMBER_RESULT_UNKNOWN;
+    }
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0 ? EMBER_RESULT_OK : EMBER_RESULT_UNKNOWN;
+}
+
+emplat_library emplat_system_library_load(const char* path) {
+	return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+}
+
+void* emplat_system_library_symbol(emplat_library lib, const char* name) {
+    return dlsym(lib, name);
+}
+
+void emplat_system_library_unload(emplat_library lib) {
+	dlclose(lib);
+}
 
 void emplat_sleep_ms(f64 ms) {
     struct timespec ts;
@@ -15,106 +60,6 @@ void emplat_sleep_ms(f64 ms) {
 
     while (nanosleep(&ts, &ts) == -1)
         continue;
-}
-
-b8 emplat_mutex_init(emplat_mutex* mtx, emplat_mutex_type type) {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    if (type & EMBER_MUTEX_TYPE_RECURSIVE)
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-
-    int ret = pthread_mutex_init(mtx, &attr);
-    pthread_mutexattr_destroy(&attr);
-    return ret == 0 ? TRUE : FALSE;
-}
-
-void emplat_mutex_destroy(emplat_mutex* mtx) {
-    pthread_mutex_destroy(mtx);
-}
-
-b8 emplat_mutex_lock(emplat_mutex* mtx) {
-    return pthread_mutex_lock(mtx) == 0 ? TRUE : FALSE;
-}
-
-b8 emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts) {
-#if defined(_POSIX_TIMEOUTS) && (_POSIX_TIMEOUTS >= 200112L) && defined(_POSIX_THREADS) && (_POSIX_THREADS >= 200112L)
-    switch (pthread_mutex_timedlock(mtx, ts)) {
-    case 0:
-        return TRUE;
-    case ETIMEDOUT:
-    default:
-        return FALSE;
-    }
-#else
-    int rc;
-    struct timespec cur, dur;
-
-    // Try to acquire the lock and, if we fail, sleep for 5ms.
-    while ((rc = pthread_mutex_trylock(mtx)) == EBUSY) {
-        timespec_get(&cur, TIME_UTC);
-
-        if ((cur.tv_sec > ts->tv_sec) || ((cur.tv_sec == ts->tv_sec) && (cur.tv_nsec >= ts->tv_nsec)))
-            break;
-
-        dur.tv_sec = ts->tv_sec - cur.tv_sec;
-        dur.tv_nsec = ts->tv_nsec - cur.tv_nsec;
-        if (dur.tv_nsec < 0) {
-            dur.tv_sec--;
-            dur.tv_nsec += 1000000000;
-        }
-
-        if ((dur.tv_sec != 0) || (dur.tv_nsec > 5000000)) {
-            dur.tv_sec = 0;
-            dur.tv_nsec = 5000000;
-        }
-
-        nanosleep(&dur, NULL);
-    }
-
-    switch (rc) {
-    case 0:
-        return TRUE;
-    case ETIMEDOUT:
-    case EBUSY:
-    default:
-        return FALSE;
-    }
-#endif
-}
-
-b8 emplat_mutex_trylock(emplat_mutex* mtx) {
-    return (pthread_mutex_trylock(mtx) == 0) ? TRUE : FALSE;
-}
-
-b8 emplat_mutex_unlock(emplat_mutex* mtx) {
-    return pthread_mutex_unlock(mtx) == 0 ? TRUE : FALSE;
-}
-
-b8 emplat_cond_init(emplat_cond* cond) {
-    return pthread_cond_init(cond, NULL) == 0 ? TRUE : FALSE;
-}
-
-void emplat_cond_destroy(emplat_cond* cond) {
-    pthread_cond_destroy(cond);
-}
-
-b8 emplat_cond_signal(emplat_cond* cond) {
-    return pthread_cond_signal(cond) == 0 ? TRUE : FALSE;
-}
-
-b8 emplat_cond_broadcast(emplat_cond* cond) {
-    return pthread_cond_broadcast(cond) == 0 ? TRUE : FALSE;
-}
-
-b8 emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx) {
-    return pthread_cond_wait(cond, mtx) == 0 ? TRUE : FALSE;
-}
-
-b8 emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts) {
-    int ret = pthread_cond_timedwait(cond, mtx, ts);
-    if (ret == ETIMEDOUT) return FALSE;
-
-    return ret == 0 ? TRUE : FALSE;
 }
 
 // Information to pass to the new thread (what to run).
@@ -143,7 +88,7 @@ static void* _thrd_wrapper_function(void* aArg) {
     return (void*)(intptr_t)res;
 }
 
-b8 emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
+em_result emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
     // Fill out the thread startup information (passed to the thread wrapper, which will eventually free it)
     _thread_start_info* ti = (_thread_start_info*)mem_allocate(sizeof(_thread_start_info), MEMORY_TAG_PLATFORM);
     ti->mFunction = func;
@@ -162,34 +107,107 @@ b8 emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
     return TRUE;
 }
 
-emplat_thread emplat_thread_current(void) {
+emplat_thread emplat_thread_current() {
     return pthread_self();
-}
-
-b8 emplat_thread_detach(emplat_thread thr) {
-    return pthread_detach(thr) == 0 ? TRUE : FALSE;
 }
 
 b8 emplat_thread_equal(emplat_thread thr0, emplat_thread thr1) {
     return pthread_equal(thr0, thr1);
 }
 
-void emplat_thread_exit(int res) {
-    pthread_exit((void*)(intptr_t)res);
-}
-
-b8 emplat_thread_join(emplat_thread thr, int* res) {
+em_result emplat_thread_join(emplat_thread thr, u32* res) {
     void* pres;
-    if (pthread_join(thr, &pres) != 0)
-        return FALSE;
+    switch (pthread_join(thr, &pres)) {
+        case 0: /* ... */ break;
+        case ESRCH:   return EMBER_RESULT_INVALID_VALUE;
+        case EINVAL:  return EMBER_RESULT_INVALID_VALUE;
+        case EDEADLK: return EMBER_RESULT_IN_USE;
 
-    if (res != NULL)
-        *res = (int)(intptr_t)pres;
-
-    return TRUE;
+        default: 
+            return EMBER_RESULT_UNKNOWN;
+    }
+    
+    if (res) *res = (u32)(intptr_t)pres;
+    return EMBER_RESULT_OK;
 }
 
-void emplat_thread_yield(void) {
-    sched_yield();
+em_result emplat_mutex_init(emplat_mutex_type type, emplat_mutex* mtx) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    if (type & EMBER_MUTEX_TYPE_RECURSIVE)
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    int ret = pthread_mutex_init(mtx, &attr);
+    pthread_mutexattr_destroy(&attr);
+    return ret == 0 ? EMBER_RESULT_OK : EMBER_RESULT_UNKNOWN; // Man pages say `pthread_mutex_init` will always return 0 anyway.
+}
+
+void emplat_mutex_destroy(emplat_mutex* mtx) {
+    pthread_mutex_destroy(mtx);
+}
+
+em_result emplat_mutex_lock(emplat_mutex* mtx) {
+    switch (pthread_mutex_lock(mtx)) {
+        case 0: return EMBER_RESULT_OK;
+        case EINVAL:  return EMBER_RESULT_UNINITIALIZED;
+        case EDEADLK: return EMBER_RESULT_IN_USE;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
+}
+
+em_result emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts) {
+    switch (pthread_mutex_timedlock(mtx, ts)) {
+        case 0: return EMBER_RESULT_OK;
+        case EINVAL:    return EMBER_RESULT_UNINITIALIZED;
+        case EDEADLK:   return EMBER_RESULT_IN_USE;
+        case ETIMEDOUT: return EMBER_RESULT_TIMEOUT;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
+}
+
+em_result emplat_mutex_trylock(emplat_mutex* mtx) {
+    switch (pthread_mutex_trylock(mtx)) {
+        case 0: return EMBER_RESULT_OK;
+        case EINVAL: return EMBER_RESULT_UNINITIALIZED;
+        case EBUSY:  return EMBER_RESULT_IN_USE;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
+}
+
+em_result emplat_mutex_unlock(emplat_mutex* mtx) {
+    switch (pthread_mutex_unlock(mtx)) {
+        case 0: return EMBER_RESULT_OK;
+        case EINVAL: return EMBER_RESULT_UNINITIALIZED;
+        case EPERM:  return EMBER_RESULT_IN_USE;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
+}
+
+em_result emplat_cond_init(emplat_cond* cond) {
+    
+}
+
+void emplat_cond_destroy(emplat_cond* cond) {
+    
+}
+
+em_result emplat_cond_signal(emplat_cond* cond) {
+    
+}
+
+em_result emplat_cond_broadcast(emplat_cond* cond) {
+    
+}
+
+em_result emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx) {
+    
+}
+
+em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts) {
+    
 }
 #endif

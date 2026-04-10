@@ -1,15 +1,12 @@
 #include "ember/core.h"
 
 #ifdef EM_PLATFORM_LINUX
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include "ember/platform/window.h"
-#include "ember/platform/internal.h"
 #include "vulkan_platform.h"
 
+#include "ember/platform/window.h"
+
 VkResult vulkan_platform_create_surface(VkInstance instance, emplat_window* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* out_surface) {
-    return glfwCreateWindowSurface(instance, window->glfw.handle, allocator, out_surface);
+    return glfwCreateWindowSurface(instance, window->wayland.handle, allocator, out_surface);
 }
 
 const char** vulkan_platform_get_required_extensions(u32* out_extension_count) {
