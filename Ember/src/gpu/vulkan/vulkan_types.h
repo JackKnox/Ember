@@ -149,6 +149,9 @@ VkFilter filter_to_vulkan_type(emgpu_filter_type filter_type);
 // Converts engine address mode to a Vulkan sampler address mode.
 VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address);
 
+// Converts engine primitive type to a Vulkan enum.
+VkPrimitiveTopology primitive_to_vulkan_type(emgpu_primitive_type type);
+
 // Converts engine render format to a Vulkan format.
 VkFormat format_to_vulkan_type(emgpu_format format);
 

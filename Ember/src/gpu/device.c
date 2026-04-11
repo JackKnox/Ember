@@ -31,10 +31,10 @@ em_result emgpu_device_init(const emgpu_device_config* config, emgpu_device* out
         out_device->submit_frame                = vulkan_device_submit_frame;
         out_device->create_surface              = vulkan_surface_create;
         out_device->destroy_surface             = vulkan_surface_destroy;
-        //out_device->create_graphics_pipeline    = vulkan_pipeline_create_graphics;
-        //out_device->create_compute_pipeline     = vulkan_pipeline_create_compute;
-        //out_device->update_pipeline_descriptors = vulkan_pipeline_update_descriptors;
-        //out_device->destroy_pipeline            = vulkan_pipeline_destroy;
+        out_device->create_graphics_pipeline    = vulkan_pipeline_create_graphics;
+        out_device->create_compute_pipeline     = vulkan_pipeline_create_compute;
+        out_device->update_pipeline_descriptors = vulkan_pipeline_update_descriptors;
+        out_device->destroy_pipeline            = vulkan_pipeline_destroy;
         out_device->create_buffer               = vulkan_buffer_create;
         out_device->upload_to_buffer            = vulkan_buffer_upload;
         out_device->destroy_buffer              = vulkan_buffer_destroy;

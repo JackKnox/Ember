@@ -71,6 +71,47 @@ typedef enum emgpu_texture_usage {
 } emgpu_texture_usage;
 
 /**
+ * @brief Describes how vertex data is interpreted and assembled into primitives.
+ */
+typedef enum emgpu_primitive_type {
+    /**
+     * @brief Each vertex represents a single point.
+     * 
+     * No connectivity between vertices. Useful for point rendering.
+     */
+    EMBER_PRIMITIVE_TYPE_POINT_LIST, 
+
+    /**
+     * @brief Each pair of vertices forms an independent line.
+     * 
+     * Vertices are grouped in pairs with no sharing.
+     */
+    EMBER_PRIMITIVE_TYPE_LINE_LIST,
+
+    /**
+     * @brief Vertices are connected in a continuous line strip.
+     * 
+     * Each vertex (after the first) forms a line with the previous vertex.
+     */
+    EMBER_PRIMITIVE_TYPE_LINE_STRIP,
+
+    /**
+     * @brief Each group of three vertices forms an independent triangle.
+     * 
+     * No vertex sharing between triangles.
+     */
+    EMBER_PRIMITIVE_TYPE_TRIANGLE_LIST,
+
+    /**
+     * @brief Forms a connected strip of triangles sharing vertices.
+     * 
+     * Each new vertex (after the first two) creates a triangle with the previous two.
+     * Winding order typically alternates.
+     */
+    EMBER_PRIMITIVE_TYPE_TRIANGLE_STRIP,
+} emgpu_primitive_type;
+
+/**
  * @brief Type of render target attachment.
  *
  * Defines the logical purpose of an attachment within a render target.
@@ -186,6 +227,9 @@ typedef struct emgpu_shader_src {
 
     /** @brief Size of the shader data in bytes. */
     u64 size;
+
+    /** @brief Name of entrypoint in shader ran by the rendering device. */
+    const char* entry_point;
 } emgpu_shader_src;
 
 /**

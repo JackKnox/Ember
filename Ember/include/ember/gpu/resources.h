@@ -48,6 +48,9 @@ emgpu_buffer_config emgpu_buffer_default();
  * vertex/index buffers used when creating a graphics pipeline.
  */
 typedef struct emgpu_graphics_pipeline_config {
+    /** @brief Describes how vertices are turned into primitives. */
+    emgpu_primitive_type vertex_topology;
+
     /** @brief Number of active vertex attributes. */
     u32 vertex_attribute_count;
     

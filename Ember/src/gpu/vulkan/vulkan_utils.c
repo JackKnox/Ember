@@ -87,6 +87,19 @@ VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address) {
     }
 }
 
+VkPrimitiveTopology primitive_to_vulkan_type(emgpu_primitive_type type) {
+    switch (type) {
+    case EMBER_PRIMITIVE_TYPE_POINT_LIST:    return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    case EMBER_PRIMITIVE_TYPE_LINE_LIST:     return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    case EMBER_PRIMITIVE_TYPE_LINE_STRIP:    return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    case EMBER_PRIMITIVE_TYPE_TRIANGLE_LIST: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    default:
+        EM_ASSERT(FALSE && "Unsupported primitive type!");
+        return 0;
+    }
+}
+
 VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op) {
     switch (load_op) {
     case EMBER_LOAD_OP_LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
