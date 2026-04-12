@@ -63,10 +63,11 @@ typedef struct emgpu_present_target_config {
     /** 
      * @brief Textures that are connected to the rendertarget.
      * 
-     * These textures are now owned by the rendertarget, automatically recreates when resizing.
+     * This array starts after the first attachment, which is the destination of the surface texture.
+     * These textures are also now owned by the rendertarget, automatically recreates when resizing.
      * 
      * @note The texture array must be in the format of `[frame][attachment] (a0 -> f0, f1, a1 -> f0, f1 ...)`
-     *       and the size must be `surface.image_count * attachment_count`.
+     *       and the size must be `surface.image_count * attachment_count - 1`.
      */
     emgpu_texture* existing_textures;
 } emgpu_present_target_config;

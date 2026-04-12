@@ -153,7 +153,7 @@ em_result vulkan_surface_recreate(
         emgpu_texture_config swapchain_texture_config = emgpu_texture_default();
         swapchain_texture_config.size = new_size;
         swapchain_texture_config.image_format = surface->pixel_format;
-        swapchain_texture_config.usage = 0;
+        swapchain_texture_config.usage = EMBER_TEXTURE_USAGE_ATTACHMENT_DST;
 
         em_result result = vulkan_texture_create(
             device, &swapchain_texture_config, &internal_surface->swapchain_images[i]);

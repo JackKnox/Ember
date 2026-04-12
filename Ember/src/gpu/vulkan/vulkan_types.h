@@ -62,14 +62,15 @@ typedef struct internal_vulkan_surface {
     emgpu_texture* swapchain_images;
 } internal_vulkan_surface;
 
-// Internal Vulkan implementation of a emgpu_buffer.
-typedef struct internal_vulkan_buffer {
-    VkBuffer handle;
-    VkDeviceMemory memory;
-    VkBufferUsageFlags usage;
-    VkMemoryPropertyFlags properties;
-    VkMemoryRequirements memory_requirements;
-} internal_vulkan_buffer;
+typedef struct internal_vulkan_rendertarget {
+    VkRenderPass handle;
+    VkFramebuffer* framebuffers;
+
+    u32 frames_in_flight;
+
+    emgpu_surface* surface;
+    emgpu_texture* owned_textures; // [attachment][frame] (f0 -> a0, a1, f1 -> a0, a1 ...)
+} internal_vulkan_rendertarget;
 
 // Internal Vulkan implementation of a emgpu_pipeline.
 typedef struct internal_vulkan_pipeline {
