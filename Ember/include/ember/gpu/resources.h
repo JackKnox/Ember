@@ -4,6 +4,50 @@
 
 #include "ember/gpu/types.h"
 
+#include <ember/platform/window.h>
+
+/**
+ * @brief Configuration for a surface that connects to 
+ * a platform window.
+ * 
+ * Defines a refrence to a window and a prefered/required 
+ * format for the surface.
+ */
+typedef struct emgpu_surface_config {
+    // TODO: Change to some sort of platform_data struct to decouple from emplat_*
+    /** @brief Window to attach render surface to. */
+    emplat_window* window;
+
+    /** @brief Requested format of the surface texture. */
+    emgpu_format preferred_format;
+
+    /** @brief Whetever to exit if exact preferred format isn't found. */
+    b8 force_format;
+} emgpu_surface_config;
+
+/**
+ * @brief Creates a default surface configuration.
+ *
+ * @return A default-initialized emgpu_surface_config.
+ */
+emgpu_surface_config emgpu_surface_default();
+
+/**
+ * @brief Backend-agnostic GPU surface objects.
+ *
+ * Represents a backend-agnsotic object that connectes a platform surface.
+ */
+typedef struct emgpu_surface {
+    /** @brief Backend-specific internal data. */
+    void* internal_data;
+
+    /** @brief Format of the pixel(s) attachted to the platform surface. */
+    emgpu_format pixel_format;
+
+    /** @brief Number of owned images used for concurrent rendering. */
+    u32 image_count;
+} emgpu_surface;
+
 /**
  * @brief Configuration for a render buffer.
  *
@@ -179,7 +223,7 @@ emgpu_texture_config emgpu_texture_default();
 u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
 
 /**
- * @brief Describes a single render target attachment.
+ * @brief Describes a single render pass attachment.
  */
 typedef struct emgpu_attachment_config {
     /** @brief Logical attachment type (colour, depth, stencil, etc.). */
@@ -208,63 +252,38 @@ typedef struct emgpu_attachment_config {
 } emgpu_attachment_config;
 
 /**
- * @brief Configuration for a rendertarget.
+ * @brief Configuration for a renderpass.
  *
  * Contains attachments, image layout transitions
  * and attachment images.
  */
-typedef struct emgpu_rendertarget_config {
-    /** @brief Render area origin. */
-    uvec2 origin;
-
-    /** @brief Render area size. */
-    uvec2 size;
-
-    /** @brief Number of attachments attached to the rendertarget. */
+typedef struct emgpu_renderpass_config {
+    /** @brief Number of attachments attached to the renderpass. */
     u32 attachment_count;
 
-    /** @brief Attachments created within the rendertarget. */
+    /** @brief Attachments created within the renderpass. */
     emgpu_attachment_config* attachments;
-
-    /** 
-     * @brief Textures that are connected to the rendertarget.
-     * 
-     * These textures are now owned by the rendertarget, automatically recreates when resizing.
-     * 
-     * @note The texture array must be in the format of `[frame][attachment] (a0 -> f0, f1, a1 -> f0, f1 ...)`
-     *       and the size must be `device.frame_in_flight * attachment_count`.
-     */
-    emgpu_texture* existing_textures;
-} emgpu_rendertarget_config;
+} emgpu_renderpass_config;
 
 /**
- * @brief Represents a render target used by the renderer backend.
+ * @brief Represents a render pass used by the renderer backend.
  *
- * A render target is the destination for rendering operations. It can either
+ * A render pass is the blueprint for rendering operations. It can either
  * represent a window-backed surface (such as a swapchain image) or an
- * offscreen render target (such as a framebuffer or texture).
+ * offscreen render pass.
  */
-typedef struct emgpu_rendertarget {
-    /** @brief Indicates whetever the rendertarget renders to a platform surface. */
-    b8 is_present;
-
-    /** @brief Clear colour value used when beginning a render target. */
+typedef struct emgpu_renderpass {
+    /** @brief Clear colour value used when beginning a render pass. */
     u32 clear_colour;
 
-    /** @brief Current index of the image just processed by the device. */
-    u32 image_index;
-
-    /** @brief Number of attachments attached to the rendertarget. */
+    /** @brief Number of attachments attached to the renderpass. */
     u32 attachment_count;
 
     /** @brief Backend-specific internal data. */
     void* internal_data;
-    
-    /** @brief Render area size. */
-    uvec2 size;
-} emgpu_rendertarget;
+} emgpu_renderpass;
 
-emgpu_rendertarget_config emgpu_rendertarget_default();
+emgpu_renderpass_config emgpu_renderpass_default();
 
 /**
  * @brief Describes a single descriptor update for a pipeline.

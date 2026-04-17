@@ -7,7 +7,7 @@
 em_result vulkan_pipeline_create_graphics(
     emgpu_device* device, 
     const emgpu_graphics_pipeline_config* config, 
-    emgpu_rendertarget* bound_rendertarget, 
+    emgpu_renderpass* bound_renderpass, 
     emgpu_pipeline* out_graphics_pipeline);
 
 em_result vulkan_pipeline_create_compute(

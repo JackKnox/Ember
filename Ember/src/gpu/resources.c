@@ -44,8 +44,8 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture) {
 	return texture->size.x * texture->size.y * EMBER_FORMAT_SIZE(texture->image_format);
 }
 
-emgpu_rendertarget_config emgpu_rendertarget_default() {
-    emgpu_rendertarget_config config = {};
+emgpu_renderpass_config emgpu_renderpass_default() {
+    emgpu_renderpass_config config = {};
     return config;
 }
 
@@ -53,10 +53,5 @@ emgpu_surface_config emgpu_surface_default() {
     emgpu_surface_config config = {};
     config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Most common in vulkan and vulkan is the most common API.
 	config.force_format = TRUE;
-    return config;
-}
-
-emgpu_present_target_config emgpu_rendertarget_default_present() {
-    emgpu_present_target_config config = {};
     return config;
 }

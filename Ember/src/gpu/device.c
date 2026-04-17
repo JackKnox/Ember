@@ -31,10 +31,8 @@ em_result emgpu_device_init(const emgpu_device_config* config, emgpu_device* out
         out_device->submit_frame                = vulkan_device_submit_frame;
         out_device->create_surface              = vulkan_surface_create;
         out_device->destroy_surface             = vulkan_surface_destroy;
-        out_device->create_rendertarget         = vulkan_rendertarget_create;
-        out_device->create_present_target       = vulkan_rendertarget_create_present;
-        out_device->resize_rendertarget         = vulkan_rendertarget_resize;
-        out_device->destroy_rendertarget        = vulkan_rendertarget_destroy;
+        out_device->create_renderpass           = vulkan_renderpass_create;
+        out_device->destroy_renderpass          = vulkan_renderpass_destroy;
         out_device->create_graphics_pipeline    = vulkan_pipeline_create_graphics;
         out_device->create_compute_pipeline     = vulkan_pipeline_create_compute;
         out_device->update_pipeline_descriptors = vulkan_pipeline_update_descriptors;
@@ -70,9 +68,10 @@ em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level)
 
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s %i.%i.%i - %s [%i.%i.%i]", 
-        emgpu_backend_type_string(device->capabilities->api_type),
-        EM_API_VERSION_MAJOR(device->capabilities->internal_api_version), EM_API_VERSION_MINOR(device->capabilities->internal_api_version), EM_API_VERSION_PATCH(device->capabilities->internal_api_version),
-        device->capabilities->vendor_name,
-        EM_API_VERSION_MAJOR(device->capabilities->driver_version), EM_API_VERSION_MINOR(device->capabilities->driver_version),  EM_API_VERSION_PATCH(device->capabilities->driver_version));
-    EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", device->capabilities->device_name, emgpu_device_type_string(device->capabilities->device_type));
+        emgpu_backend_type_string(capabilities->api_type),
+        EM_API_VERSION_MAJOR(capabilities->internal_api_version), EM_API_VERSION_MINOR(capabilities->internal_api_version), EM_API_VERSION_PATCH(capabilities->internal_api_version),
+        capabilities->vendor_name,
+        EM_API_VERSION_MAJOR(capabilities->driver_version), EM_API_VERSION_MINOR(capabilities->driver_version),  EM_API_VERSION_PATCH(capabilities->driver_version));
+    EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
+    return EMBER_RESULT_OK;
 }

@@ -365,21 +365,6 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             "Failed to create Vulkan compute command buffers");
 	}
 
-    context->in_flight_fences = darray_reserve(VkFence, config->frames_in_flight, MEMORY_TAG_RENDERER);
-
-	for (u32 i = 0; i < config->frames_in_flight; ++i) {
-		VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-		CHECK_VKRESULT(
-			vkCreateFence(
-				context->logical_device,
-				&fence_create_info,
-				context->allocator,
-				darray_push_empty(context->in_flight_fences)),
-			"Failed to create Vulkan sync objects");
-	}
-
     EM_INFO("Vulkan", "Rendering device fully initiailized.");
     return EMBER_RESULT_OK;
 }

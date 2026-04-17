@@ -43,6 +43,9 @@ typedef enum emgpu_device_mode {
     EMBER_DEVICE_MODE_COMPUTE  = 1 << 1,  /**< Compute shader operations */
     EMBER_DEVICE_MODE_TRANSFER = 1 << 2,  /**< Data transfer operations */
     EMBER_DEVICE_MODE_PRESENT  = 1 << 3,  /**< Presentation to a platform surface */
+    // EMBER_DEVICE_MODE_RAYTRACING
+    // EMBER_DEVICE_MODE_POWER_SAVING
+    // EMBER_DEVICE_MODE_ENABLE_VALIDATION
 } emgpu_device_mode;
 
 /**
@@ -55,7 +58,7 @@ typedef enum emgpu_buffer_usage {
     EMBER_BUFFER_USAGE_INDEX   = 1 << 1, /**< Index buffer */
     EMBER_BUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
     EMBER_BUFFER_USAGE_TRANSFER_SRC = 1 << 3, /**< Transfer from this buffer */
-    EMBER_BUFFER_USAGE_CPU_VISIBLE = 1 << 4,  /**< CPU-coherent buffer */
+    EMBER_BUFFER_USAGE_CPU_VISIBLE  = 1 << 4, /**< CPU-coherent buffer */
 } emgpu_buffer_usage;
 
 /**
@@ -67,7 +70,7 @@ typedef enum emgpu_texture_usage {
     EMBER_TEXTURE_USAGE_STORAGE = 1 << 0,      /**< Storage image */
     EMBER_TEXTURE_USAGE_SAMPLED = 1 << 1,      /**< Texture created with sampler */
     EMBER_TEXTURE_USAGE_TRANSFER_SRC = 1 << 2, /**< Transfer from this texture */
-    EMBER_TEXTURE_USAGE_ATTACHMENT_DST = 1 << 4, /**< Used as a texture in a rendertarget */
+    EMBER_TEXTURE_USAGE_ATTACHMENT_DST = 1 << 4, /**< Used as a texture in a renderpass */
 } emgpu_texture_usage;
 
 /**
@@ -112,24 +115,22 @@ typedef enum emgpu_primitive_type {
 } emgpu_primitive_type;
 
 /**
- * @brief Type of render target attachment.
+ * @brief Type of render pass attachment.
  *
- * Defines the logical purpose of an attachment within a render target.
+ * Defines the logical purpose of an attachment within a render pass.
  */
 typedef enum emgpu_attachment_type {
-    // TODO: Remove this attachment type as a window surface may not be colour.
-    EMBER_ATTACHMENT_TYPE_PRESENT,  /**< Surface attachment (implictly colour) */
-    EMBER_ATTACHMENT_TYPE_COLOUR,   /**< Colour render target (RGBA output) */
+    EMBER_ATTACHMENT_TYPE_COLOUR,   /**< Colour render pass (RGBA output) */
     EMBER_ATTACHMENT_TYPE_DEPTH,    /**< Depth-only attachment */
     EMBER_ATTACHMENT_TYPE_STENCIL,  /**< Stencil-only attachment */
     EMBER_ATTACHMENT_TYPE_DEPTH_STENCIL, /**< Combined depth-stencil attachment */
 } emgpu_attachment_type;
 
 /**
- * @brief Attachment load operation at the start of a render target.
+ * @brief Attachment load operation at the start of a render pass.
  *
  * Determines how existing attachment contents are treated
- * when the render target begins.
+ * when the render pass begins.
  */
 typedef enum emgpu_load_op {
     EMBER_LOAD_OP_LOAD,     /**< Preserve existing contents of the attachment */
@@ -138,10 +139,10 @@ typedef enum emgpu_load_op {
 } emgpu_load_op;
 
 /**
- * @brief Attachment store operation at the end of a render target.
+ * @brief Attachment store operation at the end of a render pass.
  *
  * Determines whether attachment contents are preserved
- * after the render target completes.
+ * after the render pass completes.
  */
 typedef enum emgpu_store_op {
     EMBER_STORE_OP_STORE,      /**< Store the results for later use */

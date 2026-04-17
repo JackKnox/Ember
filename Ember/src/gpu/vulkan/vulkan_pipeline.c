@@ -101,7 +101,7 @@ em_result vulkan_pipeline_create_layout(
 em_result vulkan_pipeline_create_graphics(
     emgpu_device* device, 
     const emgpu_graphics_pipeline_config* config, 
-    emgpu_rendertarget* bound_rendertarget, 
+    emgpu_renderpass* bound_renderpass, 
     emgpu_pipeline* out_graphics_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
@@ -211,7 +211,7 @@ em_result vulkan_pipeline_create_graphics(
     VkPipelineInputAssemblyStateCreateInfo input_assembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
     input_assembly.topology = primitive_to_vulkan_type(config->vertex_topology);
 
-    internal_vulkan_rendertarget* attachted_rendertarget = (internal_vulkan_rendertarget*)bound_rendertarget->internal_data;
+    internal_vulkan_renderpass* attachted_renderpass = (internal_vulkan_renderpass*)bound_renderpass->internal_data;
 
     // Attach all configured states to the pipeline create info
     VkGraphicsPipelineCreateInfo pipeline_create_info = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
@@ -225,7 +225,7 @@ em_result vulkan_pipeline_create_graphics(
     pipeline_create_info.pColorBlendState = &color_blending;
     pipeline_create_info.pDynamicState = &dynamic_state;
     pipeline_create_info.layout = internal_pipeline->layout;
-    pipeline_create_info.renderPass = attachted_rendertarget->handle;
+    pipeline_create_info.renderPass = attachted_renderpass->handle;
 
     darray_destroy(shader_stages);
     return EMBER_RESULT_OK;

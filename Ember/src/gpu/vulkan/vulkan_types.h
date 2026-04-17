@@ -62,15 +62,9 @@ typedef struct internal_vulkan_surface {
     emgpu_texture* swapchain_images;
 } internal_vulkan_surface;
 
-typedef struct internal_vulkan_rendertarget {
+typedef struct internal_vulkan_renderpass {
     VkRenderPass handle;
-    VkFramebuffer* framebuffers;
-
-    u32 frames_in_flight;
-
-    emgpu_surface* surface;
-    emgpu_texture* owned_textures; // [attachment][frame] (f0 -> a0, a1, f1 -> a0, a1 ...)
-} internal_vulkan_rendertarget;
+} internal_vulkan_renderpass;
 
 // Internal Vulkan implementation of a emgpu_pipeline.
 typedef struct internal_vulkan_pipeline {
@@ -125,7 +119,6 @@ typedef struct vulkan_context {
     VkDevice logical_device;
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
     
-    VkFence* in_flight_fences;
     vulkan_command_buffer graphics_command_ring, compute_command_ring;
 } vulkan_context;
 
@@ -165,7 +158,7 @@ VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op);
 // Converts engine store op format to a Vulkan format.
 VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op);
 
-// Converts engine attachment to a final image layout of a rendertarget attachment.
+// Converts engine attachment to a final image layout of a renderpass attachment.
 VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type);
 
 // Converts Vulkan error code to engine result code.

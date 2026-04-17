@@ -20,15 +20,15 @@ int main(int argc, char** argv) {
 	window_config.size = (uvec2) { 640, 640 };
 	window_config.title = "Test Window";
 
-	emgpu_device_config device_config = emgpu_device_default();
-	device_config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
-	device_config.application_name = window_config.title;
-	device_config.enable_validation = TRUE;
-
 	emplat_window window = {};
 	CHECK_FUNC(
 		emplat_window_open(&window_config, &window), 
 		"Failed to open window");
+
+	emgpu_device_config device_config = emgpu_device_default();
+	device_config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
+	device_config.application_name = window_config.title;
+	device_config.enable_validation = TRUE;
 	
 	emgpu_device device = {};
 	CHECK_FUNC(
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
 	emgpu_attachment_config attachments[] = {
 		{
-			.type = EMBER_ATTACHMENT_TYPE_PRESENT,
+			.type = EMBER_ATTACHMENT_TYPE_COLOUR,
 			.format = surface.pixel_format,
 			.load_op = EMBER_LOAD_OP_CLEAR,
 			.store_op = EMBER_STORE_OP_STORE,
@@ -59,15 +59,14 @@ int main(int argc, char** argv) {
 		}
 	};
 
-	emgpu_present_target_config rendertarget_config = emgpu_rendertarget_default_present();
-	rendertarget_config.surface = &surface;
-	rendertarget_config.attachments = attachments;
-	rendertarget_config.attachment_count = EM_ARRAYSIZE(attachments);
+	emgpu_renderpass_config renderpass_config = emgpu_renderpass_default();
+	renderpass_config.attachments = attachments;
+	renderpass_config.attachment_count = EM_ARRAYSIZE(attachments);
 
-	emgpu_rendertarget surface_target = {};
+	emgpu_renderpass mainpass = {};
 	CHECK_FUNC(
-		device.create_present_target(&device, &rendertarget_config, &surface_target), 
-		"Failed to create main rendertarget (present)");
+		device.create_renderpass(&device, &renderpass_config, &mainpass), 
+		"Failed to create main renderpass (present)");
 
 	show_memory_stats();
 
@@ -80,7 +79,10 @@ int main(int argc, char** argv) {
 		emgpu_frame frame = {};
 		if (emgpu_frame_init(&frame) == EMBER_RESULT_OK) {		
 			// ------------------
-			emgpu_frame_bind_rendertarget(&frame, &surface_target);
+			emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
+
+			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
+			emgpu_frame_bind_renderpass(&frame, &mainpass, window_tex);
 
 			CHECK_FUNC(
 				device.submit_frame(&device, &frame), 
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
 	}
 
 failed_init:
-	device.destroy_rendertarget(&device, &surface_target);
+	device.destroy_renderpass(&device, &mainpass);
 	device.destroy_surface(&device, &surface);
 	emgpu_device_shutdown(&device);
 	emplat_window_close(&window);

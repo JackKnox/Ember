@@ -5,80 +5,6 @@
 #include "ember/gpu/resources.h"
 #include "ember/gpu/frame.h"
 
-#include <ember/platform/window.h>
-
-/**
- * @brief Configuration for a surface that connects to 
- * a platform window.
- * 
- * Defines a refrence to a window and a prefered/required 
- * format for the surface.
- */
-typedef struct emgpu_surface_config {
-    emplat_window* window;
-    emgpu_format preferred_format;
-    b8 force_format;
-} emgpu_surface_config;
-
-/**
- * @brief Creates a default surface configuration.
- *
- * @return A default-initialized emgpu_surface_config.
- */
-emgpu_surface_config emgpu_surface_default();
-
-/**
- * @brief Backend-agnostic GPU surface objects.
- *
- * Represents a backend-agnsotic object that connectes a platform surface.
- */
-typedef struct emgpu_surface {
-    /** @brief Backend-specific internal data. */
-    void* internal_data;
-
-    /** @brief Format of the pixel(s) attachted to the platform surface. */
-    emgpu_format pixel_format;
-
-    /** @brief Number of owned images used for concurrent rendering. */
-    u32 image_count;
-} emgpu_surface;
-
-/**
- * @brief Configuration for a rendertarget that implictly 
- * connects to a platform surface.
- *
- * Defines a rendertarget to a platform surface, omitting
- * some fields from base configuration that aren't applicable.
- */
-typedef struct emgpu_present_target_config {
-    /** @brief Surface that the created rendertarget renders to. */
-    emgpu_surface* surface;
-
-    /** @brief Number of attachments attached to the rendertarget. */
-    u32 attachment_count;
-
-    /** @brief Attachments created within the rendertarget. */
-    emgpu_attachment_config* attachments;
-
-    /** 
-     * @brief Textures that are connected to the rendertarget.
-     * 
-     * This array starts after the first attachment, which is the destination of the surface texture.
-     * These textures are also now owned by the rendertarget, automatically recreates when resizing.
-     * 
-     * @note The texture array must be in the format of `[frame][attachment] (a0 -> f0, f1, a1 -> f0, f1 ...)`
-     *       and the size must be `surface.image_count * attachment_count - 1`.
-     */
-    emgpu_texture* existing_textures;
-} emgpu_present_target_config;
-
-/**
- * @brief Creates a default rendertarget configuration with presentation.
- *
- * @return A default-initialized emgpu_present_target_config.
- */
-emgpu_present_target_config emgpu_rendertarget_default_present();
-
 /**
  * @brief Renderer device interface.
  *
@@ -152,53 +78,33 @@ typedef struct emgpu_device {
     void (*destroy_surface)(struct emgpu_device* device, emgpu_surface* surface);
 
     /**
-     * @brief Creates a render target.
+     * @brief Creates a render pass.
      *
      * @param device Pointer to the device instance.
-     * @param config Render target configuration.
-     * @param out_rendertarget Output render target.
+     * @param config Render pass configuration.
+     * @param out_renderpass Output render pass.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_rendertarget)(struct emgpu_device* device, const emgpu_rendertarget_config* config, emgpu_rendertarget* out_rendertarget);
+    em_result (*create_renderpass)(struct emgpu_device* device, const emgpu_renderpass_config* config, emgpu_renderpass* out_renderpass);
 
     /**
-     * @brief Creates a presentable render target (swapchain-backed).
+     * @brief Destroys a render pass.
      *
      * @param device Pointer to the device instance.
-     * @param config Present target configuration.
-     * @param out_rendertarget Output render target.
-     * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+     * @param renderpass Pass to destroy.
      */
-    em_result (*create_present_target)(struct emgpu_device* device, const emgpu_present_target_config* config, emgpu_rendertarget* out_rendertarget);
-
-    /**
-     * @brief Resizes a render target.
-     *
-     * @param device Pointer to the device instance.
-     * @param rendertarget Target to resize.
-     * @param new_size New dimensions.
-     * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
-     */
-    em_result (*resize_rendertarget)(struct emgpu_device* device, emgpu_rendertarget* rendertarget, uvec2 new_size);
-
-    /**
-     * @brief Destroys a render target.
-     *
-     * @param device Pointer to the device instance.
-     * @param rendertarget Target to destroy.
-     */
-    void (*destroy_rendertarget)(struct emgpu_device* device, emgpu_rendertarget* rendertarget);
+    void (*destroy_renderpass)(struct emgpu_device* device, emgpu_renderpass* renderpass);
 
     /**
      * @brief Creates a graphics pipeline.
      *
      * @param device Pointer to the device instance.
      * @param config Pipeline configuration.
-     * @param bound_rendertarget Render target the pipeline is compatible with.
+     * @param bound_renderpass Render pass the pipeline is compatible with.
      * @param out_graphics_pipeline Output pipeline.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_graphics_pipeline)(struct emgpu_device* device, const emgpu_graphics_pipeline_config* config, emgpu_rendertarget* bound_rendertarget, emgpu_pipeline* out_graphics_pipeline);
+    em_result (*create_graphics_pipeline)(struct emgpu_device* device, const emgpu_graphics_pipeline_config* config, emgpu_renderpass* bound_renderpass, emgpu_pipeline* out_graphics_pipeline);
 
     /**
      * @brief Creates a compute pipeline.
