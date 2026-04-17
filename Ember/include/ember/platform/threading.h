@@ -16,7 +16,7 @@ typedef EMBER_PLATFORM_THREAD_STATE emplat_thread;
  * @param arg User-provided argument.
  * @return Non-descriptive code for any system.
  */
-typedef u32 (*PFN_thread_start)(void* arg);
+typedef void* (*PFN_thread_start)(void* arg);
 
 /**
  * @brief Creates a new thread.

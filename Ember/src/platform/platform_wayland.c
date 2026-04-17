@@ -1,7 +1,7 @@
 #include "ember/core.h"
 
 #ifdef EM_PLATFORM_LINUX
-#include "ember/platform/global.h"
+#include "ember/platform/system.h"
 #include "ember/platform/window.h"
 
 #include <stdlib.h>
@@ -27,7 +27,7 @@ emplat_window_config emplat_window_default() {
 	return config;
 }
 
-em_result emplat_window_start(
+em_result emplat_window_open(
     const emplat_window_config* config, 
     emplat_window* out_window) {
     glfwSetErrorCallback(GLFWErrorCallback);

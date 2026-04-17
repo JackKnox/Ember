@@ -1,5 +1,5 @@
 #include <ember/platform/window.h>
-#include <ember/platform/global.h>
+#include <ember/platform/system.h>
 
 #include <ember/gpu/device.h>
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
 	emplat_window window = {};
 	CHECK_FUNC(
-		emplat_window_start(&window_config, &window), 
+		emplat_window_open(&window_config, &window), 
 		"Failed to open window");
 	
 	emgpu_device device = {};
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
 	emgpu_surface_config surface_config = emgpu_surface_default();
 	surface_config.window = &window;
-	surface_config.prefered_format = EMGPU_FORMAT_BGRA8_UNORM;
+	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM;
 	surface_config.force_format = FALSE;
 
 	emgpu_surface surface = {};
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 	}
 
 failed_init:
-	//device.destroy_rendertarget(&device, &surface_target);
+	device.destroy_rendertarget(&device, &surface_target);
 	device.destroy_surface(&device, &surface);
 	emgpu_device_shutdown(&device);
 	emplat_window_close(&window);

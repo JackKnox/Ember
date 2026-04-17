@@ -16,7 +16,7 @@
  */
 typedef struct emgpu_surface_config {
     emplat_window* window;
-    emgpu_format prefered_format;
+    emgpu_format preferred_format;
     b8 force_format;
 } emgpu_surface_config;
 
@@ -122,7 +122,7 @@ typedef struct emgpu_device {
      * @param out_capabilities Output capabilties structure.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*retreive_capabilities)(struct emgpu_device* device, emgpu_device_capabilities* out_capabilities);
+    emgpu_device_capabilities* (*retreive_capabilities)(struct emgpu_device* device);
 
     /**
      * @brief Submits a frame for execution on the GPU.

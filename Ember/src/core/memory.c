@@ -1,8 +1,6 @@
 #include "ember/core.h"
 #include "memory.h"
 
-#include "ember/platform/global.h"
-
 #if EM_ENABLE_DIAGNOSTICS
 typedef struct memory_stats {
 	u64 total_allocated;

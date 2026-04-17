@@ -237,6 +237,9 @@ const char* em_result_string(em_result result, b8 get_extended);
 
 #define EM_OFFSETOF(s, m) (&(((s*)0)->m))
 
+// :)
+#define EMBER_VERSION EM_API_MAKE_VERSION(0, 2, 0)
+
 #include "ember/core/logger.h"
 #include "ember/core/memory.h"
 #include "ember/core/math_types.h"

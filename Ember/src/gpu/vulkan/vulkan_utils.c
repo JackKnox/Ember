@@ -125,7 +125,6 @@ VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op) {
 
 VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type) {
     switch (type) {
-    case EMBER_ATTACHMENT_TYPE_PRESENT:  return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     case EMBER_ATTACHMENT_TYPE_COLOUR:   return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     case EMBER_ATTACHMENT_TYPE_DEPTH:    return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
     case EMBER_ATTACHMENT_TYPE_STENCIL:  return VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;

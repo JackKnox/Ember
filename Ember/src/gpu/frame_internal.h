@@ -11,10 +11,12 @@
  * into backend-specific API calls (OpenGL, Vulkan, etc.).
  */
 enum {
-    RENDERCMD_BIND_RENDERTARGET,
+    RENDERCMD_SET_RENDERAREA,
+    RENDERCMD_BIND_NEXT_SURFACE_TEXTURE,
+    RENDERCMD_BIND_IMPORT_TEXTURE,
+    RENDERCMD_BIND_RENDERPASS,
     RENDERCMD_MEMORY_BARRIER,
-    RENDERCMD_BEGIN_PIPELINE,
-    RENDERCMD_END_PIPELINE,
+    RENDERCMD_BIND_PIPELINE,
     RENDERCMD_DRAW,
     RENDERCMD_DRAW_INDEXED,
     RENDERCMD_DISPATCH,
@@ -25,15 +27,25 @@ enum {
 /** @brief Type used to identify a render command payload. */
 typedef u32 rendercmd_payload_type;
 
-#pragma pack(push, 1)
-
 typedef struct rendercmd_payload {
     rendercmd_payload_type type;
+    emgpu_device_mode command_mode; // TODO: Push to device backends.
 
     union {
         struct {
-            emgpu_rendertarget* rendertarget;
-        } bind_rendertarget;
+            uvec2 origin, size;
+            b8 set_scissor;
+        } set_renderarea;
+
+        struct {
+            emgpu_surface* surface;
+            emgpu_frame_texture dst_texture;
+        } next_surface_texture;
+
+        struct {
+            emgpu_renderpass* renderpass;
+            emgpu_frame_texture render_texture;
+        } bind_renderpass;
 
         struct {
             emgpu_pipeline* src_pipeline, * dst_pipeline;
@@ -42,7 +54,7 @@ typedef struct rendercmd_payload {
 
         struct {
             emgpu_pipeline* pipeline;
-        } begin_pipeline;
+        } bind_pipeline;
 
         struct {
             u32 vertex_count, instance_count;
@@ -58,5 +70,3 @@ typedef struct rendercmd_payload {
     };
     
 } rendercmd_payload;
-
-#pragma pack(pop)

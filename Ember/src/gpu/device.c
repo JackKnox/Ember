@@ -66,8 +66,7 @@ void emgpu_device_shutdown(emgpu_device* device) {
 }
 
 em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level) {
-    em_result result = device->retreive_capabilities(device, NULL);
-    if (result != EMBER_RESULT_OK) return result;
+    emgpu_device_capabilities* capabilities = device->retreive_capabilities(device);
 
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s %i.%i.%i - %s [%i.%i.%i]", 

@@ -275,6 +275,9 @@ typedef struct emgpu_device_config {
      */
     u32 frames_in_flight;
 
+    /** @brief Version of the cretaed app in `em_version` format. */
+    em_version application_version;
+
     /** @brief Enabled renderer modes (bitmask). */
     emgpu_device_mode enabled_modes;
 

@@ -79,9 +79,9 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
 	// Fill create info
 	VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
-	app_info.apiVersion = VK_API_VERSION_1_2;
-	app_info.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-	app_info.engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
+	app_info.apiVersion = VK_API_VERSION_1_3;
+	app_info.applicationVersion = VK_MAKE_API_VERSION(0, EM_API_VERSION_MAJOR(config->application_version), EM_API_VERSION_MINOR(config->application_version), EM_API_VERSION_PATCH(config->application_version));
+	app_info.engineVersion = VK_MAKE_API_VERSION(0, EM_API_VERSION_MAJOR(EMBER_VERSION), EM_API_VERSION_MINOR(EMBER_VERSION), EM_API_VERSION_PATCH(EMBER_VERSION));
 	app_info.pApplicationName = config->application_name;
 	app_info.pEngineName = "ember_gpu";
 
@@ -388,7 +388,7 @@ void vulkan_device_shutdown(emgpu_device* device) {
 
 }
 
-em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabilities* out_capabilities) {
+emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     if (device->capabilities == NULL) {
@@ -453,8 +453,7 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
             VK_API_VERSION_PATCH(properties.driverVersion));
     }
 
-    if (out_capabilities) emc_memcpy(out_capabilities, device->capabilities, sizeof(emgpu_device_capabilities));
-    return EMBER_RESULT_OK;
+    return device->capabilities;
 }
 
 em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* frame) {

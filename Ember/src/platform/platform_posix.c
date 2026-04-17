@@ -1,7 +1,7 @@
 #include "ember/core.h"
 
 #ifdef EM_PLATFORM_POSIX
-#include "ember/platform/global.h"
+#include "ember/platform/system.h"
 #include "ember/platform/threading.h"
 
 #include <unistd.h>
@@ -62,45 +62,13 @@ void emplat_sleep_ms(f64 ms) {
         continue;
 }
 
-// Information to pass to the new thread (what to run).
-typedef struct _thread_start_info {
-    PFN_thread_start mFunction; // Pointer to the function to be executed.
-    void* mArg;             // Function argument for the thread function.
-} _thread_start_info;
-
-// Thread wrapper function.
-static void* _thrd_wrapper_function(void* aArg) {
-    PFN_thread_start fun;
-    void* arg;
-    b8  res;
-
-    // Get thread startup information
-    _thread_start_info* ti = (_thread_start_info*)aArg;
-    fun = ti->mFunction;
-    arg = ti->mArg;
-
-    // The thread is responsible for freeing the startup information
-    mem_free(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
-
-    // Call the actual client thread function
-    res = fun(arg);
-
-    return (void*)(intptr_t)res;
-}
-
 em_result emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
-    // Fill out the thread startup information (passed to the thread wrapper, which will eventually free it)
-    _thread_start_info* ti = (_thread_start_info*)mem_allocate(sizeof(_thread_start_info), MEMORY_TAG_PLATFORM);
-    ti->mFunction = func;
-    ti->mArg = arg;
-
     // Create the thread
-    if (pthread_create(thr, NULL, _thrd_wrapper_function, (void*)ti) != 0)
+    if (pthread_create(thr, NULL, func, arg) != 0)
         *thr = 0;
 
-    // Did we fail to create the thread?
     if (!*thr) {
-        mem_free(ti, sizeof(ti), MEMORY_TAG_PLATFORM);
+        // Did we fail to create the thread?
         return FALSE;
     }
 

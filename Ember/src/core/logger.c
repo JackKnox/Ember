@@ -1,7 +1,6 @@
 #include "ember/core.h"
 
 #include "ember/core/string_utils.h"
-#include "ember/platform/global.h"
 
 #include <stdarg.h>
 

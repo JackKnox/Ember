@@ -5,6 +5,7 @@
 
 emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
+    config.application_version = EM_API_MAKE_VERSION(0, 1, 0);
     config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS;
 	config.frames_in_flight = 3;
 
@@ -50,7 +51,7 @@ emgpu_rendertarget_config emgpu_rendertarget_default() {
 
 emgpu_surface_config emgpu_surface_default() {
     emgpu_surface_config config = {};
-    config.prefered_format = EMGPU_FORMAT_BGR8_UNORM; // Most common in vulkan and vulkan is the most common API.
+    config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Most common in vulkan and vulkan is the most common API.
 	config.force_format = TRUE;
     return config;
 }

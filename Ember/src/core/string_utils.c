@@ -1,8 +1,6 @@
 #include "ember/core.h"
 #include "ember/core/string_utils.h"
 
-#include "ember/platform/global.h"
-
 #include <stdarg.h> // For variadic functions
 #include <stdio.h>  // vsnprintf, sscanf, sprintf
 #include <string.h>

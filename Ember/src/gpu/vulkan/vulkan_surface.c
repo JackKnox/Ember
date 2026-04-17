@@ -41,7 +41,7 @@ em_result vulkan_surface_create(
     VkSurfaceFormatKHR found_format = formats[0];
     
     for (u32 i = 0; i < format_count; ++i) {
-        if (formats[i].format == format_to_vulkan_type(config->prefered_format) &&
+        if (formats[i].format == format_to_vulkan_type(config->preferred_format) &&
             formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             found_format = formats[i];
             break;
@@ -50,11 +50,11 @@ em_result vulkan_surface_create(
 
     // Special Vulkan edge case, means no limits on swapchain format.
     if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
-        found_format.format = format_to_vulkan_type(config->prefered_format);
+        found_format.format = format_to_vulkan_type(config->preferred_format);
         found_format.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
 
-    if (found_format.format != format_to_vulkan_type(config->prefered_format)) {
+    if (found_format.format != format_to_vulkan_type(config->preferred_format)) {
         EM_WARN("Vulkan", "Could not find required surface format. (See emgpu_surface_config::force_format)");
 
         if (config->force_format)

@@ -58,7 +58,7 @@ typedef struct emplat_window {
     const char* title;
 
     /** @brief Platform-specific window state. */
-	EMBER_PLATFORM_WINDOW_STATE
+	_EMBER_PLATFORM_WINDOW_STATE
 } emplat_window;
 
 /**
@@ -78,7 +78,7 @@ emplat_window_config emplat_window_default();
  * @param out_window Pointer to the window to initialise.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds..
  */
-em_result emplat_window_start(const emplat_window_config* config, emplat_window* out_window);
+em_result emplat_window_open(const emplat_window_config* config, emplat_window* out_window);
 
 /**
  * @brief Closes and destroys a window.

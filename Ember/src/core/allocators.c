@@ -1,8 +1,6 @@
 #include "ember/core.h"
 #include "ember/core/allocators.h"
 
-#include "ember/platform/global.h"
-
 #pragma pack(push, 1)
 typedef struct freelist_header {
     u64 payload_size;
