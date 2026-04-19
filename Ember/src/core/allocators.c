@@ -11,7 +11,77 @@ u64 alignment(u64 v, u64 align) {
     return (v + (align - 1)) & ~(align - 1);
 }
 
-void* get_user_memory(freelist* list, void* internal_block) {
+void* _darray_create(u64 stride, u32 capacity, memory_tag memtag) {
+    u64 size = stride * capacity;
+    darray_header* new_array = mem_allocate(sizeof(darray_header) + size, memtag);
+    new_array->capacity = capacity;
+    new_array->length = 0;
+    new_array->memtag = memtag;
+    new_array->stride = stride;
+    return emc_memset(new_array + 1, 0, size);
+}
+
+void* _darry_from_data(u64 stride, u32 length, const void* from_data, memory_tag memtag) {
+    void* new_array = _darray_create(stride, length, memtag);
+    _darray_header(new_array)->length = length;
+
+    if (from_data)
+        emc_memcpy(new_array, from_data, stride * length);
+    return new_array;
+}
+
+void darray_destroy(void* array) {
+    darray_header* hdr = _darray_header(array);
+    mem_free(hdr, sizeof(darray_header) + hdr->stride * hdr->capacity, hdr->memtag);
+}
+
+void* _darray_push(void** out_array, const void* value_ptr) {
+    darray_header* hdr = _darray_header(*out_array);
+
+    // Resize if needed
+    if (hdr->length + 1 > hdr->capacity) {
+        u64 new_capacity = (hdr->capacity ? hdr->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY);
+
+        void* new_array = _darray_create(hdr->stride, new_capacity, hdr->memtag);
+        emc_memcpy(new_array, *out_array, hdr->length * hdr->stride);
+
+        _darray_header(new_array)->length = hdr->length;
+        darray_destroy(*out_array);
+        
+        *out_array = new_array;
+        hdr = _darray_header(*out_array);
+    }
+
+    // Write new element
+    void* addr = (u8*)(*out_array) + (hdr->length * hdr->stride);
+    if (value_ptr)
+        emc_memcpy(addr, value_ptr, hdr->stride);
+
+    hdr->length += 1;
+    return addr;
+}
+
+void darray_pop_at(void* array, u32 index, void* dest) {
+    darray_header* hdr = _darray_header(array);
+
+    u8* addr = (u8*)array + index * hdr->stride;
+    if (dest) emc_memcpy(dest, (void*)addr, hdr->stride);
+
+    if (index != hdr->length - 1) {
+        emc_memcpy(
+            addr,
+            addr + hdr->stride,
+            hdr->stride * (hdr->length - index));
+    }
+
+    hdr->length -= 1;
+}
+
+darray_header* _darray_header(void* array) {
+    return ((darray_header*)array) - 1;
+}
+
+void* get_user_memory(const freelist* list, void* internal_block) {
     EM_ASSERT(list != NULL && internal_block != NULL && "Invalid arguments passed to get_user_memory");
     return (u8*)internal_block + sizeof(freelist_header);
 }
@@ -44,16 +114,6 @@ void freelist_destroy(freelist* list) {
 
     list->capacity = 0;
     list->size = 0;
-}
-
-u64 freelist_size(freelist* list) {
-    EM_ASSERT(list != NULL && list->memory != NULL && "Invalid arguments passed to freelist_size");
-    return list->size;
-}
-
-u64 freelist_capacity(freelist* list) {
-    EM_ASSERT(list != NULL && list->memory != NULL && "Invalid arguments passed to freelist_capacity");
-    return list->capacity;
 }
 
 void freelist_resize(freelist* list, u64 new_size) {
@@ -116,7 +176,7 @@ void* freelist_push(freelist* list, u64 block_size, void* memory) {
     return (void*)user_ptr;
 }
 
-void* freelist_get(freelist* list, u64 index) {
+void* freelist_get(const freelist* list, u64 index) {
     EM_ASSERT(list != NULL && list->memory != NULL && "Invalid arguments passed to freelist_get");
 
     u64 pos = 0;
@@ -132,7 +192,7 @@ void* freelist_get(freelist* list, u64 index) {
     return get_user_memory(list, (u8*)list->memory + pos);
 }
 
-b8 freelist_next_block(freelist* list, u8** cursor) {
+b8 freelist_next_block(const freelist* list, u8** cursor) {
     EM_ASSERT(list != NULL && cursor != NULL && list->memory != NULL && "Invalid arguments passed to freelist_next_block");
     u8* next_block_header = 0;
 
@@ -153,72 +213,12 @@ b8 freelist_next_block(freelist* list, u8** cursor) {
     return TRUE;
 }
 
-void* _darray_create(u64 stride, u32 capacity, memory_tag memtag) {
-    u64 size = stride * capacity;
-    darray_header* new_array = mem_allocate(sizeof(darray_header) + size, memtag);
-    new_array->capacity = capacity;
-    new_array->length = 0;
-    new_array->memtag = memtag;
-    new_array->stride = stride;
-    return emc_memset(new_array + 1, 0, size);
+u64 freelist_size(const freelist* list) {
+    EM_ASSERT(list != NULL && list->memory != NULL && "Invalid arguments passed to freelist_size");
+    return list->size;
 }
 
-void* _darry_from_data(u64 stride, u32 length, void* from_data, memory_tag memtag) {
-    void* new_array = _darray_create(stride, length, memtag);
-    _darray_header(new_array)->length = length;
-
-    if (from_data)
-        emc_memcpy(new_array, from_data, stride * length);
-    return new_array;
-}
-
-void darray_destroy(void* array) {
-    darray_header* hdr = _darray_header(array);
-    mem_free(hdr, sizeof(darray_header) + hdr->stride * hdr->capacity, hdr->memtag);
-}
-
-void* _darray_push(void** out_array, void* value_ptr) {
-    darray_header* hdr = _darray_header(*out_array);
-
-    // Resize if needed
-    if (hdr->length + 1 > hdr->capacity) {
-        u64 new_capacity = (hdr->capacity ? hdr->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY);
-
-        void* new_array = _darray_create(hdr->stride, new_capacity, hdr->memtag);
-        emc_memcpy(new_array, *out_array, hdr->length * hdr->stride);
-
-        _darray_header(new_array)->length = hdr->length;
-        darray_destroy(*out_array);
-        
-        *out_array = new_array;
-        hdr = _darray_header(*out_array);
-    }
-
-    // Write new element
-    void* addr = (u8*)(*out_array) + (hdr->length * hdr->stride);
-    if (value_ptr)
-        emc_memcpy(addr, value_ptr, hdr->stride);
-
-    hdr->length += 1;
-    return addr;
-}
-
-void darray_pop_at(void* array, u32 index, void* dest) {
-    darray_header* hdr = _darray_header(array);
-
-    u8* addr = (u8*)array + index * hdr->stride;
-    if (dest) emc_memcpy(dest, (void*)addr, hdr->stride);
-
-    if (index != hdr->length - 1) {
-        emc_memcpy(
-            addr,
-            addr + hdr->stride,
-            hdr->stride * (hdr->length - index));
-    }
-
-    hdr->length -= 1;
-}
-
-darray_header* _darray_header(void* array) {
-    return ((darray_header*)array) - 1;
+u64 freelist_capacity(const freelist* list) {
+    EM_ASSERT(list != NULL && list->memory != NULL && "Invalid arguments passed to freelist_capacity");
+    return list->capacity;
 }

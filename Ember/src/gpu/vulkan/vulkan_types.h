@@ -60,6 +60,7 @@ typedef struct internal_vulkan_surface {
 
     VkSwapchainKHR swapchain;
     emgpu_texture* swapchain_images;
+    u32 image_index;
 } internal_vulkan_surface;
 
 typedef struct internal_vulkan_renderpass {
@@ -119,7 +120,8 @@ typedef struct vulkan_context {
     VkDevice logical_device;
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
     
-    vulkan_command_buffer graphics_command_ring, compute_command_ring;
+
+    VkCommandBuffer* graphics_command_ring, *compute_command_ring;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.

@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 			emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
 
 			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
-			emgpu_frame_bind_renderpass(&frame, &mainpass, window_tex);
+			emgpu_frame_bind_renderpass(&frame, &mainpass, &window_tex, 1);
 
 			CHECK_FUNC(
 				device.submit_frame(&device, &frame), 

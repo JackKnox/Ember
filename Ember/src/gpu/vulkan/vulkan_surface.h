@@ -23,12 +23,12 @@ em_result vulkan_surface_recreate(
 VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,
-    u32* out_image_index,
-    u64 timeout, VkFence wait_fence);
+    u64 timeout, 
+    VkSemaphore signal_semaphore, VkFence signal_fence);
 
 // Presents the current swapchain image to the screen.
 VkResult vulkan_surface_present(
     emgpu_device* device, 
     emgpu_surface* surface, 
-    u32 image_index, vulkan_queue* present_queue, 
+    vulkan_queue* present_queue, 
     u32 wait_semaphore_count, VkSemaphore* wait_semaphores);

@@ -72,7 +72,28 @@ em_result vulkan_surface_create(
 void vulkan_surface_destroy(
     emgpu_device* device, 
     emgpu_surface* surface) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
+    if (!internal_surface) 
+        return;
+
+    if (internal_surface->swapchain_images) {
+        for (u32 i = 0; i < surface->image_count; ++i)
+            vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);
+        
+        mem_free(internal_surface->swapchain_images, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
+    }
+
+    if (internal_surface->swapchain)   
+        vkDestroySwapchainKHR(context->logical_device, internal_surface->swapchain, context->allocator);
+
+    if (internal_surface->surface)
+        vkDestroySurfaceKHR(context->instance, internal_surface->surface, context->allocator);
+
+    mem_free(internal_surface, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
+    surface->internal_data = NULL;
 }
 
 em_result vulkan_surface_recreate(
@@ -160,6 +181,26 @@ em_result vulkan_surface_recreate(
         if (result != EMBER_RESULT_OK) return result;
     }
 
+    // Acquire first image before submitting frames
+    // --------------------------------------
+    VkFence temp_fence = VK_NULL_HANDLE;
+    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+
+    CHECK_VKRESULT(
+        vkCreateFence(context->logical_device, &fence_create_info, context->allocator, &temp_fence),
+        "Failed to temporary Vulkan surface fence");
+
+    CHECK_VKRESULT(
+        vulkan_surface_accquire(device, surface, UINT64_MAX, VK_NULL_HANDLE, temp_fence),
+        "Failed to acquire first Vulkan swapchain image");
+
+    CHECK_VKRESULT(
+        vkWaitForFences(context->logical_device, 1, &temp_fence, TRUE, UINT64_MAX),
+        "Failed to acquire first Vulkan swapchain image");
+
+    vkDestroyFence(context->logical_device, temp_fence, context->allocator);
+    // --------------------------------------
+
     mem_free(images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_RENDERER);
     return EMBER_RESULT_OK;
 }
@@ -167,15 +208,27 @@ em_result vulkan_surface_recreate(
 VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,
-    u32* out_image_index,
-    u64 timeout, VkFence wait_fence) {
+    u64 timeout,
+    VkSemaphore signal_semaphore, VkFence signal_fence) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
 
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
+    
+    return vkAcquireNextImageKHR(
+        context->logical_device, 
+        internal_surface->swapchain, 
+        timeout, 
+        signal_semaphore, signal_fence, 
+        &internal_surface->image_index);
 }
 
 VkResult vulkan_surface_present(
     emgpu_device* device, 
     emgpu_surface* surface, 
-    u32 image_index, vulkan_queue* present_queue, 
+    vulkan_queue* present_queue, 
     u32 wait_semaphore_count, VkSemaphore* wait_semaphores) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
 
 }

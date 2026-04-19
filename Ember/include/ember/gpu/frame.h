@@ -13,6 +13,9 @@ typedef u32 emgpu_frame_texture;
  * @brief Represents a single GPU frame used to record commands to the rendering frame.
  */
 typedef struct emgpu_frame {
+    /** @brief Indicates whetever emgpu_frame_init() was called successfully. */
+    b8 initied;
+
     /** @brief Internal command buffer storage. */
     freelist buffer; 
 
@@ -34,7 +37,7 @@ em_result emgpu_frame_init(emgpu_frame* frame);
  * @param frame Pointer to the frame to validate.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_frame_validate(emgpu_frame* frame);
+em_result emgpu_frame_validate(const emgpu_frame* frame);
 
 /**
  * @brief Adds a no-op (dummy) command to the frame.
@@ -56,6 +59,15 @@ void emgpu_frame_dummy(emgpu_frame* frame);
 emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_surface* surface);
 
 /**
+ * @brief Imports a texture into the frame to ensure lifetime and assigns a id.
+ * 
+ * @param frame Pointer to the frame.
+ * @param texture Texture to import into frame.
+ * @return A refrence to a texture independent of frame lifetime.
+ */
+emgpu_frame_texture emgpu_frame_import_texture(emgpu_frame* frame, emgpu_texture* texture);
+
+/**
  * @brief Set the renderable area for subsequent command.
  * 
  * @param frame Pointer to the frame.
@@ -72,9 +84,10 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size, b8
  *
  * @param frame Pointer to the frame.
  * @param renderpass Pointer to the render pass to bind.
- * @param render_texture Texture to the render the output data to.
+ * @param texture_attachments Array of texture to output render data to.
+ * @param attachment_count Number of texture attachments to render to.
  */
-void emgpu_frame_bind_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture render_texture);
+void emgpu_frame_bind_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count);
 
 /**
  * @brief Inserts a memory barrier between pipeline.

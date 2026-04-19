@@ -15,7 +15,6 @@ em_result vulkan_renderpass_create(
     VkAttachmentReference* colour_attachments  = NULL;
     VkAttachmentDescription* attachment_descs = darray_reserve(VkAttachmentDescription, out_renderpass->attachment_count, MEMORY_TAG_RENDERER);
 
-
     for (u32 i = 0; i < out_renderpass->attachment_count; ++i) {
         const emgpu_attachment_config* attachment = &config->attachments[i];
 
@@ -70,11 +69,25 @@ em_result vulkan_renderpass_create(
     CHECK_VKRESULT(
         vkCreateRenderPass(context->logical_device, &pass_create_info, context->allocator, &internal_renderpass->handle),
         "Failed to create internal Vulkan renderpass");
+
+    darray_destroy(attachment_descs);
+    if (colour_attachments) darray_destroy(colour_attachments);
     return EMBER_RESULT_OK;
 }
 
 void vulkan_renderpass_destroy(
     emgpu_device* device,
     emgpu_renderpass* renderpass) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 
+    internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)renderpass->internal_data;
+    if (!internal_renderpass)
+        return;
+    
+    if (internal_renderpass->handle)
+        vkDestroyRenderPass(context->logical_device, internal_renderpass->handle, context->allocator);
+
+    mem_free(internal_renderpass, sizeof(internal_vulkan_renderpass), MEMORY_TAG_RENDERER);
+    renderpass->internal_data = NULL;
 }

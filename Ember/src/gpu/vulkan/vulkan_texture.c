@@ -80,7 +80,7 @@ em_result vulkan_texture_recreate(
 
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_SAMPLED) image_create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_STORAGE) image_create_info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
-        if (internal_texture->usage & EMBER_TEXTURE_USAGE_TRANSFER_SRC)  image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        if (internal_texture->usage & EMBER_TEXTURE_USAGE_TRANSFER_SRC) image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_ATTACHMENT_DST) {
@@ -212,5 +212,25 @@ em_result vulkan_texture_upload(
 void vulkan_texture_destroy(
     emgpu_device* device, 
     emgpu_texture* texture) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 
+    internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)texture->internal_data;
+    if (!internal_texture)
+        return;
+    
+    if (internal_texture->view)
+        vkDestroyImageView(context->logical_device,  internal_texture->view, context->allocator);
+    
+    if (internal_texture->memory)
+        vkFreeMemory(context->logical_device, internal_texture->memory, context->allocator);
+
+    if (internal_texture->ownes_image && internal_texture->handle)
+        vkDestroyImage(context->logical_device, internal_texture->handle, context->allocator);
+
+    if (internal_texture->sampler)
+        vkDestroySampler(context->logical_device, internal_texture->sampler, context->allocator);
+
+    mem_free(internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
+    texture->internal_data = NULL;
 }

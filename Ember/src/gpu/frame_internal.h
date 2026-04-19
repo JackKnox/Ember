@@ -43,8 +43,14 @@ typedef struct rendercmd_payload {
         } next_surface_texture;
 
         struct {
+            emgpu_texture* texture;
+            emgpu_frame_texture dst_texture;
+        } import_texture;
+
+        struct {
             emgpu_renderpass* renderpass;
-            emgpu_frame_texture render_texture;
+            emgpu_frame_texture* textures;
+            u32 attachment_count;
         } bind_renderpass;
 
         struct {
