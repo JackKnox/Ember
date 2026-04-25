@@ -5,15 +5,11 @@ typedef enum {
     LOG_LEVEL_ERROR = 1,
     LOG_LEVEL_WARN = 2,
     LOG_LEVEL_INFO = 3,
-    LOG_LEVEL_TRACE = 4
+    LOG_LEVEL_TRACE = 4,
+    LOG_LEVEL_DEV = 5,
 } log_level;
 
 void log_output(log_level level, const char* subsystem, const char* message, ...);
-
-#if !EM_ENABLE_LOGGING
-#   define EM_INFO(...)
-#   define EM_TRACE(...)
-#endif
 
 #ifndef EM_LOG
 // General logging function for Ember.
@@ -45,7 +41,13 @@ void log_output(log_level level, const char* subsystem, const char* message, ...
 #define EM_TRACE(subsystem, message, ...) EM_LOG(LOG_LEVEL_TRACE, subsystem, message, __VA_ARGS__)
 #endif
 
-#if EM_ENABLE_ASSERTS
+#ifndef EM_DEV
+// Logs a dev-level message.
+#define EM_DEV(subsystem, message, ...) EM_LOG(LOG_LEVEL_DEV, subsystem, message, __VA_ARGS__)
+#endif
+
+#define EMBER_ENABLE_ASSERTS // TODO: Define distribution mode.
+#ifdef EMBER_ENABLE_ASSERTS
 // * NOTE: Assertions in the engine are used to validate internal state and function arguments 
 // *       that originate from within the engine itself. Assertions should only be used to detect 
 // *       programming errors or invalid engine state. Any user-provided input must be validated explicitly 

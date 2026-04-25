@@ -6,15 +6,11 @@
 rendercmd_payload* add_command(emgpu_frame* cmd, emgpu_device_mode mode, rendercmd_payload_type type, u64 payload_size) {
     EM_ASSERT(cmd != NULL && "Invalid arguments passed to add_command");
 
-    void* user_memory = freelist_push(&cmd->buffer, payload_size, NULL);
-    if (!user_memory) {
-        EM_ERROR("gpu", "Frame object allocation failed.");
-        return NULL;
-    }
+    rendercmd_payload* payload;
+    payload = (rendercmd_payload*)freelist_push(&cmd->buffer, sizeof(payload->hdr) + payload_size, NULL);
 
-    rendercmd_payload* payload = (rendercmd_payload*)user_memory;
-    payload->type = type;
-    payload->command_mode = mode;
+    payload->hdr.type = type;
+    payload->hdr.command_mode = mode;
     return payload_size > 0 ? payload : NULL;
 }
 

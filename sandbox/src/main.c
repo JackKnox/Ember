@@ -10,7 +10,7 @@
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
             LOG_OUTPUT(LOG_LEVEL_ERROR, message ": %s",    \
-					em_result_string(result, EM_ENABLE_VALIDATION)); \
+					em_result_string(result, EMBER_BUILD_DEBUG)); \
             goto failed_init;                             \
         }                                                 \
     }

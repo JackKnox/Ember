@@ -5,8 +5,8 @@
 #include <stdarg.h>
 
 void log_output(log_level level, const char* subsystem, const char* message, ...) {
-    const char* level_strings[] = { "FATAL", "ERROR",  "WARN",  "INFO",  "TRACE" };
-    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m" };
+    const char* level_strings[] = { "FATAL", "ERROR",  "WARN",  "INFO",  "TRACE", "DEV" };
+    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m", "\033[0;30m" };
     EM_ASSERT(level < EM_ARRAYSIZE(level_strings) && subsystem != NULL && message != NULL && "Invalid arguments passed to log_output");
 
     va_list args;

@@ -1,16 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
-project(Ember VERSION 1.0 LANGUAGES C)
+project(Ember VERSION 0.2 LANGUAGES C)
 
 include(FetchContent)
 
 set(CMAKE_C_STANDARD 99)
 
-# Allow custom build types
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist" CACHE STRING "" FORCE)
+set(MAIN_PROJECT OFF)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(MAIN_PROJECT ON)
+endif()
 
-# Single-config generators (Ninja, Makefiles)
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+set(DEV_MODE OFF)
+if (${MAIN_PROJECT})
+    message(STATUS "Enabling DEV mode as Ember is the main project")
+    set(DEV_MODE ON)
 endif()
 
 add_subdirectory(Ember)

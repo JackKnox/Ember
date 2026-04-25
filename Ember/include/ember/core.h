@@ -159,23 +159,6 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #   error "Unknown platform!"
 #endif
 
-#if defined(EMBER_BUILD_DEV)
-#   define EM_ENABLE_ASSERTS 1
-#   define EM_ENABLE_LOGGING 1
-#   define EM_ENABLE_DIAGNOSTICS 1
-#   define EM_ENABLE_VALIDATION 1
-#elif defined(EMBER_BUILD_RELEASE)
-#   define EM_ENABLE_ASSERTS 1
-#   define EM_ENABLE_LOGGING 1
-#   define EM_ENABLE_DIAGNOSTICS 0
-#   define EM_ENABLE_VALIDATION 1
-#elif defined(EMBER_BUILD_DIST)
-#   define EM_ENABLE_ASSERTS 0
-#   define EM_ENABLE_LOGGING 0
-#   define EM_ENABLE_DIAGNOSTICS 0
-#   define EM_ENABLE_VALIDATION 0
-#endif
-
 typedef u32 em_version;
 
 #define EM_API_MAKE_VERSION(major, minor, patch) \
@@ -237,6 +220,7 @@ const char* em_result_string(em_result result, b8 get_extended);
 
 #define EM_OFFSETOF(s, m) (&(((s*)0)->m))
 
+// TODO: Retrieve from cmake project
 // :)
 #define EMBER_VERSION EM_API_MAKE_VERSION(0, 2, 0)
 
