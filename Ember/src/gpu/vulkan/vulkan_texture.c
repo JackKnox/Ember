@@ -81,7 +81,7 @@ em_result vulkan_texture_recreate(
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_SAMPLED) image_create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_STORAGE) image_create_info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_TRANSFER_SRC) image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        if (context->enabled_modes  & EMBER_DEVICE_MODE_TRANSFER) image_create_info.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
         if (internal_texture->usage & EMBER_TEXTURE_USAGE_ATTACHMENT_DST) {
             u32 flags = EMBER_FORMAT_FLAGS(texture->image_format);

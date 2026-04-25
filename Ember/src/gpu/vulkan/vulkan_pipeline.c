@@ -43,7 +43,7 @@ em_result vulkan_pipeline_create_layout(
 
 			VkDescriptorPoolSize* pool_size = darray_push_empty(descriptor_pools);
 			pool_size->type            = binding->descriptorType;
-			pool_size->descriptorCount = context->config.frames_in_flight;
+			pool_size->descriptorCount = context->frames_in_flight;
 		}
         // ------------------------------------------
 
@@ -58,7 +58,7 @@ em_result vulkan_pipeline_create_layout(
 
         // Create descriptor pool.
 		VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-		pool_info.maxSets       = context->config.frames_in_flight;
+		pool_info.maxSets       = context->frames_in_flight;
 		pool_info.poolSizeCount = darray_length(descriptor_pools);
 		pool_info.pPoolSizes    = descriptor_pools;
         CHECK_VKRESULT(

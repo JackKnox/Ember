@@ -26,17 +26,16 @@ int main(int argc, char** argv) {
 		"Failed to open window");
 
 	emgpu_device_config device_config = emgpu_device_default();
-	device_config.enabled_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
+	device_config.required_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
+	device_config.optional_modes = EMBER_DEVICE_MODE_VALIDATION;
 	device_config.application_name = window_config.title;
-	device_config.enable_validation = TRUE;
 	
 	emgpu_device device = {};
 	CHECK_FUNC(
 		emgpu_device_init(&device_config, &device), 
 		"Failed to create rendering device");
 
-	if (device_config.enable_validation)
-		emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
+	emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
 
 	emgpu_surface_config surface_config = emgpu_surface_default();
 	surface_config.window = &window;
@@ -56,6 +55,7 @@ int main(int argc, char** argv) {
 			.store_op = EMBER_STORE_OP_STORE,
 			.stencil_load_op = EMBER_LOAD_OP_DONT_CARE,
 			.stencil_store_op = EMBER_STORE_OP_DONT_CARE,
+			.presentable = TRUE,
 		}
 	};
 
@@ -82,7 +82,8 @@ int main(int argc, char** argv) {
 			emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
 
 			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
-			emgpu_frame_bind_renderpass(&frame, &mainpass, &window_tex, 1);
+			emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
+			emgpu_frame_end_renderpass(&frame);
 
 			CHECK_FUNC(
 				device.submit_frame(&device, &frame), 

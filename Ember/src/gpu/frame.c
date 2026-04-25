@@ -31,7 +31,7 @@ void emgpu_frame_dummy(emgpu_frame* frame) {
 }
 
 emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_surface* surface) {
-    rendercmd_payload* payload; // DO NOT CHANGE MODE.
+    rendercmd_payload* payload; // * DO NOT CHANGE MODE.
     payload = add_command(frame, EMBER_DEVICE_MODE_GRAPHICS, RENDERCMD_BIND_NEXT_SURFACE_TEXTURE, sizeof(payload->next_surface_texture));
     payload->next_surface_texture.surface = surface;
     payload->next_surface_texture.dst_texture = frame->current_resource_idx++;
@@ -52,14 +52,18 @@ void emgpu_frame_set_renderarea(emgpu_frame *frame, uvec2 origin, uvec2 size, b8
     payload->set_renderarea.set_scissor = set_scissor;
 }
 
-void emgpu_frame_bind_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
+void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
     rendercmd_payload* payload;
-    payload = add_command(frame, EMBER_DEVICE_MODE_GRAPHICS, RENDERCMD_BIND_RENDERPASS, sizeof(payload->bind_renderpass) + sizeof(emgpu_frame_texture) * attachment_count);
+    payload = add_command(frame, EMBER_DEVICE_MODE_GRAPHICS, RENDERCMD_BEGIN_RENDERPASS, sizeof(payload->bind_renderpass) + sizeof(emgpu_frame_texture) * attachment_count);
     payload->bind_renderpass.renderpass = renderpass;
-    payload->bind_renderpass.textures = (emgpu_frame_texture*)((u8*)payload + sizeof(payload->bind_renderpass));
+    payload->bind_renderpass.attachments = (emgpu_frame_texture*)((u8*)payload + sizeof(payload->bind_renderpass));
     payload->bind_renderpass.attachment_count = attachment_count;
 
-    emc_memcpy(payload->bind_renderpass.textures, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
+    emc_memcpy(payload->bind_renderpass.attachments, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
+}
+
+void emgpu_frame_end_renderpass(emgpu_frame* frame) {
+    add_command(frame, 0, RENDERCMD_END_RENDERPASS, 0);
 }
 
 void emgpu_frame_memory_barrier(emgpu_frame* frame, emgpu_pipeline* src_pipeline, emgpu_pipeline* dst_pipeline, emgpu_access_flags src_access, emgpu_access_flags dst_access) {

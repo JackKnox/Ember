@@ -23,7 +23,7 @@
         VkResult result = func;                           \
         if (!vulkan_result_is_success(result)) {          \
             EM_ERROR("Vulkan", message ": %s",             \
-                     vulkan_result_string(result, EM_ENABLE_VALIDATION)); \
+                     vulkan_result_string(result, EMBER_BUILD_DEBUG)); \
             return em_result_from_vulkan_result(result);  \
         }                                                 \
     }
@@ -110,11 +110,14 @@ typedef struct internal_vulkan_texture {
 // Represents the global Vulkan backend context.
 // Owns the Vulkan instance, device, swapchain, synchronization primitives, and per-frame resources.
 typedef struct vulkan_context {
-    emgpu_device_config config;
+    u32 frames_in_flight;
+    emgpu_device_mode enabled_modes;
 
     VkInstance instance;
     VkAllocationCallbacks* allocator;
+#ifdef EMBER_DEV
     VkDebugUtilsMessengerEXT debug_messenger;
+#endif
 
     VkPhysicalDevice physical_device;
     VkDevice logical_device;

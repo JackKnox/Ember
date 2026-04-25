@@ -39,13 +39,15 @@ const char* emgpu_device_type_string(emgpu_device_type device_type);
  * Modes may be combined as bit flags.
  */
 typedef enum emgpu_device_mode {
-    EMBER_DEVICE_MODE_GRAPHICS = 1 << 0,  /**< Graphics pipeline operations */
-    EMBER_DEVICE_MODE_COMPUTE  = 1 << 1,  /**< Compute shader operations */
-    EMBER_DEVICE_MODE_TRANSFER = 1 << 2,  /**< Data transfer operations */
-    EMBER_DEVICE_MODE_PRESENT  = 1 << 3,  /**< Presentation to a platform surface */
+    EMBER_DEVICE_MODE_GRAPHICS = 1 << 0,    /**< Graphics pipeline operations */
+    EMBER_DEVICE_MODE_COMPUTE  = 1 << 1,    /**< Compute shader operations */
+    EMBER_DEVICE_MODE_TRANSFER = 1 << 2,    /**< Data transfer operations */
+    EMBER_DEVICE_MODE_PRESENT  = 1 << 3,    /**< Presentation to a platform surface */
+    EMBER_DEVICE_MODE_VALIDATION = 1 << 4,  /**< Impl-agnostic validation layer */
+    EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY = 1 << 5, /** Use of sampler anisotropy in textures */
+    
     // EMBER_DEVICE_MODE_RAYTRACING
     // EMBER_DEVICE_MODE_POWER_SAVING
-    // EMBER_DEVICE_MODE_ENABLE_VALIDATION
 } emgpu_device_mode;
 
 /**
@@ -220,7 +222,7 @@ typedef struct emgpu_descriptor_desc {
 /**
  * @brief Raw shader stage data.
  *
- * Contains compiled bytecode loaded from disk or memory.
+ * Contains compiled bytecode (SPIR-V) loaded from disk or memory.
  */
 typedef struct emgpu_shader_src {
     /** @brief Pointer to compiled bytecode. */
@@ -229,7 +231,7 @@ typedef struct emgpu_shader_src {
     /** @brief Size of the shader data in bytes. */
     u64 size;
 
-    /** @brief Name of entrypoint in shader ran by the rendering device. */
+    /** @brief Name of function in shader ran by the rendering device. */
     const char* entry_point;
 } emgpu_shader_src;
 
@@ -242,6 +244,9 @@ typedef struct emgpu_device_capabilities {
 
     /** @brief Device classification. */
     emgpu_device_type device_type;
+
+    /** @brief Enabled modes in device. */
+    emgpu_device_mode enabled_modes;
 
     /** @brief Version of the internal API used by the device. */
     em_version internal_api_version;
@@ -263,11 +268,24 @@ typedef struct emgpu_device_capabilities {
  * @brief Configuration for creating a renderer backend.
  */
 typedef struct emgpu_device_config {
-    /** @brief Enable validation and debug messages. */
-    b8 enable_validation;
+    /** @brief Name of the application. */
+    const char* application_name;
+    
+    /** @brief Selected backend API type. */
+    emgpu_device_backend api_type;
 
-    /** @brief Enable sampler anisotropy if supported. */
-    b8 sampler_anisotropy;
+    /** @brief Version of the cretaed app in `em_version` format. */
+    em_version application_version;
+
+    /** @brief Required modes for the device to function (bitmask). */
+    emgpu_device_mode required_modes;
+
+    /** 
+     * @brief Optional device modes that may or may not be supported (bitmask). 
+     * 
+     * @note See final modes in capabilities structure . 
+     */
+    emgpu_device_mode optional_modes;
 
     /**
      * @brief Number of frames processed concurrently.
@@ -275,18 +293,6 @@ typedef struct emgpu_device_config {
      * Must be greater than 1.
      */
     u32 frames_in_flight;
-
-    /** @brief Version of the cretaed app in `em_version` format. */
-    em_version application_version;
-
-    /** @brief Enabled renderer modes (bitmask). */
-    emgpu_device_mode enabled_modes;
-
-    /** @brief Selected backend API type. */
-    emgpu_device_backend api_type;
-
-    /** @brief Name of the application. */
-    const char* application_name;
 } emgpu_device_config;
 
 /**

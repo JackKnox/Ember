@@ -22,7 +22,7 @@ VkImageUsageFlags vulkan_texture_usage(vulkan_context* context, const emgpu_text
 	VkImageUsageFlags image_usage = 0;
     if (config->usage & EMBER_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     if (config->usage & EMBER_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
-	if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	if (context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     return image_usage;
 }
@@ -33,7 +33,7 @@ VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buff
 	if (config->usage & EMBER_BUFFER_USAGE_INDEX)   buffer_usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	if (config->usage & EMBER_BUFFER_USAGE_STORAGE) buffer_usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	if (config->usage & EMBER_BUFFER_USAGE_CPU_VISIBLE) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	if (context->config.enabled_modes & EMBER_DEVICE_MODE_TRANSFER) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	if (context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
     return buffer_usage;
 }

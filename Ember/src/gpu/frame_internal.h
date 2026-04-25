@@ -14,7 +14,8 @@ enum {
     RENDERCMD_SET_RENDERAREA,
     RENDERCMD_BIND_NEXT_SURFACE_TEXTURE,
     RENDERCMD_BIND_IMPORT_TEXTURE,
-    RENDERCMD_BIND_RENDERPASS,
+    RENDERCMD_BEGIN_RENDERPASS,
+    RENDERCMD_END_RENDERPASS,
     RENDERCMD_MEMORY_BARRIER,
     RENDERCMD_BIND_PIPELINE,
     RENDERCMD_DRAW,
@@ -28,8 +29,10 @@ enum {
 typedef u32 rendercmd_payload_type;
 
 typedef struct rendercmd_payload {
-    rendercmd_payload_type type;
-    emgpu_device_mode command_mode; // TODO: Push to device backends.
+    struct {
+        rendercmd_payload_type type;
+        emgpu_device_mode command_mode; // TODO: Push to device backends.
+    } hdr;
 
     union {
         struct {
@@ -49,7 +52,7 @@ typedef struct rendercmd_payload {
 
         struct {
             emgpu_renderpass* renderpass;
-            emgpu_frame_texture* textures;
+            emgpu_frame_texture* attachments;
             u32 attachment_count;
         } bind_renderpass;
 

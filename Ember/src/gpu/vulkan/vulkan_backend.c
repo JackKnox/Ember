@@ -30,7 +30,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_config* config) {
     device->internal_context = mem_allocate(sizeof(vulkan_context), MEMORY_TAG_RENDERER);
     vulkan_context* context = (vulkan_context*)device->internal_context;
-    context->config = *config;
+
+    context->frames_in_flight = config->frames_in_flight;
+    context->enabled_modes = config->required_modes | config->optional_modes;
 
     // * NOTE: This value is kind of a lie as each frame waits for the next one
     // *       in the future this should act as a trade between memory and performance.
@@ -156,8 +158,8 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     vkEnumeratePhysicalDevices(context->instance, &physical_device_count, physical_devices);
 
     // Build a list of required device extensions based on configuration
-    const char** required_device_extensions = darray_create(const char*, MEMORY_TAG_RENDERER);
-    if (config->enabled_modes & EMBER_DEVICE_MODE_PRESENT) darray_push(required_device_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    const char** required_device_extensions = darray_create(const char*, MEMORY_TAG_TEMP);
+    if (context->enabled_modes & EMBER_DEVICE_MODE_PRESENT) darray_push(required_device_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     
     vulkan_queue queue_support[VULKAN_QUEUE_TYPE_MAX] = {};
     // Iterate over all available physical devices to find the most suitable one
@@ -218,10 +220,10 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             }
         }
 
-        if (((config->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index == -1) ||
-            ((config->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  == -1) ||
-            ((config->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index == -1) ||
-            ((config->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  && queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index  == -1)) {
+        if (((context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index == -1) ||
+            ((context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  == -1) ||
+            ((context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index == -1) ||
+            ((context->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  && queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index  == -1)) {
             continue;
         }
 
@@ -256,7 +258,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         EM_TRACE("Vulkan", "  Present support: %s", queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index != -1 ? "yes" : "no");
 
         // Sampler anisotropy
-        if (config->sampler_anisotropy && !features.samplerAnisotropy) {
+        if ((context->enabled_modes & EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY) && !features.samplerAnisotropy) {
             EM_INFO("Vulkan", "Device does not support sampler anisotropy.");
             continue;
         }
@@ -306,7 +308,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     // Request device features.
     VkPhysicalDeviceFeatures device_features = {};
-    device_features.samplerAnisotropy = context->config.sampler_anisotropy;  // Request anisotropy
+    if (context->enabled_modes & EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY) device_features.samplerAnisotropy = TRUE;  // Request anisotropy
 
     VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     device_create_info.queueCreateInfoCount = darray_length(queue_create_info);
@@ -326,7 +328,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     // Create command pool for necessary queue.
     for (u32 i = 0; i < EM_ARRAYSIZE(context->mode_queues); ++i) {
-        if (!(context->config.enabled_modes & queue_support[i].supported_modes)) continue;
+        if (!(context->enabled_modes & queue_support[i].supported_modes)) continue;
         vulkan_queue* mode = &context->mode_queues[i];
 
         mode->family_index = queue_support[i].family_index;
@@ -354,14 +356,14 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     EM_INFO("Vulkan", "Creating intermediate render objects");
 
-    if (config->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) {
+    if (context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
         EM_TRACE("Vulkan", "Creating global Vulkan graphics command ring");
 
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         allocate_info.commandPool = context->mode_queues[queue_type].pool;
         allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = context->config.frames_in_flight;
+        allocate_info.commandBufferCount = context->frames_in_flight;
 
         context->graphics_command_ring = mem_allocate(sizeof(VkCommandBuffer) * allocate_info.commandBufferCount, MEMORY_TAG_RENDERER);
 
@@ -373,14 +375,14 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             "Failed to create Vulkan graphics command buffers");
 	}
 
-	if (config->enabled_modes & EMBER_DEVICE_MODE_COMPUTE) {
+	if (context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_COMPUTE;
         EM_TRACE("Vulkan", "Creating global Vulkan compute command ring");
 
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         allocate_info.commandPool = context->mode_queues[queue_type].pool;
         allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = context->config.frames_in_flight;
+        allocate_info.commandBufferCount = context->frames_in_flight;
 
         context->compute_command_ring = mem_allocate(sizeof(VkCommandBuffer) * allocate_info.commandBufferCount, MEMORY_TAG_RENDERER);
 
@@ -395,7 +397,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     context->semaphore_pool = darray_create(VkSemaphore, MEMORY_TAG_RENDERER);
     context->in_flight_fences = darray_reserve(VkFence, context->frames_in_flight, MEMORY_TAG_RENDERER);
 
-    for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
+    for (u32 i = 0; i < context->frames_in_flight; ++i) {
 		VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
@@ -416,7 +418,7 @@ void vulkan_device_shutdown(emgpu_device* device) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 
-    for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
+    for (u32 i = 0; i < context->frames_in_flight; ++i) {
         if (context->in_flight_fences[i]) {
             vkDestroyFence(
                 context->logical_device, 
@@ -442,10 +444,10 @@ void vulkan_device_shutdown(emgpu_device* device) {
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            context->config.frames_in_flight, 
+            context->frames_in_flight, 
             context->compute_command_ring);
 
-        mem_free(context->compute_command_ring, sizeof(VkCommandBuffer) * context->config.frames_in_flight, MEMORY_TAG_RENDERER);
+        mem_free(context->compute_command_ring, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
     if (context->graphics_command_ring) {
@@ -453,10 +455,10 @@ void vulkan_device_shutdown(emgpu_device* device) {
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            context->config.frames_in_flight, 
+            context->frames_in_flight, 
             context->graphics_command_ring);
         
-        mem_free(context->graphics_command_ring, sizeof(VkCommandBuffer) * context->config.frames_in_flight, MEMORY_TAG_RENDERER);
+        mem_free(context->graphics_command_ring, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
     for (u32 i = 0; i < EM_ARRAYSIZE(context->mode_queues); ++i) {

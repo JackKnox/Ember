@@ -34,6 +34,8 @@ em_result emgpu_frame_init(emgpu_frame* frame);
 /**
  * @brief Validates the recorded commands in the frame.
  *
+ * May print warnings messages for common pitfalls.
+ * 
  * @param frame Pointer to the frame to validate.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
@@ -80,14 +82,16 @@ emgpu_frame_texture emgpu_frame_import_texture(emgpu_frame* frame, emgpu_texture
 void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size, b8 set_scissor);
 
 /**
- * @brief Binds a render pass to the frame.
+ * @brief Begins a render pass within the frame.
  *
  * @param frame Pointer to the frame.
  * @param renderpass Pointer to the render pass to bind.
  * @param texture_attachments Array of texture to output render data to.
  * @param attachment_count Number of texture attachments to render to.
  */
-void emgpu_frame_bind_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count);
+void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count);
+
+void emgpu_frame_end_renderpass(emgpu_frame* frame);
 
 /**
  * @brief Inserts a memory barrier between pipeline.
@@ -117,6 +121,13 @@ void emgpu_frame_memory_barrier(
  * @param pipeline Pointer to the pipeline to begin.
  */
 void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline);
+
+/**
+ * @brief Issues a graphics draw call.
+ * @param vertex_count Number of vertices to draw.
+ * @param instance_count Number of instances to draw.
+ */
+void emgpu_frame_draw(emgpu_frame* frame, u32 vertex_count, u32 instance_count);
 
 /**
  * @brief Issues an indexed draw call.

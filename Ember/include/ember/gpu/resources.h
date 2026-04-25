@@ -187,7 +187,11 @@ typedef struct emgpu_texture_config {
     /** @brief Refrence to extra configuration structure specific to API type. */
     void* api_next;
 
-    /** @brief Max anisotropy of attached sampler in backend, ignored if texture is not sampled. */
+    /** 
+     * @brief Max anisotropy of attached sampler in backend.
+     * 
+     * @note Ignored if texture is not sampled or equals zero. 
+     */
     f32 max_anisotropy;
 } emgpu_texture_config;
 
@@ -249,6 +253,9 @@ typedef struct emgpu_attachment_config {
      * Only relevant for stencil or depth-stencil attachments.
      */
     emgpu_store_op stencil_store_op;
+
+    /** @brief Compatible with rendering to a surface object. */
+    b8 presentable;
 } emgpu_attachment_config;
 
 /**
