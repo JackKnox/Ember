@@ -17,13 +17,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
 		EM_WARN("Vulkan", callback_data->pMessage);
 		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		EM_INFO("Vulkan", callback_data->pMessage);
-		break;
 
 	default:
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		EM_TRACE("Vulkan", callback_data->pMessage);
+		EM_DEV("Vulkan", callback_data->pMessage);
 		break;
 	}
 
@@ -46,20 +43,20 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     const char** platform_extensions = vulkan_platform_get_required_extensions(&platform_extension_count);
 
 	// Obtain a list of required extensions
-	const char** required_extensions = darray_from_data(const char*, platform_extension_count, platform_extensions, MEMORY_TAG_RENDERER);
-	const char** required_validation_layers = darray_create(const char*, MEMORY_TAG_RENDERER);
+	const char** required_extensions = darray_from_data(const char*, platform_extension_count, platform_extensions, MEMORY_TAG_TEMP);
+	const char** required_validation_layers = darray_create(const char*, MEMORY_TAG_TEMP);
 
 	// Add debug extensions/layers if enabled
-	if (config->enable_validation) {
-		darray_push(required_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-		darray_push(required_validation_layers, "VK_LAYER_KHRONOS_validation");
-	}
+#ifdef EMBER_DEV
+    darray_push(required_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    darray_push(required_validation_layers, "VK_LAYER_KHRONOS_validation");
+#endif
 
     // Verify exsistence of validation layers
 	u32 supported_layer_count = 0;
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, NULL);
 
-	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, MEMORY_TAG_RENDERER);
+	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, MEMORY_TAG_TEMP);
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, supported_layers);
 
 	for (u32 i = 0; i < darray_length(required_validation_layers); ++i) {
@@ -115,30 +112,32 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 	darray_destroy(required_validation_layers);
 
     // Setup debug messenger if validation enabled
-	if (config->enable_validation) {
-		VkDebugUtilsMessengerCreateInfoEXT debug_create_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-		debug_create_info.messageSeverity = 
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-		debug_create_info.messageType =
-			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-		debug_create_info.pfnUserCallback = vk_debug_callback;
+#ifdef EMBER_DEV
+    VkDebugUtilsMessengerCreateInfoEXT debug_create_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
+    debug_create_info.messageSeverity = 
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT    |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debug_create_info.messageType =
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT     |
+        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+    debug_create_info.pfnUserCallback = vk_debug_callback;
 
-		PFN_vkCreateDebugUtilsMessengerEXT create_debug_messenger = 
-			(PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context->instance, "vkCreateDebugUtilsMessengerEXT");
+    PFN_vkCreateDebugUtilsMessengerEXT create_debug_messenger = 
+        (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context->instance, "vkCreateDebugUtilsMessengerEXT");
 
-        EM_INFO("Vulkan", "Creating Vulkan validation layers.");
+    EM_INFO("Vulkan", "Creating Vulkan validation layers.");
 
-		CHECK_VKRESULT(
-			create_debug_messenger(
-				context->instance, 
-				&debug_create_info, 
-				context->allocator, 
-				&context->debug_messenger),
-			"Failed to create internal Vulkan debug messenger");
-	}
+    CHECK_VKRESULT(
+        create_debug_messenger(
+            context->instance, 
+            &debug_create_info, 
+            context->allocator, 
+            &context->debug_messenger),
+        "Failed to create internal Vulkan debug messenger");
+#endif
 
     // Query the number of available Vulkan physical devices (GPUs)
     u32 physical_device_count = 0;
@@ -153,7 +152,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     EM_TRACE("Vulkan", "Enumerated %i physical device(s).", physical_device_count);
 
-    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, MEMORY_TAG_RENDERER);
+    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, MEMORY_TAG_TEMP);
     vkEnumeratePhysicalDevices(context->instance, &physical_device_count, physical_devices);
 
     // Build a list of required device extensions based on configuration
@@ -179,7 +178,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
         u32 queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, 0);
-        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, MEMORY_TAG_RENDERER);
+        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, MEMORY_TAG_TEMP);
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families);
 
         // Look at each queue and see what queues it supports
@@ -233,7 +232,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         u32 supported_extension_count = 0;
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, NULL);
 
-        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, MEMORY_TAG_RENDERER);
+        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, MEMORY_TAG_TEMP);
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, supported_extensions);
 
         for (u32 i = 0; i < darray_length(required_device_extensions); ++i) {
@@ -280,7 +279,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     EM_INFO("Vulkan", "Creating logical device.");
 
     f32 queue_priority = 1.0f;
-    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, MEMORY_TAG_RENDERER);
+    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, MEMORY_TAG_TEMP);
 
     for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
         u32 family = queue_support[i].family_index;
@@ -394,7 +393,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 	}
 
     context->semaphore_pool = darray_create(VkSemaphore, MEMORY_TAG_RENDERER);
-    context->in_flight_fences = darray_reserve(VkFence, context->config.frames_in_flight, MEMORY_TAG_RENDERER);
+    context->in_flight_fences = darray_reserve(VkFence, context->frames_in_flight, MEMORY_TAG_RENDERER);
 
     for (u32 i = 0; i < context->config.frames_in_flight; ++i) {
 		VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
@@ -472,12 +471,14 @@ void vulkan_device_shutdown(emgpu_device* device) {
     if (context->logical_device)
         vkDestroyDevice(context->logical_device, context->allocator);
 
+#ifdef EMBER_DEV
     if (context->debug_messenger) {
         PFN_vkDestroyDebugUtilsMessengerEXT func =
             (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context->instance, "vkDestroyDebugUtilsMessengerEXT");
         
         func(context->instance, context->debug_messenger, context->allocator);
     }
+#endif
 
     if (context->instance)
         vkDestroyInstance(context->instance, context->allocator);

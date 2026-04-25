@@ -31,7 +31,7 @@ em_result vulkan_surface_create(
 
     // Swapchain format count.
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, NULL);
-    VkSurfaceFormatKHR* formats = mem_allocate(sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_RENDERER);
+    VkSurfaceFormatKHR* formats = mem_allocate(sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, formats);
     // --------------------------------------
 
@@ -64,7 +64,7 @@ em_result vulkan_surface_create(
     out_surface->pixel_format = vulkan_format_to_engine(found_format.format);
     internal_surface->colour_space = found_format.colorSpace;
 
-    mem_free(formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_RENDERER);
+    mem_free(formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
 
     return vulkan_surface_recreate(device, out_surface, config->window->size);
 }
@@ -158,7 +158,7 @@ em_result vulkan_surface_recreate(
             NULL), 
         "Failed to retrieve Vulkan swapchain images");
     
-    VkImage* images = (VkImage*)mem_allocate(sizeof(VkImage) * surface->image_count, MEMORY_TAG_RENDERER);
+    VkImage* images = (VkImage*)mem_allocate(sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     vkGetSwapchainImagesKHR(context->logical_device, internal_surface->swapchain, &surface->image_count, images);
 
     if (!internal_surface->swapchain_images)
@@ -201,7 +201,7 @@ em_result vulkan_surface_recreate(
     vkDestroyFence(context->logical_device, temp_fence, context->allocator);
     // --------------------------------------
 
-    mem_free(images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_RENDERER);
+    mem_free(images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
 }
 
