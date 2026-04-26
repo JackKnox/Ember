@@ -3,7 +3,9 @@
 
 #include <ember/gpu/device.h>
 
-#define LOG_OUTPUT(level, message, ...) log_output(level, "Sandbox", message __VA_OPT__(,) __VA_ARGS__)
+#include <ember/core/allocators.h>
+
+#define LOG_OUTPUT(level, message, ...) em_log_console(level, "Sandbox", message __VA_OPT__(,) __VA_ARGS__)
 
 #define CHECK_FUNC(func, message)                          \
     {                                                      \

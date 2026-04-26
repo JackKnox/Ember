@@ -1,19 +1,21 @@
 #include "ember/core.h"
 #include "vulkan_renderpass.h"
 
+#include "ember/core/darray.h"
+
 em_result vulkan_renderpass_create(
     emgpu_device* device,
     const emgpu_renderpass_config* config,
     emgpu_renderpass* out_renderpass) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    out_renderpass->internal_data = (internal_vulkan_renderpass*)mem_allocate(sizeof(internal_vulkan_renderpass), MEMORY_TAG_RENDERER);
+    out_renderpass->internal_data = (internal_vulkan_renderpass*)mem_allocate(NULL, sizeof(internal_vulkan_renderpass), MEMORY_TAG_RENDERER);
     internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)out_renderpass->internal_data;
 
     out_renderpass->attachment_count = config->attachment_count;
 
     VkAttachmentReference* colour_attachments  = NULL;
-    VkAttachmentDescription* attachment_descs = darray_reserve(VkAttachmentDescription, out_renderpass->attachment_count, MEMORY_TAG_TEMP);
+    VkAttachmentDescription* attachment_descs = darray_reserve(VkAttachmentDescription, out_renderpass->attachment_count, NULL, MEMORY_TAG_TEMP);
 
     for (u32 i = 0; i < out_renderpass->attachment_count; ++i) {
         const emgpu_attachment_config* attachment = &config->attachments[i];
@@ -21,7 +23,7 @@ em_result vulkan_renderpass_create(
         VkAttachmentReference* reference = NULL;
         switch (attachment->type) {
             case EMBER_ATTACHMENT_TYPE_COLOUR:
-                if (!colour_attachments) colour_attachments = darray_create(VkAttachmentReference, MEMORY_TAG_TEMP);
+                if (!colour_attachments) colour_attachments = darray_create(VkAttachmentReference, NULL, MEMORY_TAG_TEMP);
                 reference = darray_push_empty(colour_attachments);
                 break;
             
@@ -76,7 +78,7 @@ em_result vulkan_renderpass_create(
     darray_destroy(attachment_descs);
     if (colour_attachments) darray_destroy(colour_attachments);
 
-    internal_renderpass->framebuffers = darray_create(vulkan_renderpass_framebuffer, MEMORY_TAG_RENDERER);
+    internal_renderpass->framebuffers = darray_create(vulkan_renderpass_framebuffer, NULL, MEMORY_TAG_RENDERER);
     return EMBER_RESULT_OK;
 }
 
@@ -104,6 +106,6 @@ void vulkan_renderpass_destroy(
     if (internal_renderpass->handle)
         vkDestroyRenderPass(context->logical_device, internal_renderpass->handle, context->allocator);
 
-    mem_free(internal_renderpass, sizeof(internal_vulkan_renderpass), MEMORY_TAG_RENDERER);
+    mem_free(NULL, internal_renderpass, sizeof(internal_vulkan_renderpass), MEMORY_TAG_RENDERER);
     renderpass->internal_data = NULL;
 }

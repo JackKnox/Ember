@@ -1,8 +1,6 @@
 #include "ember/core.h"
 #include "vulkan_types.h"
 
-#include "ember/core/string_utils.h"
-
 i32 find_memory_index(vulkan_context *context, u32 type_filter, VkMemoryPropertyFlags property_flags) {
     VkPhysicalDeviceMemoryProperties memory_properties;
     vkGetPhysicalDeviceMemoryProperties(context->physical_device, &memory_properties);

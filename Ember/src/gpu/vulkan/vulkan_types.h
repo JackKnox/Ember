@@ -123,8 +123,14 @@ typedef struct vulkan_context {
     VkDevice logical_device;
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
     
+    // Stuff for frame submission
+    // --------------------------------------
+    VkFence in_flight_fence;
+    VkSemaphore* semaphore_pool;
+    u32 semaphores_total_refresh;
+    // --------------------------------------
 
-    VkCommandBuffer* graphics_command_ring, *compute_command_ring;
+    VkCommandBuffer graphics_commandbuf, compute_commandbuf;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.

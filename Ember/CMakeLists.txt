@@ -1,13 +1,12 @@
 file(GLOB_RECURSE EMBER_SOURCES "src/core/**.c")
 add_library(ember STATIC ${EMBER_SOURCES})
-target_include_directories(ember PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(ember PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_definitions(ember PUBLIC
     $<$<CONFIG:Debug>:EMBER_BUILD_DEBUG>
-    $<$<CONFIG:Release>:EMBER_BUILD_RELEASE>)
-if (DEV_MODE)
-    target_compile_definitions(ember PUBLIC EMBER_DEV)
-endif()
+    $<$<CONFIG:Release>:EMBER_BUILD_RELEASE>
+    $<$<BOOL:${EMBER_DEV}>:EMBER_DEV>
+    $<$<BOOL:${EMBER_DIST}>:EMBER_DIST>)
 
 # Ember platform abstraction module
 # --------------------------------

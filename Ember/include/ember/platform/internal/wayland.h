@@ -9,4 +9,4 @@ typedef struct _emplat_window_wayland {
     GLFWwindow* handle;
 } _emplat_window_wayland;
 
-#define _EMBER_PLATFORM_WINDOW_STATE _emplat_window_wayland wayland;
+#define EMBER_PLATFORM_WINDOW_STATE _emplat_window_wayland wayland;

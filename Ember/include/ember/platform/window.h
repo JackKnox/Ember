@@ -25,16 +25,13 @@ typedef struct emplat_window_config {
 
     /** @brief Window title (UTF-8 string). */
 	const char* title;
-	
-    /**
-     * @brief Window positioning configuration.
-     *
-     * If @ref window_centered is TRUE, the window will be centered on screen.
-     * Otherwise, @ref window_absolute specifies the top-left position in pixels.
-     */
+    
 	union {
-		uvec2 window_absolute; /**< Absolute position in screen coordinates. */
-		b8 window_centered;    /**< Whether the window should be centered. */
+        /** @brief Absolute position in screen coordinates. */
+		uvec2 window_absolute;
+
+        /** @brief Whether the window should be centered. */
+		b8 window_centered;
 	};
 
     /** @brief Initial window size in pixels. */
@@ -58,7 +55,7 @@ typedef struct emplat_window {
     const char* title;
 
     /** @brief Platform-specific window state. */
-	_EMBER_PLATFORM_WINDOW_STATE
+	EMBER_PLATFORM_WINDOW_STATE
 } emplat_window;
 
 /**
@@ -75,10 +72,14 @@ emplat_window_config emplat_window_default();
  * and stores the resulting state in @p out_window.
  *
  * @param config Pointer to the window configuration.
+ * @param last_window Pointer to last window created, may be NULL.
  * @param out_window Pointer to the window to initialise.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds..
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ * 
+ * @note Accurately setting @p last_window is extremely recommened 
+ *       as it avoids creating global state twice across windows.
  */
-em_result emplat_window_open(const emplat_window_config* config, emplat_window* out_window);
+em_result emplat_window_open(const emplat_window_config* config, emplat_window* last_window, emplat_window* out_window);
 
 /**
  * @brief Closes and destroys a window.

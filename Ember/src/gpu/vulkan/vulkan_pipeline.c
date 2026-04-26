@@ -1,6 +1,8 @@
 #include "ember/core.h"
 #include "vulkan_pipeline.h"
 
+#include "ember/core/darray.h"
+
 em_result vulkan_pipeline_create_layout(
     emgpu_device* device, 
     emgpu_shader_src* shader_sources, emgpu_shader_stage_type* stage_types, u32 shader_source_count, 
@@ -31,8 +33,8 @@ em_result vulkan_pipeline_create_layout(
 
     if (descriptor_count > 0) {
         // Collect descriptor data into vulkan structs.
-		VkDescriptorSetLayoutBinding* descriptor_bindings = darray_reserve(VkDescriptorSetLayoutBinding, descriptor_count, MEMORY_TAG_TEMP);
-		VkDescriptorPoolSize* descriptor_pools = darray_reserve(VkDescriptorPoolSize, descriptor_count, MEMORY_TAG_TEMP);
+		VkDescriptorSetLayoutBinding* descriptor_bindings = darray_reserve(VkDescriptorSetLayoutBinding, descriptor_count, NULL, MEMORY_TAG_TEMP);
+		VkDescriptorPoolSize* descriptor_pools = darray_reserve(VkDescriptorPoolSize, descriptor_count, NULL, MEMORY_TAG_TEMP);
 
         for (u32 i = 0; i < descriptor_count; ++i) {
 			VkDescriptorSetLayoutBinding* binding = darray_push_empty(descriptor_bindings);
@@ -67,9 +69,9 @@ em_result vulkan_pipeline_create_layout(
         // ------------------------------------------
 
         // Create descriptor sets per frame in flight.
-		internal_pipeline->descriptor_sets = darray_from_data(VkDescriptorSet, context->frames_in_flight, NULL, MEMORY_TAG_RENDERER);
+		internal_pipeline->descriptor_sets = darray_from_data(VkDescriptorSet, context->frames_in_flight, NULL, NULL, MEMORY_TAG_RENDERER);
 
-        VkDescriptorSetLayout* layouts = darray_reserve(VkDescriptorSetLayout, darray_capacity(internal_pipeline->descriptor_sets), MEMORY_TAG_TEMP);
+        VkDescriptorSetLayout* layouts = darray_reserve(VkDescriptorSetLayout, darray_capacity(internal_pipeline->descriptor_sets), NULL, MEMORY_TAG_TEMP);
 		for (u32 i = 0; i < context->frames_in_flight; ++i)
 			darray_push(layouts, internal_pipeline->descriptor);
 
@@ -105,14 +107,14 @@ em_result vulkan_pipeline_create_graphics(
     emgpu_pipeline* out_graphics_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    out_graphics_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
+    out_graphics_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_graphics_pipeline->internal_data;
 
     out_graphics_pipeline->pipeline_type = EMBER_DEVICE_MODE_GRAPHICS;
     internal_pipeline->graphics.vertex_buffer = config->vertex_buffer;
     internal_pipeline->graphics.index_buffer = config->index_buffer;
 
-    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, MEMORY_TAG_TEMP);
+    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
     emgpu_shader_src shaders_srcs[] = { config->vertex_shader, config->fragment_shader };
     emgpu_shader_stage_type stage_types[] = { EMBER_SHADER_STAGE_TYPE_VERTEX, EMBER_SHADER_STAGE_TYPE_FRAGMENT };
 
@@ -131,7 +133,7 @@ em_result vulkan_pipeline_create_graphics(
     // Vertex input configuration
     // Calculate total vertex stride and fill attribute descriptions.   
     VkVertexInputBindingDescription binding_desc = {};
-    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, config->vertex_attribute_count, MEMORY_TAG_TEMP);
+    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, config->vertex_attribute_count, NULL, MEMORY_TAG_TEMP);
 
     u64 attribute_stride = 0;
     for (u32 i = 0; i < config->vertex_attribute_count; ++i) {
@@ -237,12 +239,12 @@ em_result vulkan_pipeline_create_compute(
     emgpu_pipeline* out_compute_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    out_compute_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
+    out_compute_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_compute_pipeline->internal_data;
 
     out_compute_pipeline->pipeline_type = EMBER_DEVICE_MODE_COMPUTE;
 
-    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, MEMORY_TAG_TEMP);
+    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
     emgpu_shader_src shaders_srcs[] = { config->compute_shader };
     emgpu_shader_stage_type stage_types[] = { EMBER_SHADER_STAGE_TYPE_COMPUTE };
 

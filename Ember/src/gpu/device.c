@@ -51,6 +51,8 @@ em_result emgpu_device_init(const emgpu_device_config* config, emgpu_device* out
 
     EM_INFO("Gpu", "Initializing rendering device: %s", emgpu_backend_type_string(config->api_type));
     EM_TRACE("Gpu", "Application name: %s", config->application_name);
+
+    out_device->frame_allocator = em_allocator_default();
     return out_device->initialize(out_device, config);
 }
 
@@ -59,8 +61,8 @@ void emgpu_device_shutdown(emgpu_device* device) {
     if (device->shutdown) 
         device->shutdown(device);
     
-    if (device->capabilities) mem_free(device->capabilities, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
-    emc_memset(device, 0, sizeof(emgpu_device));
+    if (device->capabilities) mem_free(NULL, device->capabilities, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
+    em_memset(device, 0, sizeof(emgpu_device));
 }
 
 em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level) {
@@ -69,9 +71,9 @@ em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level)
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s %i.%i.%i - %s [%i.%i.%i]", 
         emgpu_backend_type_string(capabilities->api_type),
-        EM_API_VERSION_MAJOR(capabilities->internal_api_version), EM_API_VERSION_MINOR(capabilities->internal_api_version), EM_API_VERSION_PATCH(capabilities->internal_api_version),
+        EMBER_VERSION_MAJOR(capabilities->internal_api_version), EMBER_VERSION_MINOR(capabilities->internal_api_version), EMBER_VERSION_PATCH(capabilities->internal_api_version),
         capabilities->vendor_name,
-        EM_API_VERSION_MAJOR(capabilities->driver_version), EM_API_VERSION_MINOR(capabilities->driver_version),  EM_API_VERSION_PATCH(capabilities->driver_version));
+        EMBER_VERSION_MAJOR(capabilities->driver_version), EMBER_VERSION_MINOR(capabilities->driver_version),  EMBER_VERSION_PATCH(capabilities->driver_version));
     EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
     return EMBER_RESULT_OK;
 }

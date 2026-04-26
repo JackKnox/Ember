@@ -3,21 +3,26 @@
 
 #include "frame_internal.h"
 
-rendercmd_payload* add_command(emgpu_frame* cmd, emgpu_device_mode mode, rendercmd_payload_type type, u64 payload_size) {
-    EM_ASSERT(cmd != NULL && "Invalid arguments passed to add_command");
+#include "ember/core/allocators.h"
 
+rendercmd_payload* add_command(emgpu_frame* frame, emgpu_device_mode mode, rendercmd_payload_type type, u64 payload_size) {
     rendercmd_payload* payload;
-    payload = (rendercmd_payload*)freelist_push(&cmd->buffer, sizeof(payload->hdr) + payload_size, NULL);
+    payload = mem_allocate(&frame->commands, sizeof(payload->hdr) + payload_size, MEMORY_TAG_RENDERER);
 
     payload->hdr.type = type;
     payload->hdr.command_mode = mode;
     return payload_size > 0 ? payload : NULL;
 }
 
-em_result emgpu_frame_init(emgpu_frame* frame) {
-    if (!frame->buffer.memory || !freelist_capacity(&frame->buffer))
-        freelist_create(0, MEMORY_TAG_RENDERER, &frame->buffer);
-    
+em_result emgpu_frame_init(emgpu_frame* frame, emgpu_device* device) {
+    if (frame->initied) {
+        EM_WARN("Gpu", "Already initied frame object but called emgpu_frame_init twice");
+        return EMBER_RESULT_OK;
+    }
+
+    frame->frame_allocator = &device->frame_allocator;
+
+    frame->commands = freelist_allocator(frame->frame_allocator);
     frame->initied = TRUE;
     return EMBER_RESULT_OK;
 }
@@ -59,7 +64,7 @@ void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpa
     payload->bind_renderpass.attachments = (emgpu_frame_texture*)((u8*)payload + sizeof(payload->bind_renderpass));
     payload->bind_renderpass.attachment_count = attachment_count;
 
-    emc_memcpy(payload->bind_renderpass.attachments, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
+    em_memcpy(payload->bind_renderpass.attachments, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
 }
 
 void emgpu_frame_end_renderpass(emgpu_frame* frame) {

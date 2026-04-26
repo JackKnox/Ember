@@ -9,7 +9,7 @@ em_result vulkan_buffer_create(
     emgpu_buffer* out_buffer) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     
-    out_buffer->internal_data = mem_allocate(sizeof(internal_vulkan_buffer), MEMORY_TAG_RENDERER);
+    out_buffer->internal_data = mem_allocate(NULL, sizeof(internal_vulkan_buffer), MEMORY_TAG_RENDERER);
     internal_vulkan_buffer* internal_buffer = (internal_vulkan_buffer*)out_buffer->internal_data;
 
     out_buffer->buffer_size = config->buffer_size;
@@ -75,7 +75,7 @@ em_result vulkan_buffer_upload(
             vkMapMemory(context->logical_device, internal_buffer->memory, start_offset, region, 0, &mapped_ptr),
             "Failed to map memory to buffer for upload");
         
-        emc_memcpy(mapped_ptr, data, region);
+        em_memcpy(mapped_ptr, data, region);
         vkUnmapMemory(context->logical_device, internal_buffer->memory);
         return EMBER_RESULT_OK;
     }

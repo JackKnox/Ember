@@ -7,7 +7,7 @@ emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
     config.application_name = "Ember test gpu";
     config.api_type = EMBER_DEVICE_BACKEND_VULKAN;
-    config.application_version = EM_API_MAKE_VERSION(0, 1, 0);
+    config.application_version = EMBER_MAKE_VERSION(0, 1, 0);
     config.required_modes = EMBER_DEVICE_MODE_GRAPHICS;
     config.frames_in_flight = 3; // Standard in low level GAPIs.
     return config;

@@ -27,9 +27,7 @@ emplat_window_config emplat_window_default() {
 	return config;
 }
 
-em_result emplat_window_open(
-    const emplat_window_config* config, 
-    emplat_window* out_window) {
+em_result emplat_window_open(const emplat_window_config* config, emplat_window* last_window, emplat_window* out_window) {
     glfwSetErrorCallback(GLFWErrorCallback);
 	if (glfwInit() == 0) {
 		EM_ERROR("Platform", "Failed to initialize GLFW.");

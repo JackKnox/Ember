@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // Unsigned int types.
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -20,69 +22,13 @@ typedef double f64;
 typedef int b32;
 typedef _Bool b8;
 
-#define INT8_MAX         127
-#define INT16_MAX        32767
-#define INT32_MAX        2147483647
-#define INT64_MAX        9223372036854775807
-#define UINT8_MAX        0xffu
-#define UINT16_MAX       0xffffu
-#define UINT32_MAX       0xffffffffu
-#define UINT64_MAX       0xffffffffffffffffu
-
-// Properly define static assertions.
-#if defined(__clang__) || defined(__GNUC__)
-#   define STATIC_ASSERT _Static_assert
-#else
-#   define STATIC_ASSERT static_assert
-#endif
-
-#ifndef emc_console_write
-#   include <stdio.h>
-#   define emc_console_write(format_string, ...) printf((const char*)(format_string) __VA_OPT__(,) __VA_ARGS__)
-#endif
-
-#ifndef emc_malloc
-#   include <stdlib.h>
-#   define emc_malloc(size, aligned) malloc((size_t)(size))
-#endif
-
-#ifndef emc_free
-#   include <stdlib.h>
-#   define emc_free(block, aligned) free((void*)(block))
-#endif
-
-#ifndef emc_memcpy
-#   include <string.h>
-#   define emc_memcpy(dest, source, size) memcpy((void*)(dest), (const void*)(source), (size_t)(size))
-#endif
-
-#ifndef emc_memset
-#   include <string.h>
-#   define emc_memset(dest, value, size) memset((void*)(dest), (int)(value), (size_t)(size))
-#endif
-
-#ifndef emc_memcmp
-#   include <string.h>
-#   define emc_memcmp(buf1, buf2, size) memcmp((const void*)(buf1), (const void*)(buf2), (size_t)(size))
-#endif
-
-// Ensure all types are of the correct size.
-STATIC_ASSERT(sizeof(u8) == 1, "Expected u8 to be 1 byte.");
-STATIC_ASSERT(sizeof(u16) == 2, "Expected u16 to be 2 bytes.");
-STATIC_ASSERT(sizeof(u32) == 4, "Expected u32 to be 4 bytes.");
-STATIC_ASSERT(sizeof(u64) == 8, "Expected u64 to be 8 bytes.");
-
-STATIC_ASSERT(sizeof(i8) == 1, "Expected i8 to be 1 byte.");
-STATIC_ASSERT(sizeof(i16) == 2, "Expected i16 to be 2 bytes.");
-STATIC_ASSERT(sizeof(i32) == 4, "Expected i32 to be 4 bytes.");
-STATIC_ASSERT(sizeof(i64) == 8, "Expected i64 to be 8 bytes.");
-
-STATIC_ASSERT(sizeof(f32) == 4, "Expected f32 to be 4 bytes.");
-STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
-
 #define TRUE 1
 #define FALSE 0
-#define NULL ((void *)0)
+
+#ifndef emwrite_console
+#   include <stdio.h>
+#   define emwrite_console(format_string, ...) printf((const char*)(format_string) __VA_OPT__(,) __VA_ARGS__)
+#endif
 
 // Always define emdebug_break in case it is ever needed outside assertions (i.e fatal log errors)
 // Try via __has_builtin first.
@@ -107,13 +53,18 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #    endif
 #endif
 
-// Compiler-specific stuff
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-#   define EM_NORETURN _Noreturn
-#   elif defined(__GNUC__)
-#       define EM_NORETURN __attribute__((__noreturn__))
-#   else
-#       define EM_NORETURN
+
+#if defined(__cplusplus) && __cplusplus >= 201103L // C++11 and later
+#   define EM_ALIGNOF(type) alignof(type)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L // C11 and later
+#   define EM_ALIGNOF(type) _Alignof(type)
+#elif defined(_MSC_VER) // MSVC (works in both C and C++)
+#   define EM_ALIGNOF(type) __alignof(type)
+#elif defined(__GNUC__) || defined(__clang__) // GCC / Clang (works in both C and C++)
+#   define EM_ALIGNOF(type) __alignof__(type)
+#else // Pure fallback (standard C89, no extensions)
+#   include <stddef.h>
+#   define EM_ALIGNOF(type) offsetof(struct { char c; type member; }, member)
 #endif
 
 #if !(defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201102L)) && !defined(_Thread_local)
@@ -159,72 +110,22 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #   error "Unknown platform!"
 #endif
 
-typedef u32 em_version;
-
-#define EM_API_MAKE_VERSION(major, minor, patch) \
-    ((((u32)(major)) << 22U) | (((u32)(minor)) << 12U) | ((u32)(patch)))
-
-#define EM_API_VERSION_MAJOR(version) ((u32)(version) >> 22U)
-#define EM_API_VERSION_MINOR(version) (((u32)(version) >> 12U) & 0x3FFU)
-#define EM_API_VERSION_PATCH(version) ((u32)(version) & 0xFFFU)
-
-/**
- * @brief Result codes returned by Ember functions.
- * 
- * Indicates the outcome of an operation. Functions typically return
- * `EMBER_RESULT_OK` on success or another value indicating the type
- * of failure or status.
- */
-typedef enum em_result {
-    EMBER_RESULT_OK = 0,             /**< Operation completed successfully. */
-    EMBER_RESULT_TIMEOUT,            /**< Operation timed out before completion. */
-    EMBER_RESULT_UNINITIALIZED,      /**< The system, device, or resource was not initialized. */
-    EMBER_RESULT_INVALID_ENUM,       /**< An invalid enum value was provided. */
-    EMBER_RESULT_INVALID_VALUE,      /**< An invalid value was provided (out of expected range). */
-    EMBER_RESULT_UNSUPPORTED_FORMAT, /**< The requested format or type is not supported. */
-    EMBER_RESULT_OUT_OF_MEMORY_CPU,  /**< CPU memory allocation failed. */
-    EMBER_RESULT_OUT_OF_MEMORY_GPU,  /**< GPU memory allocation failed. */
-    EMBER_RESULT_UNAVAILABLE_API,    /**< The requested API is not available on this device. */
-    EMBER_RESULT_UNIMPLEMENTED,      /**< The requested feature or function is not implemented. */
-    EMBER_RESULT_VALIDATION_FAILED,  /**< Input or operation validation failed. */
-    EMBER_RESULT_IN_USE,             /**< The resource is currently in use and cannot be accessed. */
-    EMBER_RESULT_UNKNOWN             /**< An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred. */
-} em_result;
-
-const char* em_result_string(em_result result, b8 get_extended);
-
-#define EMBER_DATA_TYPE_UINT  0
-#define EMBER_DATA_TYPE_SINT  1
-#define EMBER_DATA_TYPE_FLOAT 2
-#define EMBER_DATA_TYPE_BOOL  3
-
-#define EMBER_FORMAT_FLAG_NORMALIZED 1 << 0
-#define EMBER_FORMAT_FLAG_BGRA       1 << 1
-#define EMBER_FORMAT_FLAG_SRGB       1 << 2
-#define EMBER_FORMAT_FLAG_DEPTH      1 << 3
-#define EMBER_FORMAT_FLAG_STENCIL    1 << 4
-
-#define EMBER_FORMAT_MAKE(type, bytes, channels, flags) \
-    (((flags)              << 24)  | \
-     ((type)               << 20)  | \
-     (((bytes) / 8)        << 16)  | \
-     ((channels)           << 12))
-
-#define EMBER_FORMAT_FLAGS(format)     (((format)  >> 24)  & 0xFF)
-#define EMBER_FORMAT_DATA_TYPE(format) (((format)  >> 20)  & 0xF)
-#define EMBER_FORMAT_BYTES(format)     ((((format) >> 16)  & 0xF) * 8)
-#define EMBER_FORMAT_CHANNELS(format)  (((format)  >> 12)  & 0xF)
-#define EMBER_FORMAT_SIZE(format)      (EMBER_FORMAT_BYTES(format) * EMBER_FORMAT_CHANNELS(format))
-
 #define EM_ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
-
 #define EM_OFFSETOF(s, m) (&(((s*)0)->m))
 
-// TODO: Retrieve from cmake project
-// :)
-#define EMBER_VERSION EM_API_MAKE_VERSION(0, 2, 0)
+typedef u32 em_version;
+
+#define EMBER_MAKE_VERSION(major, minor, patch) \
+    ((((u32)(major)) << 22U) | (((u32)(minor)) << 12U) | ((u32)(patch)))
+
+#define EMBER_VERSION_MAJOR(version) ((u32)(version) >> 22U)
+#define EMBER_VERSION_MINOR(version) (((u32)(version) >> 12U) & 0x3FFU)
+#define EMBER_VERSION_PATCH(version) ((u32)(version) & 0xFFFU)
 
 #include "ember/core/logger.h"
 #include "ember/core/memory.h"
 #include "ember/core/math_types.h"
-#include "ember/core/allocators.h"
+#include "ember/core/format.h"
+#include "ember/core/result.h"
+
+#include "ember/version.h"

@@ -6,11 +6,11 @@ VkResult vulkan_command_buffer_allocate(
     vulkan_queue* owner,
     u32 command_buffers_count,
     vulkan_command_buffer* out_command_buffers) {
-    emc_memset(out_command_buffers, 0, sizeof(vulkan_command_buffer));
+    em_memset(out_command_buffers, 0, sizeof(vulkan_command_buffer));
     out_command_buffers->buffer_count = command_buffers_count;
     out_command_buffers->owner = owner;
 
-    out_command_buffers->handles = mem_allocate(sizeof(vulkan_command_buffer) * out_command_buffers->buffer_count, MEMORY_TAG_RENDERER);
+    out_command_buffers->handles = mem_allocate(NULL, sizeof(vulkan_command_buffer) * out_command_buffers->buffer_count, MEMORY_TAG_RENDERER);
 
     VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
     allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -28,7 +28,7 @@ void vulkan_command_buffer_free(
     vulkan_command_buffer* command_buffer) {
     if (command_buffer->handles != NULL) {
         vkFreeCommandBuffers(context->logical_device, command_buffer->owner->pool, command_buffer->buffer_count, command_buffer->handles);
-        mem_free(command_buffer->handles, sizeof(vulkan_command_buffer) * command_buffer->buffer_count, MEMORY_TAG_RENDERER);
+        mem_free(NULL, command_buffer->handles, sizeof(vulkan_command_buffer) * command_buffer->buffer_count, MEMORY_TAG_RENDERER);
     }
 }
 

@@ -10,7 +10,7 @@ em_result vulkan_surface_create(
     vulkan_context* context = (vulkan_context*)device->internal_context;
     config->window->internal_renderer_state = out_surface;
     
-    out_surface->internal_data = mem_allocate(sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
+    out_surface->internal_data = mem_allocate(NULL, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
     internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)out_surface->internal_data;
 
     EM_INFO("Vulkan", "Creating Vulkan surface on window: '%s'", config->window->title);
@@ -31,7 +31,7 @@ em_result vulkan_surface_create(
 
     // Swapchain format count.
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, NULL);
-    VkSurfaceFormatKHR* formats = mem_allocate(sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
+    VkSurfaceFormatKHR* formats = mem_allocate(NULL, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, formats);
     // --------------------------------------
 
@@ -64,7 +64,7 @@ em_result vulkan_surface_create(
     out_surface->pixel_format = vulkan_format_to_engine(found_format.format);
     internal_surface->colour_space = found_format.colorSpace;
 
-    mem_free(formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
+    mem_free(NULL, formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
 
     return vulkan_surface_recreate(device, out_surface, config->window->size);
 }
@@ -83,7 +83,7 @@ void vulkan_surface_destroy(
         for (u32 i = 0; i < surface->image_count; ++i)
             vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);
         
-        mem_free(internal_surface->swapchain_images, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
+        mem_free(NULL, internal_surface->swapchain_images, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
     }
 
     if (internal_surface->swapchain)   
@@ -92,7 +92,7 @@ void vulkan_surface_destroy(
     if (internal_surface->surface)
         vkDestroySurfaceKHR(context->instance, internal_surface->surface, context->allocator);
 
-    mem_free(internal_surface, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
+    mem_free(NULL, internal_surface, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
     surface->internal_data = NULL;
 }
 
@@ -158,11 +158,11 @@ em_result vulkan_surface_recreate(
             NULL), 
         "Failed to retrieve Vulkan swapchain images");
     
-    VkImage* images = (VkImage*)mem_allocate(sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
+    VkImage* images = (VkImage*)mem_allocate(NULL, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     vkGetSwapchainImagesKHR(context->logical_device, internal_surface->swapchain, &surface->image_count, images);
 
     if (!internal_surface->swapchain_images)
-        internal_surface->swapchain_images = (emgpu_texture*)mem_allocate(sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
+        internal_surface->swapchain_images = (emgpu_texture*)mem_allocate(NULL, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
         
     for (u32 i = 0; i < surface->image_count; ++i) {
         vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);
@@ -201,7 +201,7 @@ em_result vulkan_surface_recreate(
     vkDestroyFence(context->logical_device, temp_fence, context->allocator);
     // --------------------------------------
 
-    mem_free(images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
+    mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
 }
 

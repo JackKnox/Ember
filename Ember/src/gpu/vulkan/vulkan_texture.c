@@ -10,7 +10,7 @@ em_result vulkan_texture_create(
     emgpu_texture* out_texture) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     
-    out_texture->internal_data = (internal_vulkan_texture*)mem_allocate(sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
+    out_texture->internal_data = (internal_vulkan_texture*)mem_allocate(NULL, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
     internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)out_texture->internal_data;
 
     out_texture->size = config->size;
@@ -231,6 +231,6 @@ void vulkan_texture_destroy(
     if (internal_texture->sampler)
         vkDestroySampler(context->logical_device, internal_texture->sampler, context->allocator);
 
-    mem_free(internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
+    mem_free(NULL, internal_texture, sizeof(internal_vulkan_texture), MEMORY_TAG_RENDERER);
     texture->internal_data = NULL;
 }

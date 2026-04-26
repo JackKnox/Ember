@@ -19,6 +19,86 @@ static b8 is_initialized = FALSE;
 static memory_stats stats = { 0 };
 #endif
 
+#define SYSTEM_ALLOC_MAGIC 0xFF
+
+void* system_malloc(ember_allocator* allocator, u64 size, u64 alignment) {
+	if (!alignment) {
+		return malloc(size);
+	}
+
+    if (alignment < sizeof(void*)) alignment = sizeof(void*);
+
+#if defined(_MSC_VER)
+    return _aligned_malloc(size, alignment);
+
+#elif defined(_POSIX_VERSION)
+    void* ptr = NULL;
+    if (posix_memalign(&ptr, alignment, size) != 0) return NULL;
+    return ptr;
+
+#else
+    /* Fallback: manual alignment */
+    uintptr_t raw = (uintptr_t)malloc(size + alignment - 1 + sizeof(void*));
+    if (!raw) return NULL;
+
+    uintptr_t aligned = (raw + sizeof(void*) + alignment - 1) & ~(alignment - 1);
+
+    ((void**)aligned)[-1] = (void*)raw; /* store original pointer */
+    return (void*)aligned;
+#endif
+}
+
+void system_free(ember_allocator* allocator, void* block, u64 size, u64 alignment) {
+	if (!alignment) {
+		free(block);
+		return;
+	}
+
+#if defined(_MSC_VER)
+    _aligned_free(block);
+
+#elif defined(_POSIX_VERSION)
+    free(block);
+
+#else
+    free(((void**)block)[-1]);
+#endif
+}
+
+ember_allocator em_allocator_default() {
+	ember_allocator allocator = {};
+	allocator.alloc = system_malloc;
+	allocator.free = system_free;
+	allocator.magic = SYSTEM_ALLOC_MAGIC;
+	return allocator;
+}
+
+void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag) {
+	mem_report(size, tag);
+	return em_memset(aligned_malloc(NULL, size, 0), 0, size);
+}
+
+void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag) {
+	mem_report_free(size, tag);
+	aligned_free(NULL, block, size, 0);
+}
+
+void mem_report(u64 size, memory_tag tag) {
+#if EMBER_DEV
+	stats.total_allocated += size;
+	stats.tagged_allocations[tag] += size;
+	stats.allocation_count[tag]++;
+#endif
+}
+
+void mem_report_free(u64 size, memory_tag tag) {
+#if EMBER_DEV
+	stats.total_allocated -= size;
+	stats.tagged_allocations[tag] -= size;
+	stats.allocation_count[tag]--;
+#endif
+}
+
 void memory_leaks() {
 #if EMBER_DEV
 	if (stats.total_allocated == 0) return;
@@ -27,28 +107,6 @@ void memory_leaks() {
 		EM_ERROR("Core", "Unfreed %llu bytes on MEMORY_TAG_%s", stats.tagged_allocations[i], tag_strings[i]);
 		EM_ERROR("Core", "%i unfreed allocations on tag...", stats.allocation_count[i]);
 	}
-#endif
-}
-
-void* mem_allocate(u64 size, memory_tag tag) {
-	mem_report(size, tag);
-	return emc_memset(emc_malloc(size, FALSE), 0, size);
-}
-
-void mem_free(void* block, u64 size, memory_tag tag) {
-	mem_report(-(i64)size, tag);
-	emc_free(block, FALSE);
-}
-
-void mem_report(i64 size, memory_tag tag) {
-#if EMBER_DEV
-	stats.total_allocated += size;
-	stats.tagged_allocations[tag] += size;
-
-	if (size > 0)
-		stats.allocation_count[tag]++;
-	else
-		stats.allocation_count[tag]--;
 #endif
 }
 

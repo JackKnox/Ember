@@ -1,9 +1,10 @@
 #include "ember/core.h"
 #include "vulkan_backend.h"
 
-#include "ember/core/string_utils.h"
-
 #include "frame_internal.h"
+
+#include "ember/core/darray.h"
+#include "ember/core/allocators.h"
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
@@ -28,7 +29,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 }
 
 em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_config* config) {
-    device->internal_context = mem_allocate(sizeof(vulkan_context), MEMORY_TAG_RENDERER);
+    device->internal_context = mem_allocate(NULL, sizeof(vulkan_context), MEMORY_TAG_RENDERER);
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     context->frames_in_flight = config->frames_in_flight;
@@ -45,8 +46,8 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     const char** platform_extensions = vulkan_platform_get_required_extensions(&platform_extension_count);
 
 	// Obtain a list of required extensions
-	const char** required_extensions = darray_from_data(const char*, platform_extension_count, platform_extensions, MEMORY_TAG_TEMP);
-	const char** required_validation_layers = darray_create(const char*, MEMORY_TAG_TEMP);
+	const char** required_extensions = darray_from_data(const char*, platform_extension_count, platform_extensions, NULL, MEMORY_TAG_TEMP);
+	const char** required_validation_layers = darray_create(const char*, NULL, MEMORY_TAG_TEMP);
 
 	// Add debug extensions/layers if enabled
 #ifdef EMBER_DEV
@@ -58,13 +59,13 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 	u32 supported_layer_count = 0;
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, NULL);
 
-	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, MEMORY_TAG_TEMP);
+	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, NULL, MEMORY_TAG_TEMP);
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, supported_layers);
 
 	for (u32 i = 0; i < darray_length(required_validation_layers); ++i) {
 		b8 found = FALSE;
 		for (u32 j = 0; j < darray_length(supported_layers); ++j) {
-			if (strings_equal(required_validation_layers[i], supported_layers[j].layerName)) {
+			if (strcmp(required_validation_layers[i], supported_layers[j].layerName) == 0) {
 				found = TRUE;
 				break;
 			}
@@ -83,14 +84,14 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 	app_info.pEngineName      = "ember_gpu";
 
     app_info.applicationVersion = VK_MAKE_API_VERSION(0, 
-        EM_API_VERSION_MAJOR(config->application_version), 
-        EM_API_VERSION_MINOR(config->application_version), 
-        EM_API_VERSION_PATCH(config->application_version));
+        EMBER_VERSION_MAJOR(config->application_version), 
+        EMBER_VERSION_MINOR(config->application_version), 
+        EMBER_VERSION_PATCH(config->application_version));
 
 	app_info.engineVersion = VK_MAKE_API_VERSION(0, 
-        EM_API_VERSION_MAJOR(EMBER_VERSION), 
-        EM_API_VERSION_MINOR(EMBER_VERSION), 
-        EM_API_VERSION_PATCH(EMBER_VERSION));
+        EMBER_VERSION_MAJOR(EMBER_VERSION), 
+        EMBER_VERSION_MINOR(EMBER_VERSION), 
+        EMBER_VERSION_PATCH(EMBER_VERSION));
 
 	VkInstanceCreateInfo create_info = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 	create_info.pApplicationInfo        = &app_info;
@@ -154,11 +155,11 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     EM_TRACE("Vulkan", "Enumerated %i physical device(s).", physical_device_count);
 
-    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, MEMORY_TAG_TEMP);
+    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, NULL,  MEMORY_TAG_TEMP);
     vkEnumeratePhysicalDevices(context->instance, &physical_device_count, physical_devices);
 
     // Build a list of required device extensions based on configuration
-    const char** required_device_extensions = darray_create(const char*, MEMORY_TAG_TEMP);
+    const char** required_device_extensions = darray_create(const char*, NULL, MEMORY_TAG_TEMP);
     if (context->enabled_modes & EMBER_DEVICE_MODE_PRESENT) darray_push(required_device_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     
     vulkan_queue queue_support[VULKAN_QUEUE_TYPE_MAX] = {};
@@ -180,7 +181,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
         u32 queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, 0);
-        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, MEMORY_TAG_TEMP);
+        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, NULL, MEMORY_TAG_TEMP);
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families);
 
         // Look at each queue and see what queues it supports
@@ -234,13 +235,13 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         u32 supported_extension_count = 0;
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, NULL);
 
-        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, MEMORY_TAG_TEMP);
+        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_TEMP);
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, supported_extensions);
 
         for (u32 i = 0; i < darray_length(required_device_extensions); ++i) {
             b8 found = FALSE;
             for (u32 j = 0; j < darray_length(supported_extensions); ++j) {
-                if (strings_equal(required_device_extensions[i], supported_extensions[j].extensionName)) {
+                if (strcmp(required_device_extensions[i], supported_extensions[j].extensionName) == 0) {
                     found = TRUE;
                     break;
                 }
@@ -281,7 +282,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     EM_INFO("Vulkan", "Creating logical device.");
 
     f32 queue_priority = 1.0f;
-    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, MEMORY_TAG_TEMP);
+    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, NULL, MEMORY_TAG_TEMP);
 
     for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
         u32 family = queue_support[i].family_index;
@@ -363,15 +364,13 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         allocate_info.commandPool = context->mode_queues[queue_type].pool;
         allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = context->frames_in_flight;
-
-        context->graphics_command_ring = mem_allocate(sizeof(VkCommandBuffer) * allocate_info.commandBufferCount, MEMORY_TAG_RENDERER);
+        allocate_info.commandBufferCount = 1;
 
         CHECK_VKRESULT(
             vkAllocateCommandBuffers(
                 context->logical_device, 
                 &allocate_info, 
-                context->graphics_command_ring),
+                &context->graphics_commandbuf),
             "Failed to create Vulkan graphics command buffers");
 	}
 
@@ -382,33 +381,28 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         allocate_info.commandPool = context->mode_queues[queue_type].pool;
         allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = context->frames_in_flight;
-
-        context->compute_command_ring = mem_allocate(sizeof(VkCommandBuffer) * allocate_info.commandBufferCount, MEMORY_TAG_RENDERER);
+        allocate_info.commandBufferCount = 1;
 
         CHECK_VKRESULT(
             vkAllocateCommandBuffers(
                 context->logical_device, 
                 &allocate_info, 
-                context->compute_command_ring),
+                &context->compute_commandbuf),
             "Failed to create Vulkan compute command buffers");
 	}
 
-    context->semaphore_pool = darray_create(VkSemaphore, MEMORY_TAG_RENDERER);
-    context->in_flight_fences = darray_reserve(VkFence, context->frames_in_flight, MEMORY_TAG_RENDERER);
+    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (u32 i = 0; i < context->frames_in_flight; ++i) {
-		VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    CHECK_VKRESULT(
+        vkCreateFence(
+            context->logical_device,
+            &fence_create_info,
+            context->allocator,
+            &context->in_flight_fence),
+        "Failed to create Vulkan sync objects");
 
-		CHECK_VKRESULT(
-			vkCreateFence(
-				context->logical_device,
-				&fence_create_info,
-				context->allocator,
-				darray_push_empty(context->in_flight_fences)),
-			"Failed to create Vulkan sync objects");
-    }
+    context->semaphore_pool = darray_create(VkSemaphore, NULL, MEMORY_TAG_RENDERER);
 
     EM_INFO("Vulkan", "Rendering device fully initiailized.");
     return EMBER_RESULT_OK;
@@ -417,15 +411,6 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 void vulkan_device_shutdown(emgpu_device* device) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
-
-    for (u32 i = 0; i < context->frames_in_flight; ++i) {
-        if (context->in_flight_fences[i]) {
-            vkDestroyFence(
-                context->logical_device, 
-                context->in_flight_fences[i],
-                context->allocator);
-        }
-    }
 
     for (u32 i = 0; i < darray_length(context->semaphore_pool); ++i) {
         if (context->semaphore_pool[i]) {
@@ -436,29 +421,31 @@ void vulkan_device_shutdown(emgpu_device* device) {
         }
     }
 
-    darray_destroy(context->in_flight_fences);
     darray_destroy(context->semaphore_pool);
 
-    if (context->compute_command_ring) {
+    if (context->in_flight_fence) {
+        vkDestroyFence(
+            context->logical_device, 
+            context->in_flight_fence,
+            context->allocator);
+    }
+
+    if (context->compute_commandbuf) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_COMPUTE;
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            context->frames_in_flight, 
-            context->compute_command_ring);
-
-        mem_free(context->compute_command_ring, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+            1, 
+            &context->compute_commandbuf);
     }
 
-    if (context->graphics_command_ring) {
+    if (context->graphics_commandbuf) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            context->frames_in_flight, 
-            context->graphics_command_ring);
-        
-        mem_free(context->graphics_command_ring, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+            1, 
+            &context->graphics_commandbuf);
     }
 
     for (u32 i = 0; i < EM_ARRAYSIZE(context->mode_queues); ++i) {
@@ -485,7 +472,7 @@ void vulkan_device_shutdown(emgpu_device* device) {
     if (context->instance)
         vkDestroyInstance(context->instance, context->allocator);
 
-    mem_free(context, sizeof(vulkan_context), MEMORY_TAG_RENDERER);
+    mem_free(NULL, context, sizeof(vulkan_context), MEMORY_TAG_RENDERER);
     device->internal_context = NULL;
 }
 
@@ -504,8 +491,8 @@ emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
         extended_props.pNext = &driver_props;
         vkGetPhysicalDeviceProperties2(context->physical_device, &extended_props);
 
-        device->capabilities = (emgpu_device_capabilities*)mem_allocate(sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
-        emc_memcpy(device->capabilities->device_name, properties.deviceName, sizeof(device->capabilities->device_name));
+        device->capabilities = (emgpu_device_capabilities*)mem_allocate(NULL, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
+        em_memcpy(device->capabilities->device_name, properties.deviceName, sizeof(device->capabilities->device_name));
 
         switch (driver_props.driverID) {
             case VK_DRIVER_ID_AMD_PROPRIETARY:
@@ -541,14 +528,14 @@ emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
         device->capabilities->device_type = (emgpu_device_type)properties.deviceType;
         device->capabilities->max_anisotropy = properties.limits.maxSamplerAnisotropy;
 
-        // Convert Vulkan API version into engine-specific version format
-        device->capabilities->internal_api_version = EM_API_MAKE_VERSION(
+        // Convert Vulkan API version into library-specific version format
+        device->capabilities->internal_api_version = EMBER_MAKE_VERSION(
             VK_API_VERSION_MAJOR(properties.apiVersion),
             VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion));
 
-        // Convert Vulkan driver version into engine-specific version format
-        device->capabilities->driver_version = EM_API_MAKE_VERSION(
+        // Convert Vulkan driver version into library-specific version format
+        device->capabilities->driver_version = EMBER_MAKE_VERSION(
             VK_API_VERSION_MAJOR(properties.driverVersion),
             VK_API_VERSION_MINOR(properties.driverVersion),
             VK_API_VERSION_PATCH(properties.driverVersion));
