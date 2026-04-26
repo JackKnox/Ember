@@ -7,28 +7,26 @@ Ember is licensed under the [MIT License](LICENSE).
 
 ## Features
 - CMake-based build system
-- Absouluty zero dependecies, global state and recursion!
+- Absouluty zero dependecies! (except STL)
 - Designed for low-level engine and application development
 - Open source and easy to extend
 - Modular design with optional subsystems:
     - **ember_platform** — windowing, input, time, and system info
     - **ember_gpu** — low-level graphics API abstraction
-    - **ember_net** — networking utilities
     - **ember_audio** — audio abstraction
+    - **ember_net** — networking utilities
 
 ## System Requirements
 - A C99-compatible compiler
 - CMake ( >= 3.15 )
 - [A supported platform toolchain](#supported-platforms)
 - Git for cloning the repository
-- X11 on Linux for `ember_gpu`
-    - macOS and Wayland support in development
 
 ### Supported Platforms
 - Windows 7 and later
-- Linux (X11)
+- Linux (Wayland)
 - **Coming Soon**
-    - **macOS, Wayland support, other POSIX-based systems.**
+    - **macOS, X11 support, other POSIX-based systems.**
 
 ## Building
 ```bash
