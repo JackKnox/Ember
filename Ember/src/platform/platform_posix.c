@@ -63,16 +63,14 @@ void emplat_sleep_ms(f64 ms) {
 }
 
 em_result emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg) {
-    // Create the thread
-    if (pthread_create(thr, NULL, func, arg) != 0)
-        *thr = 0;
-
-    if (!*thr) {
-        // Did we fail to create the thread?
-        return FALSE;
+    switch (pthread_create(thr, NULL, func, arg)) {
+        case 0: return EMBER_RESULT_OK;
+        case EAGAIN:  return EMBER_RESULT_OUT_OF_MEMORY_CPU;
+        case EINVAL:  return EMBER_RESULT_INVALID_VALUE;
+        case EPERM:   return EMBER_RESULT_PERMISSION_DENIED;
     }
 
-    return TRUE;
+    return EMBER_RESULT_UNKNOWN;
 }
 
 emplat_thread emplat_thread_current() {
@@ -124,8 +122,11 @@ em_result emplat_mutex_lock(emplat_mutex* mtx) {
     return EMBER_RESULT_UNKNOWN;
 }
 
-em_result emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts) {
-    switch (pthread_mutex_timedlock(mtx, ts)) {
+em_result emplat_mutex_timedlock(emplat_mutex* mtx, f64 ms) {
+    struct timespec ts;
+    ts.tv_sec  = ms / 1000;
+
+    switch (pthread_mutex_timedlock(mtx, &ts)) {
         case 0: return EMBER_RESULT_OK;
         case EINVAL:    return EMBER_RESULT_UNINITIALIZED;
         case EDEADLK:   return EMBER_RESULT_IN_USE;
@@ -156,26 +157,50 @@ em_result emplat_mutex_unlock(emplat_mutex* mtx) {
 }
 
 em_result emplat_cond_init(emplat_cond* cond) {
-    
+    switch (pthread_cond_init(cond, NULL)) {
+        case 0: return EMBER_RESULT_OK;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
 }
 
 void emplat_cond_destroy(emplat_cond* cond) {
-    
+    pthread_cond_destroy(cond);
 }
 
 em_result emplat_cond_signal(emplat_cond* cond) {
-    
+    switch (pthread_cond_signal(cond)) {
+        case 0: return EMBER_RESULT_OK;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
 }
 
 em_result emplat_cond_broadcast(emplat_cond* cond) {
-    
+     switch (pthread_cond_broadcast(cond)) {
+        case 0: return EMBER_RESULT_OK;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
 }
 
 em_result emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx) {
-    
+    switch (pthread_cond_wait(cond, NULL)) {
+        case 0: return EMBER_RESULT_OK;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
 }
 
-em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts) {
-    
+em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, f64 ms) {    
+    struct timespec ts;
+    ts.tv_sec  = ms / 1000;
+
+    switch (pthread_cond_timedwait(cond, mtx, &ts)) {
+        case 0: return EMBER_RESULT_OK;
+        case ETIMEDOUT: return EMBER_RESULT_TIMEOUT;
+    }
+
+    return EMBER_RESULT_UNKNOWN;
 }
 #endif

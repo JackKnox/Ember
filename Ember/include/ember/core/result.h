@@ -22,6 +22,7 @@ typedef enum em_result {
     EMBER_RESULT_UNIMPLEMENTED,      /**< The requested feature or function is not implemented */
     EMBER_RESULT_VALIDATION_FAILED,  /**< Input or operation validation failed */
     EMBER_RESULT_IN_USE,             /**< The resource is currently in use and cannot be accessed */
+    EMBER_RESULT_PERMISSION_DENIED,  /**< The caller does not have the required permissions. */
     EMBER_RESULT_UNKNOWN             /**< An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred */
 } em_result;
 

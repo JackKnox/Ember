@@ -26,9 +26,11 @@ const char* em_result_string(em_result result,  b8 get_extended) {
         return !get_extended ? "EMBER_RESULT_VALIDATION_FAILED" : "EMBER_RESULT_VALIDATION_FAILED Input or operation validation failed.";
     case EMBER_RESULT_IN_USE:             
         return !get_extended ? "EMBER_RESULT_IN_USE" : "EMBER_RESULT_IN_USE The resource is currently in use and cannot be accessed.";
-        
+    case EMBER_RESULT_PERMISSION_DENIED:
+        return !get_extended ? "EMBER_RESULT_PERMISSION_DENIED" : "EMBER_RESULT_PERMISSION_DENIED The caller does not have the required permissions.";
+
     default:
-#if EM_ENABLE_ASSERTS
+#if !EMBER_DIST
         EM_ASSERT(FALSE && "Unknown em_result value!");
         return NULL;
 #endif

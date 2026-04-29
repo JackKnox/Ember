@@ -233,7 +233,7 @@ typedef struct emgpu_attachment_config {
     /** @brief Logical attachment type (colour, depth, stencil, etc.). */
     emgpu_attachment_type type;
 
-    /** @brief Engine-defined pixel format. Must be compatible with the attachment type. */
+    /** @brief Library-defined pixel format. Must be compatible with the attachment type. */
     emgpu_format format;
 
     /** @brief Load operation for colour or depth aspect. */

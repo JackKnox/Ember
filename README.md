@@ -34,3 +34,4 @@ git clone https://github.com/JackKnox/Ember.git
 cd Ember
 cmake -S . -B build
 cmake --build build
+```

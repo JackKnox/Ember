@@ -169,7 +169,7 @@ typedef enum emplat_powerstate {
  *                This will be filled in with -1 if it can't determine a value or there is no battery.
  * @param percent A pointer filled in with the percentage of battery life, between 0 and 100. 
  *                This will be filled in with -1 when we can't determine a value or there is no battery.
- * @return The current battery state or `SDL_POWERSTATE_ERROR` on failure.
+ * @return The current battery state or `EMBER_POWERSTATE_ERROR` on failure.
  * 
  * @note It's possible a platform can only report battery percentage or time left
  * but not both.

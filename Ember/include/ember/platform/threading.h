@@ -101,10 +101,10 @@ em_result emplat_mutex_lock(emplat_mutex* mtx);
  * Blocks until the mutex is acquired or the specified time is reached.
  *
  * @param mtx Pointer to the mutex to lock.
- * @param ts Absolute timeout (UTC-based timespec).
+ * @param ts Absolute timeout in milliseconds.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_mutex_timedlock(emplat_mutex* mtx, const struct timespec* ts);
+em_result emplat_mutex_timedlock(emplat_mutex* mtx, f64 ms);
 
 /**
  * @brief Attempts to lock a mutex without blocking.
@@ -186,7 +186,7 @@ em_result emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx);
  *
  * @param cond Pointer to the condition variable.
  * @param mtx Pointer to the associated mutex.
- * @param ts Absolute timeout (UTC-based timespec).
+ * @param ts Absolute timeout in milliseconds.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, const struct timespec* ts);
+em_result emplat_cond_timedwait(emplat_cond* cond, emplat_mutex* mtx, f64 ms);
