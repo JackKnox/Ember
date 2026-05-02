@@ -20,6 +20,14 @@
  */
 #define em_memcmp memcmp
 
+/**
+ * @brief Value used to poison memory in debug builds.
+ *
+ * Typically written into freed or uninitialized memory to help detect
+ * use-after-free and uninitialized access bugs.
+ */
+#define MEMORY_POISON_VALUE 0xfe
+
 struct ember_allocator;
 
 /**
@@ -70,6 +78,9 @@ typedef struct ember_allocator {
 	/** @brief Opaque context per allocator. */     
     void* user_data;       
 
+    /** @brief Optional parent allocator used for backing allocations. */
+	struct ember_allocator* parent;
+
 #if !EMBER_DIST
 	/** @brief Debug-only validation marker for allocator integrity */
     u8 magic; 
@@ -82,6 +93,15 @@ typedef struct ember_allocator {
  * @return Initialized allocator instance.
  */
 ember_allocator em_allocator_default();
+
+/**
+ * @brief Aligns a value to the specified alignment.
+ *
+ * @param v Value to align.
+ * @param alignment Alignment in bytes (must be a power of two).
+ * @return Aligned value.
+ */
+u64 alignment_ptr(u64 v, u64 alignment);
 
 /**
  * @brief Allocates memory from the library allocator system.

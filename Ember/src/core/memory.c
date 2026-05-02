@@ -73,14 +73,41 @@ ember_allocator em_allocator_default() {
 	return allocator;
 }
 
+u64 alignment_ptr(u64 v, u64 alignment) {
+    return (v + (alignment - 1)) & ~(alignment - 1);
+}
+
 void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag) {
 	mem_report(size, tag);
-	return em_memset(aligned_malloc(NULL, size, 0), 0, size);
+	ember_allocator sys = em_allocator_default();
+	if (!allocator) allocator = &sys;
+
+	return em_memset(allocator->alloc(allocator, size, 0), 0, size);
 }
 
 void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag) {
 	mem_report_free(size, tag);
-	aligned_free(NULL, block, size, 0);
+	ember_allocator sys = em_allocator_default();
+	if (!allocator) allocator = &sys;
+
+#ifdef EMBER_BUILD_DEBUG
+	em_memset(block, MEMORY_POISON_VALUE, size);
+#endif
+	allocator->free(allocator, block, size, 0);
+}
+
+void* mem_realloc(ember_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag) {
+	if (!allocator->realloc) {
+		mem_free(allocator, block, old_size, tag);
+		return mem_allocate(allocator, new_size, tag);
+	}
+
+	mem_report_free(old_size, tag);
+	mem_report(new_size, tag);
+#ifdef EMBER_BUILD_DEBUG
+	em_memset(block, MEMORY_POISON_VALUE, old_size);
+#endif
+	return em_memset(allocator->realloc(allocator, block, new_size, 0), 0, new_size);
 }
 
 void mem_report(u64 size, memory_tag tag) {
@@ -107,6 +134,7 @@ void memory_leaks() {
 		EM_ERROR("Core", "Unfreed %llu bytes on MEMORY_TAG_%s", stats.tagged_allocations[i], tag_strings[i]);
 		EM_ERROR("Core", "%i unfreed allocations on tag...", stats.allocation_count[i]);
 	}
+	EM_ERROR("Core", "In total, forget to free %i bytes.", stats.total_allocated);
 #endif
 }
 

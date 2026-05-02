@@ -33,7 +33,7 @@ typedef void (*PFN_log_output)(log_level level, const char* subsystem, const cha
  * @param message Format string (printf-style).
  * @param ... Optional format arguments.
  */
-void em_log_console(log_level level, const char* subsystem, const char* message, ...);
+void log_console(log_level level, const char* subsystem, const char* message, ...);
 
 /**
  * @brief Registers a custom log callback.
@@ -42,11 +42,11 @@ void em_log_console(log_level level, const char* subsystem, const char* message,
  *
  * @param func Function pointer receiving log messages.
  */
-void em_log_callback(PFN_log_output func);
+void set_log_callback(PFN_log_output func);
 
 #ifndef EM_LOG
 // General logging function for Ember.
-#define EM_LOG(level, subsystem, message, ...) em_log_console(level, "Ember/" subsystem, message __VA_OPT__(,) __VA_ARGS__)
+#define EM_LOG(level, subsystem, message, ...) log_console(level, "Ember/" subsystem, message __VA_OPT__(,) __VA_ARGS__)
 #endif
 
 #ifndef EM_FATAL

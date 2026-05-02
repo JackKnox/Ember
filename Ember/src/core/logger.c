@@ -16,7 +16,7 @@ void default_logger(log_level level, const char* subsystem, const char* message)
         message);
 }
 
-void em_log_console(log_level level, const char* subsystem, const char* message, ...) {
+void log_console(log_level level, const char* subsystem, const char* message, ...) {
     EM_ASSERT(level <= LOG_LEVEL_DEV && subsystem != NULL && message != NULL && "Invalid arguments passed to em_log_console");
 
     va_list args;
@@ -49,7 +49,7 @@ void em_log_console(log_level level, const char* subsystem, const char* message,
         emdebug_break();
 }
 
-void em_log_callback(PFN_log_output func) {
+void set_log_callback(PFN_log_output func) {
     EM_ASSERT(func != NULL && "Invalid arguments passed to em_log_callback");
     logger = func;
 }

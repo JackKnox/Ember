@@ -26,4 +26,11 @@ typedef enum em_result {
     EMBER_RESULT_UNKNOWN             /**< An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred */
 } em_result;
 
+/**
+ * @brief Converts a result code to a human-readable string.
+ *
+ * @param result Result code.
+ * @param get_extended If true, returns a more detailed description if available.
+ * @return Null-terminated string describing the result.
+ */
 const char* em_result_string(em_result result, b8 get_extended);
