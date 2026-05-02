@@ -1,17 +1,24 @@
 # Ember Roadmap
 This items in thi lst are not in any particular order. This list will be updated occasionally as development progresses.
 
+## Future features
+- Dialog API (ember_plat)
+- More protocols for ember_net (TLS, QUIC)
+- Legacy platform support
+    - X11
+    - DirectX11
+    - OpenGL
+    - PulseAudio
+
 ## Ember core
 - [x] CMake build system
     - [x] Seperate modules into different targets
-    - [ ] Sepereate GAPIs into diferrent modules
-    - [ ] Versioning
-    - [ ] Configuration flags
+    - [x] Versioning
+    - [x] Configuration flags
     - [ ] CMake test to flip features on/off
-- [ ] Semantic versioning across the library 
+- [x] Semantic versioning across the library 
 - [x] Error codes
 - [ ] Documentation website (Doxygen)
-- [x] Math library (vector, math ops, etc.)
 - [x] Memory subsystem
 - [x] Allocators
     - [ ] Scratch allocator
@@ -22,44 +29,36 @@ This items in thi lst are not in any particular order. This list will be updated
 - [x] Subsystems
     - [x] `ember_platform` — windowing, input, time, and system info
     - [x] `ember_gpu` — low-level graphics API abstraction
-    - [ ] `ember_net` — networking utilities
     - [ ] `ember_audio` — audio abstraction
+    - [ ] `ember_net` — networking utilities
 
-## supported platforms
+## Supported platforms
 - [ ] Windows 7 and later
-    - [ ] Win32 (windowing / input)
-    - [ ] XInput (gamepads)
-    - [ ] DirectX 12 (gpu interface)
-    - [ ] Winsock (network)
-    - [ ] WASAPI (audio)
-- [ ] macOS 11 and later
-    - [ ] Cocoa (windowing /input)
-    - [ ] Game Controller Framework (gamepads)
-    - [ ] Metal (4) (gpu interface)
-    - [ ] POSIX (network)
-    - [ ] Core Audio (audio)
-- [ ] Linux  (Ubuntu, Debian, Arch, Fedora)
-    - [ ] X11 (windowing /input)
-    - [ ] XInput2 (gamepads)
-    - [ ] Vulkan (gpu interface)
-    - [ ] POSIX (network)
-    - [ ] ALSA (audio)
+    - [ ] Win32                     - windowing / input
+    - [ ] XInput                    - gamepads
+    - [ ] DirectX 12                - gpu interface
+    - [ ] WASAPI                    - audio
+    - [ ] Winsock                   - network
 
-### Planned platforms for other releases
-- [ ] Wayland
-- [ ] DirectX11
-- [ ] OpenGL
-- [ ] PulseAudio/PipeWire
-- [ ] Android
-- [ ] Website runtime
-- [ ] steamOS & Proton
-- [ ] iOS / iPadOS
+- [ ] macOS 11 and later
+    - [ ] Cocoa                     - windowing / input
+    - [ ] Game Controller Framework - gamepads
+    - [ ] Metal4                    - gpu interface
+    - [ ] Core Audio                - audio
+    - [ ] POSIX                     - network
+
+- [ ] Linux 
+    - [ ] Wayland                   - windowing / input
+    - [ ] XInput2                   - gamepads
+    - [ ] Vulkan                    - gpu interface
+    - [ ] ALSA                      - audio
+    - [ ] POSIX                     - network
 
 ## ember_platform
 - [x] Basic platform layer
 - [x] Time subsystem 
     - [ ] Clock abstraction
-    - [ ] Current time
+    - [x] Current time
 - [x] Threading utilities
 - [ ] Input system
     - [ ] Send events for input
@@ -78,10 +77,14 @@ This items in thi lst are not in any particular order. This list will be updated
     - [x] `emgpu_buffer`
     - [x] `emgpu_commandbuf`
     - [x] Frame abstraction instead of command buffers
-- [ ] Per-frame allocators (Scratch)
+- [x] Per-frame allocators (Scratch)
 - [ ] Resource tracking across a frame
 - [ ] Depth / stencil buffer
 - [x] Vulkan backend
     - [ ] Optimise hot code (begin -> draw -> end)
     - [ ] Needs more validation
-    - [ ] Support offscreen rendering
+    - [x] Support offscreen rendering
+- [ ] Sepereate GAPIs into diferrent modules (dll magic)
+- [ ] Validation layers (like vulkan)
+    - [ ] Standard validation
+    - [ ] RenderDoc intergration

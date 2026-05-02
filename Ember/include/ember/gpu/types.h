@@ -51,6 +51,17 @@ typedef enum emgpu_device_mode {
 } emgpu_device_mode;
 
 /**
+ * @brief Type of operation that a gpu frame object can perform.
+ * 
+ * Also represents the type of a pipeline object.
+ */
+typedef enum emgpu_ops_type {
+    EMBER_OPER_TYPE_UNIVERSAL, /**< Ops-agnostic operations */
+    EMBER_OPER_TYPE_GRAPHICS,  /**< Graphics pipeline operations */
+    EMBER_OPER_TYPE_COMPUTE,   /**< Compute shader operations */
+} emgpu_ops_type;
+
+/**
  * @brief Intended usage of a GPU buffer.
  *
  * Usage flags may be combined as bit flags.
@@ -58,9 +69,10 @@ typedef enum emgpu_device_mode {
 typedef enum emgpu_buffer_usage {
     EMBER_BUFFER_USAGE_VERTEX  = 1 << 0, /**< Vertex buffer */
     EMBER_BUFFER_USAGE_INDEX   = 1 << 1, /**< Index buffer */
-    EMBER_BUFFER_USAGE_STORAGE = 1 << 2, /**< Storage buffer */
-    EMBER_BUFFER_USAGE_TRANSFER_SRC = 1 << 3, /**< Transfer from this buffer */
-    EMBER_BUFFER_USAGE_CPU_VISIBLE  = 1 << 4, /**< CPU-coherent buffer */
+    EMBER_BUFFER_USAGE_UNIFORM = 1 << 2, /**< Uniform buffer */
+    EMBER_BUFFER_USAGE_STORAGE = 1 << 3, /**< Storage buffer */
+    EMBER_BUFFER_USAGE_TRANSFER_SRC = 1 << 4, /**< Transfer from this buffer */
+    EMBER_BUFFER_USAGE_CPU_VISIBLE  = 1 << 5, /**< CPU-coherent buffer */
 } emgpu_buffer_usage;
 
 /**
@@ -173,8 +185,43 @@ typedef enum emgpu_access_flags {
 typedef enum emgpu_descriptor_type {
     EMBER_DESCRIPTOR_TYPE_STORAGE_BUFFER,  /**< Storage buffer (SSBO) */
     EMBER_DESCRIPTOR_TYPE_STORAGE_IMAGE,   /**< Storage image, no sampler */
+    EMBER_DESCRIPTOR_TYPE_UNIFORM_BUFFER,  /**< Uniform buffer */
     EMBER_DESCRIPTOR_TYPE_IMAGE_SAMPLER,   /**< Combined image + sampler */
 } emgpu_descriptor_type;
+
+/**
+ * @brief Blend factors used in color blending operations.
+ *
+ * These values define how source and destination colors are scaled
+ * before applying the blend operation.
+ */
+typedef enum emgpu_blend_factor {
+    EMBER_BLEND_FACTOR_ZERO,                       /**< (0, 0, 0, 0) */
+    EMBER_BLEND_FACTOR_ONE,                        /**< (1, 1, 1, 1) */
+    EMBER_BLEND_FACTOR_SRC_COLOR,                  /**< Source color */
+    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,        /**< 1 - source color */
+    EMBER_BLEND_FACTOR_DST_COLOR,                  /**< Destination color */
+    EMBER_BLEND_FACTOR_ONE_MINUS_DST_COLOR,        /**< 1 - destination color */
+    EMBER_BLEND_FACTOR_SRC_ALPHA,                  /**< Source alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,        /**< 1 - source alpha */
+    EMBER_BLEND_FACTOR_DST_ALPHA,                  /**< Destination alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,        /**< 1 - destination alpha */
+    EMBER_BLEND_FACTOR_CONSTANT_COLOR,             /**< Constant blend color */
+    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,   /**< 1 - constant color */
+    EMBER_BLEND_FACTOR_CONSTANT_ALPHA,             /**< Constant alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,   /**< 1 - constant alpha */
+} emgpu_blend_factor;
+
+/**
+ * @brief Blend operations used to combine source and destination values.
+ */
+typedef enum emgpu_blend_op {
+    EMBER_BLEND_OP_ADD,               /**< src + dst */
+    EMBER_BLEND_OP_SUBTRACT,          /**< src - dst */
+    EMBER_BLEND_OP_REVERSE_SUBTRACT,  /**< dst - src */
+    EMBER_BLEND_OP_MIN,               /**< min(src, dst) */
+    EMBER_BLEND_OP_MAX                /**< max(src, dst) */
+} emgpu_blend_op;
 
 /**
  * @brief Texture filtering modes.

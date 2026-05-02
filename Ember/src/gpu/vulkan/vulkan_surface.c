@@ -181,26 +181,6 @@ em_result vulkan_surface_recreate(
         if (result != EMBER_RESULT_OK) return result;
     }
 
-    // Acquire first image before submitting frames
-    // --------------------------------------
-    VkFence temp_fence = VK_NULL_HANDLE;
-    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-
-    CHECK_VKRESULT(
-        vkCreateFence(context->logical_device, &fence_create_info, context->allocator, &temp_fence),
-        "Failed to temporary Vulkan surface fence");
-
-    CHECK_VKRESULT(
-        vulkan_surface_accquire(device, surface, UINT64_MAX, VK_NULL_HANDLE, temp_fence),
-        "Failed to acquire first Vulkan swapchain image");
-
-    CHECK_VKRESULT(
-        vkWaitForFences(context->logical_device, 1, &temp_fence, TRUE, UINT64_MAX),
-        "Failed to acquire first Vulkan swapchain image");
-
-    vkDestroyFence(context->logical_device, temp_fence, context->allocator);
-    // --------------------------------------
-
     mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
 }

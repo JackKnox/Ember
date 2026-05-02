@@ -95,6 +95,25 @@ typedef struct emgpu_graphics_pipeline_config {
     /** @brief Describes how vertices are turned into primitives. */
     emgpu_primitive_type vertex_topology;
 
+    /** @brief Enables or disables blending. */
+    b8 blend_enabled;
+
+    /**
+     * @brief Source and destination blend factors for color components.
+     */
+    emgpu_blend_factor src_color;
+    emgpu_blend_factor dst_color;
+
+    /** @brief Blend operation applied to color components. */
+    emgpu_blend_op color_op;
+
+    /** @brief Source and destination blend factors for alpha component. */
+    emgpu_blend_factor src_alpha;
+    emgpu_blend_factor dst_alpha;
+
+    /** @brief Blend operation applied to alpha component. */
+    emgpu_blend_op alpha_op;
+
     /** @brief Number of active vertex attributes. */
     u32 vertex_attribute_count;
     
@@ -141,9 +160,8 @@ typedef struct emgpu_compute_pipeline_config {
  * descriptors or a vertex/index buffer.
  */
 typedef struct emgpu_pipeline {
-    // TODO: Remove this as emgpu_device_mode is technically a bitmask
     /** @brief Type / supported mode of the pipeline. */
-    emgpu_device_mode pipeline_type;
+    emgpu_ops_type type;
 
     /** @brief Backend-specific pipeline or program data. */
     void* internal_data;

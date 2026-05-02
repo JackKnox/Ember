@@ -18,15 +18,17 @@
     }
 
 int main(int argc, char** argv) {
+	ember_allocator system_alloc = em_allocator_default(); // malloc / free.
+
 	emplat_window_config window_config = emplat_window_default();
 	window_config.size = (uvec2) { 640, 640 };
 	window_config.title = "Test Window";
 
 	emplat_window window = {};
 	CHECK_FUNC(
-		emplat_window_open(&window_config, &window), 
+		emplat_window_open(&window_config, &system_alloc, NULL, &window), 
 		"Failed to open window");
-
+	
 	emgpu_device_config device_config = emgpu_device_default();
 	device_config.required_modes = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT;
 	device_config.optional_modes = EMBER_DEVICE_MODE_VALIDATION;
@@ -34,7 +36,7 @@ int main(int argc, char** argv) {
 	
 	emgpu_device device = {};
 	CHECK_FUNC(
-		emgpu_device_init(&device_config, &device), 
+		emgpu_device_init(&device_config, &system_alloc, &device), 
 		"Failed to create rendering device");
 
 	emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
@@ -72,28 +74,21 @@ int main(int argc, char** argv) {
 
 	show_memory_stats();
 
-	f64 last_time = emplat_current_time();
-	while (!emplat_window_should_close(&window)) {
-		f64 now = emplat_current_time();
-		f64 delta_time = now - last_time;
-		last_time = now;
+	emgpu_frame frame = {};
+	if (emgpu_frame_init(&frame, &device) == EMBER_RESULT_OK) {		
+		// ------------------
+		emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
 
-		emgpu_frame frame = {};
-		if (emgpu_frame_init(&frame) == EMBER_RESULT_OK) {		
-			// ------------------
-			emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
+		emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
+		emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
+		emgpu_frame_end_renderpass(&frame);
 
-			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
-			emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
-			emgpu_frame_end_renderpass(&frame);
-
-			CHECK_FUNC(
-				device.submit_frame(&device, &frame), 
-				"Failed to submit device frame");
-		}
-
-		emplat_window_pump_messages(&window); 
+		CHECK_FUNC(
+			device.submit_frame(&device, &frame), 
+			"Failed to submit device frame");
 	}
+
+	emplat_window_pump_messages(&window); 
 
 failed_init:
 	device.destroy_renderpass(&device, &mainpass);
@@ -103,4 +98,3 @@ failed_init:
 
 	memory_leaks();
 	return 0;
-}

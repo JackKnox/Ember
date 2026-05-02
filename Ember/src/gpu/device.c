@@ -21,7 +21,7 @@ const char* emgpu_device_type_string(emgpu_device_type device_type) {
     }
 }
 
-em_result emgpu_device_init(const emgpu_device_config* config, emgpu_device* out_device) {
+em_result emgpu_device_init(const emgpu_device_config* config, ember_allocator* allocator, emgpu_device* out_device) {
     EM_ASSERT(config != NULL && out_device != NULL && "Invalid arguments passed to emgpu_device_init");
 
     if (config->api_type == EMBER_DEVICE_BACKEND_VULKAN) {

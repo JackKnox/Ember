@@ -1,7 +1,7 @@
 #include "ember/core.h"
 #include "vulkan_backend.h"
 
-#include "frame_internal.h"
+#include "ember/gpu/frame_internal.h"
 
 #include "ember/core/darray.h"
 #include "ember/core/allocators.h"
@@ -542,8 +542,4 @@ emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
     }
 
     return device->capabilities;
-}
-
-em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* frame) {
-    return EMBER_RESULT_UNIMPLEMENTED;
 }

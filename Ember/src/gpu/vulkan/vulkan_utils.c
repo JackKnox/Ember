@@ -29,6 +29,7 @@ VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buff
     VkBufferUsageFlags buffer_usage = 0;
 	if (config->usage & EMBER_BUFFER_USAGE_VERTEX)  buffer_usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	if (config->usage & EMBER_BUFFER_USAGE_INDEX)   buffer_usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (config->usage & EMBER_BUFFER_USAGE_UNIFORM) buffer_usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	if (config->usage & EMBER_BUFFER_USAGE_STORAGE) buffer_usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	if (config->usage & EMBER_BUFFER_USAGE_CPU_VISIBLE) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	if (context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) buffer_usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -318,6 +319,17 @@ emgpu_format vulkan_format_to_engine(VkFormat format) {
         // --- Unsupported / Unknown ---
         default:
             return EMGPU_FORMAT_UNDEFINED;
+    }
+}
+
+VkPipelineBindPoint ops_type_to_bind_point(emgpu_ops_type type) {
+    switch (type) {
+        case EMBER_OPER_TYPE_GRAPHICS: return VK_PIPELINE_BIND_POINT_GRAPHICS;
+        case EMBER_OPER_TYPE_COMPUTE:  return VK_PIPELINE_BIND_POINT_COMPUTE;
+
+        default: 
+            EM_ASSERT(FALSE && "Unsupported renderstage type");
+            break;
     }
 }
 

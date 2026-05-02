@@ -18,6 +18,9 @@ typedef struct emgpu_device {
     /** @brief Index of the current frame in flight. */
     u32 current_frame;
 
+    /** @brief Allocator used to manage per-frame resources. */
+    ember_allocator frame_allocator;
+
     /** 
      * @brief Pointer to dynamicaly allocated capabilities struct, may be NULL.
      * 
@@ -206,7 +209,7 @@ typedef struct emgpu_device {
  * @param out_device Output device instance.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_init(const emgpu_device_config* config, emgpu_device* out_device);
+em_result emgpu_device_init(const emgpu_device_config* config, ember_allocator* allocator, emgpu_device* out_device);
 
 /**
  * @brief Shuts down a GPU device.

@@ -2,8 +2,6 @@
 
 #include "ember/core.h"
 
-#include "ember/core/allocators.h"
-
 #include "ember/gpu/types.h"
 #include "ember/gpu/resources.h"
 
@@ -16,20 +14,23 @@ typedef struct emgpu_frame {
     /** @brief Indicates whetever emgpu_frame_init() was called successfully. */
     b8 initied;
 
-    /** @brief Internal command buffer storage. */
-    freelist buffer; 
-
     /** @brief Current index of managed resources within the frame object. */
     u32 current_resource_idx;
+
+    /** @brief Internal command buffer storage. */
+    ember_allocator commands;
 } emgpu_frame;
+
+struct emgpu_device;
 
 /**
  * @brief Initializes a frame for recording commands.
  *
  * @param frame Pointer to the frame to initialize.
+ * @param device Rendering device to attach frame to.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_frame_init(emgpu_frame* frame);
+em_result emgpu_frame_init(emgpu_frame* frame, struct emgpu_device* device);
 
 /**
  * @brief Validates the recorded commands in the frame.
@@ -91,6 +92,11 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size, b8
  */
 void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count);
 
+/**
+ * @brief Ends a render pass within the frame.
+ * 
+ * @param frame Pointer to the frame.
+ */
 void emgpu_frame_end_renderpass(emgpu_frame* frame);
 
 /**
@@ -113,9 +119,9 @@ void emgpu_frame_memory_barrier(
     emgpu_access_flags dst_access);
 
 /**
- * @brief Binds a render or compute pipeline to the frame.
+ * @brief Binds a pipeline to the frame.
  *
- * A pipeline defines a sequence of GPU operations on how to draw or dispatch.
+ * A pipeline defines a sequence of GPU operations on how to draw, dispatch or trace.
  *
  * @param frame Pointer to the frame.
  * @param pipeline Pointer to the pipeline to begin.

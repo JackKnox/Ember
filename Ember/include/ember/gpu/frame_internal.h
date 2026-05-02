@@ -10,7 +10,7 @@
  * Represent high-level rendering operations that are translated
  * into backend-specific API calls (OpenGL, Vulkan, etc.).
  */
-enum {
+typedef enum rendercmd_payload_type {
     RENDERCMD_SET_RENDERAREA,
     RENDERCMD_BIND_NEXT_SURFACE_TEXTURE,
     RENDERCMD_BIND_IMPORT_TEXTURE,
@@ -23,15 +23,12 @@ enum {
     RENDERCMD_DISPATCH,
 
     RENDERCMD_DUMMY,
-};
-
-/** @brief Type used to identify a render command payload. */
-typedef u32 rendercmd_payload_type;
+} rendercmd_payload_type;
 
 typedef struct rendercmd_payload {
     struct {
         rendercmd_payload_type type;
-        emgpu_device_mode command_mode; // TODO: Push to device backends.
+        emgpu_ops_type command_mode;
     } hdr;
 
     union {

@@ -63,8 +63,15 @@ typedef struct internal_vulkan_surface {
     u32 image_index;
 } internal_vulkan_surface;
 
+typedef struct vulkan_renderpass_framebuffer {
+    VkFramebuffer framebuffer;
+    u64 cache_id; // TODO: Use a hashmap instead of a linear search.
+} vulkan_renderpass_framebuffer;
+
 typedef struct internal_vulkan_renderpass {
     VkRenderPass handle;
+    u32 total_cycle_framebuffers;
+    vulkan_renderpass_framebuffer* framebuffers;
 } internal_vulkan_renderpass;
 
 // Internal Vulkan implementation of a emgpu_pipeline.
@@ -106,6 +113,29 @@ typedef struct internal_vulkan_texture {
     VkImageLayout curr_layout;
     b8 ownes_image;
 } internal_vulkan_texture;
+
+// Describes one VkQueueSubmit call, outputted by frame command buffer.
+typedef struct vulkan_frame_submission {
+    VkCommandBuffer handle;
+    vulkan_queue_type queue;
+    VkSemaphore wait_semaphore, signal_semaphore;
+} vulkan_frame_submission;
+
+// Describes a managed surface within one frame submit call.
+typedef struct vulkan_frame_surface_entry {
+    emgpu_surface* surface;
+    VkSemaphore image_available_semaphore;
+} vulkan_frame_surface_entry;
+
+// Internal data for processing emgpu_frame.
+typedef struct vulkan_frame_context {
+    u32 semaphore_index;
+    emgpu_ops_type curr_mode;
+    vulkan_frame_submission* submissions;
+    vulkan_frame_surface_entry* managed_surfaces;
+    VkSemaphore* wait_present_semaphores;
+    emgpu_texture** frame_textures;
+} vulkan_frame_context;
 
 // Represents the global Vulkan backend context.
 // Owns the Vulkan instance, device, swapchain, synchronization primitives, and per-frame resources.
@@ -162,6 +192,9 @@ VkFormat format_to_vulkan_type(emgpu_format format);
 
 // Converts Vulkan format to engine render format, use sparingly.
 emgpu_format vulkan_format_to_engine(VkFormat format);
+
+// Coverts engine ops type to a pipeline bind point.
+VkPipelineBindPoint ops_type_to_bind_point(emgpu_ops_type type);
 
 // Converts engine load op format to a Vulkan format.
 VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op);

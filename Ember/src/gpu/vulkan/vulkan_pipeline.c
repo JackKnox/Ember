@@ -110,7 +110,7 @@ em_result vulkan_pipeline_create_graphics(
     out_graphics_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_graphics_pipeline->internal_data;
 
-    out_graphics_pipeline->pipeline_type = EMBER_DEVICE_MODE_GRAPHICS;
+    out_graphics_pipeline->type = EMBER_OPER_TYPE_GRAPHICS;
     internal_pipeline->graphics.vertex_buffer = config->vertex_buffer;
     internal_pipeline->graphics.index_buffer = config->index_buffer;
 
@@ -242,7 +242,7 @@ em_result vulkan_pipeline_create_compute(
     out_compute_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_compute_pipeline->internal_data;
 
-    out_compute_pipeline->pipeline_type = EMBER_DEVICE_MODE_COMPUTE;
+    out_compute_pipeline->type = EMBER_OPER_TYPE_COMPUTE;
 
     VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
     emgpu_shader_src shaders_srcs[] = { config->compute_shader };

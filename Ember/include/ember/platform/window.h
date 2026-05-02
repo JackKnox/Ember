@@ -79,7 +79,7 @@ emplat_window_config emplat_window_default();
  * @note Accurately setting @p last_window is extremely recommened 
  *       as it avoids creating global state twice across windows.
  */
-em_result emplat_window_open(const emplat_window_config* config, emplat_window* last_window, emplat_window* out_window);
+em_result emplat_window_open(const emplat_window_config* config, ember_allocator* allocator, emplat_window* last_window, emplat_window* out_window);
 
 /**
  * @brief Closes and destroys a window.
