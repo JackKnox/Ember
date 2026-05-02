@@ -52,6 +52,16 @@ typedef void* (*PFN_allocate_mem)(struct ember_allocator* allocator, u64 size, u
 typedef void (*PFN_free_mem)(struct ember_allocator* allocator, void* block, u64 size, u64 alignment);
 
 /**
+ * @brief Function pointer type for custom memory reallocation.
+ * 
+ * @param allocator Allocator instance.
+ * @param block Pointer to memory block to reallocate.
+ * @param size New allocation size.
+ * @param alignment Alignment used during allocation.
+ */
+typedef void* (*PFN_reallocate_mem)(struct ember_allocator* allocator, void* block, u64 new_size, u64 alignment);
+
+/**
  * @brief Categorises allocations for debugging, profiling, and leak detection.
  */
 typedef enum memory_tag {
@@ -71,6 +81,9 @@ typedef enum memory_tag {
 typedef struct ember_allocator {
 	/** @brief Allocation function. */
     PFN_allocate_mem alloc;
+
+	/** @brief Reallocation function. */
+	PFN_reallocate_mem realloc;
 
 	/** @brief Deallocation function. */
     PFN_free_mem free;
@@ -126,6 +139,17 @@ void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag);
  * @note If @p allocator is NULL, frees using the default system allocator.
  */
 void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag);
+
+/**
+ * @brief Reallocates memory in place allocated with mem_allocate.
+ * 
+ * @param allocator Allocator instance.
+ * @param block Pointer to memory block.
+ * @param old_size Original allocation size.
+ * @param new_size New allocation size.
+ * @param tag Memory category used at allocation time.
+ */
+void* mem_realloc(ember_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag);
 
 /**
  * @brief Internal bookkeeping: records allocation event.
