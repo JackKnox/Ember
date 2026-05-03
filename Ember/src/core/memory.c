@@ -10,7 +10,7 @@ typedef struct memory_stats {
 
 static const char* tag_strings[] = {
 	"CORE    ",
-	"TEMP    ",
+	"FRAME   ",
 	"DEVICE  ",
 	"PLATFORM",
 	"RENDERER",};
@@ -104,6 +104,10 @@ void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag) {
 }
 
 void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag) {
+	if (allocator && !allocator->free) {
+		EM_TRACE("Core", "Called free on a allocator that doesn't support that");
+		return;
+	}
 	mem_report_free(size, tag);
 	ember_allocator sys = em_allocator_default();
 	if (!allocator) allocator = &sys;

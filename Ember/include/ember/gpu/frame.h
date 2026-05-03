@@ -16,49 +16,10 @@
 typedef u32 emgpu_frame_texture;
 
 /**
- * @brief Describes a contiguous batch of recorded GPU commands.
- *
- * A submission groups a sequence of commands that share the same
- * execution context or pipeline type. Backends may translate each
- * submission into a single command buffer submission or similar unit.
- */
-typedef struct emgpu_frame_submission {
-    /** @brief Index of the first command in the command stream. */
-    u32 start_index;
-
-    /** @brief Number of commands in this submission. */
-    u32 submission_length;
-
-    /** @brief Type of operations contained in this submission (graphics, compute, transfer, etc.). */
-    emgpu_ops_type ops_type;
-} emgpu_frame_submission;
-
-/**
- * @brief Tracks a surface used during a frame.
- *
- * Surfaces are managed per-frame to ensure proper synchronization
- * and lifetime handling. Each surface is associated with the submission
- * that owns or last used it.
- */
-typedef struct emgpu_frame_surface {
-    /** @brief Pointer to the underlying surface resource. */
-    emgpu_surface* handle;
-
-    /** @brief Index of the submission that owns or last accessed this surface. */
-    u32 owner_submission_index;
-} emgpu_frame_surface;
-
-/**
  * @brief Represents a single GPU frame for command recording.
  *
- * An emgpu_frame acts as a transient container for all commands,
- * resources, and synchronization data required to build and submit
- * GPU work for one frame.
- *
- * The frame owns:
- * - A linear command stream (datastream)
- * - Submission groupings for execution
- * - Transient resource tracking (e.g., surfaces)
+ * An emgpu_frame acts as a transient container for all commands 
+ * required to submit GPU work for one frame.
  */
 typedef struct emgpu_frame {
     /** @brief Indicates whether emgpu_frame_init() completed successfully. */
@@ -76,12 +37,6 @@ typedef struct emgpu_frame {
     // TODO: Remove. Two points of truth for datastream.
     /** @brief Current command index within the command stream. */
     u32 curr_command_idx;
-
-    /** @brief Array of recorded submissions for this frame. */
-    emgpu_frame_submission* submissions;
-
-    /** @brief Array of surfaces tracked and used during this frame. */
-    emgpu_frame_surface* managed_surfaces;
 } emgpu_frame;
 
 struct emgpu_device;

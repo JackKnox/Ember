@@ -67,7 +67,8 @@ typedef void* (*PFN_reallocate_mem)(struct ember_allocator* allocator, void* blo
  */
 typedef enum memory_tag {
 	MEMORY_TAG_CORE,     /**< Allocated by ember_core */
-	MEMORY_TAG_TEMP,     /**< Tempory data for any subsystem */
+	MEMORY_TAG_TEMP,     /**< Used for temporary data */
+	MEMORY_TAG_FRAME,    /**< Per-frame data for any subsystem */
 	MEMORY_TAG_DEVICE,   /**< Internal memory used by internal systems */
 	MEMORY_TAG_PLATFORM, /**< Allocated by ember_plat */
 	MEMORY_TAG_RENDERER, /**< Allocated by ember_gpu */

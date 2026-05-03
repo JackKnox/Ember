@@ -114,16 +114,27 @@ typedef struct internal_vulkan_texture {
     b8 ownes_image;
 } internal_vulkan_texture;
 
+
+// Describes one VkQueueSubmit call, outputted by frame command buffer.
 typedef struct vulkan_frame_submission {
-    VkCommandBuffer commandbuf;
+    VkCommandBuffer handle;
+    vulkan_queue_type queue;
     VkSemaphore wait_semaphore, signal_semaphore;
 } vulkan_frame_submission;
+
+// Describes a managed surface within one frame submit call.
+typedef struct vulkan_frame_surface_entry {
+    emgpu_surface* surface;
+    VkSemaphore image_available_semaphore;
+} vulkan_frame_surface_entry;
 
 // Internal data for processing emgpu_frame.
 typedef struct vulkan_frame_context {
     u32 semaphore_index;
-    VkSemaphore* present_semaphores;
-    vulkan_frame_submission* vk_submissions;
+    emgpu_ops_type curr_mode;
+    vulkan_frame_submission* submissions;
+    vulkan_frame_surface_entry* managed_surfaces;
+    VkSemaphore* wait_present_semaphores;
     emgpu_texture** frame_textures;
 } vulkan_frame_context;
 

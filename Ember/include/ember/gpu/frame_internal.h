@@ -37,8 +37,8 @@ typedef struct rendercmd_payload {
         } set_renderarea;
 
         struct {
+            emgpu_surface* surface;
             emgpu_frame_texture dst_texture;
-            u32 surface_index;
         } next_surface_texture;
 
         struct {
