@@ -2,23 +2,86 @@
 
 #include "ember/core.h"
 
+#include "ember/core/datastream.h"
+
 #include "ember/gpu/types.h"
 #include "ember/gpu/resources.h"
 
+/**
+ * @brief Handle to a texture used within a frame.
+ *
+ * This is an opaque identifier referencing a texture resource
+ * that is valid only within the scope of a single emgpu_frame.
+ */
 typedef u32 emgpu_frame_texture;
 
 /**
- * @brief Represents a single GPU frame used to record commands to the rendering frame.
+ * @brief Describes a contiguous batch of recorded GPU commands.
+ *
+ * A submission groups a sequence of commands that share the same
+ * execution context or pipeline type. Backends may translate each
+ * submission into a single command buffer submission or similar unit.
+ */
+typedef struct emgpu_frame_submission {
+    /** @brief Index of the first command in the command stream. */
+    u32 start_index;
+
+    /** @brief Number of commands in this submission. */
+    u32 submission_length;
+
+    /** @brief Type of operations contained in this submission (graphics, compute, transfer, etc.). */
+    emgpu_ops_type ops_type;
+} emgpu_frame_submission;
+
+/**
+ * @brief Tracks a surface used during a frame.
+ *
+ * Surfaces are managed per-frame to ensure proper synchronization
+ * and lifetime handling. Each surface is associated with the submission
+ * that owns or last used it.
+ */
+typedef struct emgpu_frame_surface {
+    /** @brief Pointer to the underlying surface resource. */
+    emgpu_surface* handle;
+
+    /** @brief Index of the submission that owns or last accessed this surface. */
+    u32 owner_submission_index;
+} emgpu_frame_surface;
+
+/**
+ * @brief Represents a single GPU frame for command recording.
+ *
+ * An emgpu_frame acts as a transient container for all commands,
+ * resources, and synchronization data required to build and submit
+ * GPU work for one frame.
+ *
+ * The frame owns:
+ * - A linear command stream (datastream)
+ * - Submission groupings for execution
+ * - Transient resource tracking (e.g., surfaces)
  */
 typedef struct emgpu_frame {
-    /** @brief Indicates whetever emgpu_frame_init() was called successfully. */
+    /** @brief Indicates whether emgpu_frame_init() completed successfully. */
     b8 initied;
 
-    /** @brief Current index of managed resources within the frame object. */
+    /** @brief Current index for allocating frame-local resources. */
     u32 current_resource_idx;
 
-    /** @brief Internal command buffer storage. */
-    ember_allocator commands;
+    /** @brief Allocator used for all frame-local allocations. */
+    ember_allocator* local_allocator;
+
+    /** @brief Linear buffer storing all recorded commands. */
+    datastream commands;
+
+    // TODO: Remove. Two points of truth for datastream.
+    /** @brief Current command index within the command stream. */
+    u32 curr_command_idx;
+
+    /** @brief Array of recorded submissions for this frame. */
+    emgpu_frame_submission* submissions;
+
+    /** @brief Array of surfaces tracked and used during this frame. */
+    emgpu_frame_surface* managed_surfaces;
 } emgpu_frame;
 
 struct emgpu_device;
@@ -76,11 +139,10 @@ emgpu_frame_texture emgpu_frame_import_texture(emgpu_frame* frame, emgpu_texture
  * @param frame Pointer to the frame.
  * @param origin Top-left corner of the set renderable area.
  * @param size Size of area to set for subsequent rendering
- * @param set_scissor Whetever to set scissor clip to area as well.
  * 
  * @note The command is not necessary for compute-based operations.
  */
-void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size, b8 set_scissor);
+void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size);
 
 /**
  * @brief Begins a render pass within the frame.

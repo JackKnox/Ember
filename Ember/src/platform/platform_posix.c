@@ -185,7 +185,7 @@ em_result emplat_cond_broadcast(emplat_cond* cond) {
 }
 
 em_result emplat_cond_wait(emplat_cond* cond, emplat_mutex* mtx) {
-    switch (pthread_cond_wait(cond, NULL)) {
+    switch (pthread_cond_wait(cond, mtx)) {
         case 0: return EMBER_RESULT_OK;
     }
 

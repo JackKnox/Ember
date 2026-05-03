@@ -34,12 +34,11 @@ typedef struct rendercmd_payload {
     union {
         struct {
             uvec2 origin, size;
-            b8 set_scissor;
         } set_renderarea;
 
         struct {
-            emgpu_surface* surface;
             emgpu_frame_texture dst_texture;
+            u32 surface_index;
         } next_surface_texture;
 
         struct {
@@ -74,5 +73,4 @@ typedef struct rendercmd_payload {
             uvec3 group_size;
         } dispatch;
     };
-    
 } rendercmd_payload;

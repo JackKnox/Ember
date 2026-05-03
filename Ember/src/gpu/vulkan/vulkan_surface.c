@@ -175,6 +175,7 @@ em_result vulkan_surface_recreate(
         swapchain_texture_config.size = new_size;
         swapchain_texture_config.image_format = surface->pixel_format;
         swapchain_texture_config.usage = EMBER_TEXTURE_USAGE_ATTACHMENT_DST;
+        swapchain_texture_config.api_next = &ext_config;
 
         em_result result = vulkan_texture_create(
             device, &swapchain_texture_config, &internal_surface->swapchain_images[i]);
@@ -183,6 +184,16 @@ em_result vulkan_surface_recreate(
 
     mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
+}
+
+emgpu_texture* vulkan_surface_curr_texture(
+    emgpu_device* device,
+    emgpu_surface* surface) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
+
+    return &internal_surface->swapchain_images[internal_surface->image_index];
 }
 
 VkResult vulkan_surface_accquire(
@@ -200,15 +211,4 @@ VkResult vulkan_surface_accquire(
         timeout, 
         signal_semaphore, signal_fence, 
         &internal_surface->image_index);
-}
-
-VkResult vulkan_surface_present(
-    emgpu_device* device, 
-    emgpu_surface* surface, 
-    vulkan_queue* present_queue, 
-    u32 wait_semaphore_count, VkSemaphore* wait_semaphores) {
-    vulkan_context* context = (vulkan_context*)device->internal_context;
-
-    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
-
 }

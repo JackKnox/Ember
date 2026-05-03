@@ -4,7 +4,6 @@
 #include "ember/gpu/frame_internal.h"
 
 #include "ember/core/darray.h"
-#include "ember/core/allocators.h"
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
@@ -34,11 +33,6 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 
     context->frames_in_flight = config->frames_in_flight;
     context->enabled_modes = config->required_modes | config->optional_modes;
-
-    // * NOTE: This value is kind of a lie as each frame waits for the next one
-    // *       in the future this should act as a trade between memory and performance.
-    // *       (docs-assets.developer.apple.com/published/e75ecc44a7f513ac9322a840d37e2995/drawing-a-triangle-with-metal-4-1~dark%402x.png)
-    /** config->frames_in_flight ... */
 
     // Global Vulkan init code
     // --------------------------------------
@@ -525,6 +519,7 @@ emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
 
         // Populate capability fields
         device->capabilities->api_type = EMBER_DEVICE_BACKEND_VULKAN;
+        device->capabilities->enabled_modes = context->enabled_modes;
         device->capabilities->device_type = (emgpu_device_type)properties.deviceType;
         device->capabilities->max_anisotropy = properties.limits.maxSamplerAnisotropy;
 

@@ -55,5 +55,4 @@ typedef enum ember_data_type {
 #define EMBER_FORMAT_CHANNELS(format)  (((format)  >> 12)  & 0xF)
 
 /** @brief Computes total size in bits for the format. */
-#define EMBER_FORMAT_SIZE(format) \
-    (EMBER_FORMAT_BYTES(format) * EMBER_FORMAT_CHANNELS(format))
+#define EMBER_FORMAT_SIZE(format) (EMBER_FORMAT_BYTES(format) * EMBER_FORMAT_CHANNELS(format))

@@ -274,6 +274,35 @@ em_result vulkan_pipeline_update_descriptors(
 
 }
 
+void vulkan_pipeline_bind(
+    emgpu_device* device, 
+    VkCommandBuffer command_buffer,
+    emgpu_pipeline* pipeline) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+
+    internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)pipeline->internal_data;
+    
+    VkPipelineBindPoint bind_point = ops_type_to_bind_point(pipeline->type);
+
+    vkCmdBindPipeline(command_buffer, bind_point, internal_pipeline->handle);
+
+    if (internal_pipeline->descriptor_sets)
+        vkCmdBindDescriptorSets(command_buffer, bind_point, internal_pipeline->layout, 0, 1, &internal_pipeline->descriptor_sets[device->current_frame], 0, 0);
+    
+    // Bind vertex and index buffers.
+    if (bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS && internal_pipeline->graphics.vertex_buffer) {
+        VkDeviceSize offset = 0;
+
+        internal_vulkan_buffer* vertex_buffer = (internal_vulkan_buffer*)internal_pipeline->graphics.vertex_buffer->internal_data;
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer->handle, &offset);
+
+        if (internal_pipeline->graphics.index_buffer) {
+            internal_vulkan_buffer* index_buffer = (internal_vulkan_buffer*)internal_pipeline->graphics.index_buffer->internal_data;
+            vkCmdBindIndexBuffer(command_buffer, index_buffer->handle, offset, VK_INDEX_TYPE_UINT16); // TODO: Customize index type?
+        }
+    }
+}
+
 void vulkan_pipeline_destroy(
     emgpu_device* device, 
     emgpu_pipeline* pipeline) {

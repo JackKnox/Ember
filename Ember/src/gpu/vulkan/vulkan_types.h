@@ -114,26 +114,16 @@ typedef struct internal_vulkan_texture {
     b8 ownes_image;
 } internal_vulkan_texture;
 
-// Describes one VkQueueSubmit call, outputted by frame command buffer.
 typedef struct vulkan_frame_submission {
-    VkCommandBuffer handle;
-    vulkan_queue_type queue;
+    VkCommandBuffer commandbuf;
     VkSemaphore wait_semaphore, signal_semaphore;
 } vulkan_frame_submission;
-
-// Describes a managed surface within one frame submit call.
-typedef struct vulkan_frame_surface_entry {
-    emgpu_surface* surface;
-    VkSemaphore image_available_semaphore;
-} vulkan_frame_surface_entry;
 
 // Internal data for processing emgpu_frame.
 typedef struct vulkan_frame_context {
     u32 semaphore_index;
-    emgpu_ops_type curr_mode;
-    vulkan_frame_submission* submissions;
-    vulkan_frame_surface_entry* managed_surfaces;
-    VkSemaphore* wait_present_semaphores;
+    VkSemaphore* present_semaphores;
+    vulkan_frame_submission* vk_submissions;
     emgpu_texture** frame_textures;
 } vulkan_frame_context;
 
@@ -180,6 +170,9 @@ VkDescriptorType descriptor_type_to_vulkan_type(emgpu_descriptor_type descriptor
 
 // Converts engine filter mode to a Vulkan filter.
 VkFilter filter_to_vulkan_type(emgpu_filter_type filter_type);
+
+// Converts engine filter mode to a Vulkan queue type.
+vulkan_queue_type ops_type_to_queue_type(emgpu_ops_type type);
 
 // Converts engine address mode to a Vulkan sampler address mode.
 VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address);

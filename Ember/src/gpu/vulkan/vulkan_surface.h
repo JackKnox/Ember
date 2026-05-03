@@ -19,16 +19,14 @@ em_result vulkan_surface_recreate(
     emgpu_surface* surface, 
     uvec2 new_size);
 
+// Gets the next available surface image after calling acquire.
+emgpu_texture* vulkan_surface_curr_texture(
+    emgpu_device* device,
+    emgpu_surface* surface);
+
 // Acquires the next available swapchain image for rendering.
 VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,
     u64 timeout, 
     VkSemaphore signal_semaphore, VkFence signal_fence);
-
-// Presents the current swapchain image to the screen.
-VkResult vulkan_surface_present(
-    emgpu_device* device, 
-    emgpu_surface* surface, 
-    vulkan_queue* present_queue, 
-    u32 wait_semaphore_count, VkSemaphore* wait_semaphores);

@@ -3,6 +3,10 @@ This items in thi lst are not in any particular order. This list will be updated
 
 ## Future features
 - Dialog API (ember_plat)
+- File watcher API (ember_plat)
+- Filesystem API
+- IPC (Unix Files)
+- Seperate window + graphics into own module
 - More protocols for ember_net (TLS, QUIC)
 - Legacy platform support
     - X11

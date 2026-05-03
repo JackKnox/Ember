@@ -4,9 +4,9 @@
 
 typedef struct darray_header {
     memory_tag memtag;
+    ember_allocator* allocator;
     u32 capacity, length;
     u64 stride;
-    ember_allocator* allocator;
 } darray_header;
 
 #define DARRAY_DEFAULT_CAPACITY 1
@@ -15,6 +15,7 @@ typedef struct darray_header {
 void*          _darray_create(u64 stride, u32 capacity, ember_allocator* allocator, memory_tag memtag);
 void*          _darry_from_data(u64 stride, u32 length, const void* from_data, ember_allocator* allocator, memory_tag memtag);
 void*          _darray_push(void** out_array, const void* value_ptr);
+
 darray_header* _darray_header(void* array);
 
 void*          darray_resize(void* array, u32 new_size);
@@ -47,3 +48,5 @@ void           darray_pop_at(void* array, u32 index, void* dest);
 #define darray_capacity(array) (_darray_header(array)->capacity)
 
 #define darray_stride(array) (_darray_header(array)->stride)
+
+#define darray_last(array) (&array[darray_length(array) - 1])

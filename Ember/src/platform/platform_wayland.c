@@ -16,14 +16,15 @@ f64 emplat_current_time() {
 }
 
 void GLFWErrorCallback(int error, const char* description) {
-	EM_ERROR("Platform" "%s", description);
+	EM_ERROR("Platform", "Error code: %i '%s'", error, description);
 }
 
 emplat_window_config emplat_window_default() {
 	emplat_window_config config = {};
 	config.window_mode = EMBER_WINDOW_MODE_WINDOWED;
-	config.size = (uvec2) { 640, 360 };
 	config.window_centered = TRUE;
+	config.size.width = 640;
+	config.size.height = 360;
 	return config;
 }
 
@@ -46,12 +47,12 @@ em_result emplat_window_open(const emplat_window_config* config, ember_allocator
 		window_pos.y = monitorY + (mode->height - config->size.y) / 2;
 	}
 
-	if (window_pos.x > monitorX + mode->width || window_pos.y > monitorY + mode->height) {
+	if (window_pos.x > (u32)monitorX + mode->width || window_pos.y > (u32)monitorY + mode->height) {
 		EM_ERROR("Platform", "Specififed window position is outside range of monitior.");
 		return EMBER_RESULT_INVALID_VALUE;
 	}
 
-	if (config->size.width >= mode->width || config->size.height >= mode->height) {
+	if (config->size.width >= (u32)mode->width || config->size.height >= (u32)mode->height) {
 		EM_ERROR("Platform", "Specififed window size is larger than size of monitior.");
 		return EMBER_RESULT_INVALID_VALUE;
 	}
@@ -69,18 +70,31 @@ em_result emplat_window_open(const emplat_window_config* config, ember_allocator
 		return EMBER_RESULT_UNKNOWN;
 	}
 
+	u32 string_length = strlen(config->title) + 1;
+
+	out_window->title = (char*)mem_allocate(NULL, string_length, MEMORY_TAG_PLATFORM);
+	em_memcpy(out_window->title, config->title, string_length);
+
 	out_window->size = config->size;
-	out_window->title = config->title;
     return EMBER_RESULT_OK;
 }
 
 void emplat_window_close(emplat_window* window) {
+	mem_free(NULL, window->title, strlen(window->title) + 1, MEMORY_TAG_PLATFORM);
+	window->title = NULL;
+
     glfwDestroyWindow(window->wayland.handle);
     glfwTerminate();
 }
 
-b8 emplat_window_pump_messages(emplat_window* window) {
+em_result emplat_window_pump_messages(emplat_window* window) {
 	glfwPollEvents();
+	return EMBER_RESULT_OK;
+}
+
+em_result emplat_window_wait_messages(emplat_window* window) {
+	glfwWaitEvents();
+	return EMBER_RESULT_OK;
 }
 
 b8 emplat_window_should_close(emplat_window* window) {

@@ -3,9 +3,9 @@
 
 #include <ember/gpu/device.h>
 
-#include <ember/core/allocators.h>
+#include <ember/gpu/frame_internal.h>
 
-#define LOG_OUTPUT(level, message, ...) em_log_console(level, "Sandbox", message __VA_OPT__(,) __VA_ARGS__)
+#define LOG_OUTPUT(level, message, ...) log_console(level, "Sandbox", message __VA_OPT__(,) __VA_ARGS__)
 
 #define CHECK_FUNC(func, message)                          \
     {                                                      \
@@ -72,14 +72,12 @@ int main(int argc, char** argv) {
 		device.create_renderpass(&device, &renderpass_config, &mainpass), 
 		"Failed to create main renderpass (present)");
 
-	show_memory_stats();
-
 	emgpu_frame frame = {};
 	if (emgpu_frame_init(&frame, &device) == EMBER_RESULT_OK) {		
 		// ------------------
 		emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
 
-		emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size, TRUE);
+		emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size);
 		emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
 		emgpu_frame_end_renderpass(&frame);
 
@@ -89,6 +87,8 @@ int main(int argc, char** argv) {
 	}
 
 	emplat_window_pump_messages(&window); 
+
+	show_memory_stats();
 
 failed_init:
 	device.destroy_renderpass(&device, &mainpass);

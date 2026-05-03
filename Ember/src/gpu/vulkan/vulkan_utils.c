@@ -72,6 +72,18 @@ VkFilter filter_to_vulkan_type(emgpu_filter_type filter_type) {
     }
 }
 
+vulkan_queue_type ops_type_to_queue_type(emgpu_ops_type type) {
+    switch (type) {
+    case EMBER_OPER_TYPE_GRAPHICS: return VULKAN_QUEUE_TYPE_GRAPHICS;
+    case EMBER_OPER_TYPE_COMPUTE:  return VULKAN_QUEUE_TYPE_COMPUTE;
+    // TODO: EMBER_OPER_TYPE_UNIVERSAL, just find A queue
+
+    default:
+        EM_ASSERT(FALSE && "Unsupported queue type!");
+        return 0;
+    }
+}
+
 VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address) {
     switch (address) {
     case EMBER_ADDRESS_MODE_REPEAT:               return VK_SAMPLER_ADDRESS_MODE_REPEAT;
