@@ -15,15 +15,14 @@ rendercmd_payload* add_command(emgpu_frame* frame, emgpu_ops_type mode, rendercm
     return payload_size > 0 ? payload : NULL;
 }
 
-em_result emgpu_frame_init(emgpu_frame* frame, emgpu_device* device) {
+em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator) {
     if (frame->initied) {
         EM_WARN("Gpu", "Already initied frame object but called emgpu_frame_init twice");
         return EMBER_RESULT_OK;
     }
 
+    frame->commands = datastream_create(allocator, MEMORY_TAG_FRAME);
     frame->initied = TRUE;
-    frame->local_allocator = &device->frame_allocator;
-    frame->commands = datastream_create(&device->frame_allocator, MEMORY_TAG_FRAME);
     return EMBER_RESULT_OK;
 }
 

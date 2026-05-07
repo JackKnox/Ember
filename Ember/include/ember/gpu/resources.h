@@ -4,7 +4,40 @@
 
 #include "ember/gpu/types.h"
 
-#include <ember/platform/window.h>
+/**
+ * @brief Platform-specific data required to create or interface with a GPU surface/context.
+ *
+ * The contents of this structure are backend and platform dependent.
+ */
+typedef struct emgpu_platform_data {
+    /**
+     * @brief Native display or connection object.
+     *
+     * Exact value depends on platform:
+     * - X11: `Display*`
+     * - Wayland: `wl_display*`
+     * - Windows: `HINSTANCE`
+     */
+    void* display;
+
+    /**
+     * @brief Native window or surface handle.
+     *
+     * Exact value depends on platform:
+     * - X11: `Window`
+     * - Wayland: `wl_surface*`
+     * - Windows: `HWND`
+     */
+    void* handle;
+
+    /**
+     * @brief Optional debug name for the platform surface or window.
+     *
+     * Used primarily for debugging, profiling, or validation output.
+     * May be `NULL` if no debug name is provided.
+     */
+    const char* debug_name;
+} emgpu_platform_data;
 
 /**
  * @brief Configuration for a surface that connects to 
@@ -14,9 +47,11 @@
  * format for the surface.
  */
 typedef struct emgpu_surface_config {
-    // TODO: Change to some sort of platform_data struct to decouple from emplat_*
     /** @brief Window to attach render surface to. */
-    emplat_window* window;
+    emgpu_platform_data window;
+
+    /** @brief Size of the created render surface. */
+    uvec2 size;
 
     /** @brief Requested format of the surface texture. */
     emgpu_format preferred_format;

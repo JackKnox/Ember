@@ -63,15 +63,9 @@ typedef struct internal_vulkan_surface {
     u32 image_index;
 } internal_vulkan_surface;
 
-typedef struct vulkan_renderpass_framebuffer {
-    VkFramebuffer framebuffer;
-    u64 cache_id; // TODO: Use a hashmap instead of a linear search.
-} vulkan_renderpass_framebuffer;
-
 typedef struct internal_vulkan_renderpass {
     VkRenderPass handle;
-    u32 total_cycle_framebuffers;
-    vulkan_renderpass_framebuffer* framebuffers;
+    VkFramebuffer* framebuffers;
 } internal_vulkan_renderpass;
 
 // Internal Vulkan implementation of a emgpu_pipeline.
@@ -134,7 +128,7 @@ typedef struct vulkan_frame_context {
     emgpu_ops_type curr_mode;
     vulkan_frame_submission* submissions;
     vulkan_frame_surface_entry* managed_surfaces;
-    VkSemaphore* wait_present_semaphores;
+    VkSemaphore* present_semaphores;
     emgpu_texture** frame_textures;
 } vulkan_frame_context;
 

@@ -5,11 +5,12 @@
 
 emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
-    config.application_name = "Ember test gpu";
-    config.api_type = EMBER_DEVICE_BACKEND_VULKAN;
-    config.application_version = EMBER_MAKE_VERSION(0, 1, 0);
-    config.required_modes = EMBER_DEVICE_MODE_GRAPHICS;
-    config.frames_in_flight = 3; // Standard in low level GAPIs.
+    config.application_name    = "EMBER_GPU";
+    config.frame_allocator     = em_allocator_default();
+    config.backend_api         = EMBER_DEVICE_BACKEND_VULKAN;
+    config.application_version = EMBER_MAKE_VERSION(0, 0, 1);
+    config.required_modes      = EMBER_DEVICE_MODE_GRAPHICS;
+    config.frames_in_flight    = 3; // Standard in low level GAPIs.
     return config;
 }
 
@@ -30,10 +31,10 @@ emgpu_compute_pipeline_config emgpu_pipeline_default_compute() {
 
 emgpu_texture_config emgpu_texture_default() {
     emgpu_texture_config config = {};
-	config.filter_type = EMBER_FILTER_TYPE_NEAREST;
-	config.address_mode = EMBER_ADDRESS_MODE_REPEAT;
-	config.usage = EMBER_TEXTURE_USAGE_SAMPLED;
-
+    config.image_format = EMGPU_FORMAT_RGBA8_SRGB;
+    config.filter_type  = EMBER_FILTER_TYPE_NEAREST;
+    config.address_mode = EMBER_ADDRESS_MODE_REPEAT;
+    config.usage        = EMBER_TEXTURE_USAGE_SAMPLED;   
 	return config;
 }
 
@@ -49,7 +50,7 @@ emgpu_renderpass_config emgpu_renderpass_default() {
 
 emgpu_surface_config emgpu_surface_default() {
     emgpu_surface_config config = {};
-    config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Most common in vulkan and vulkan is the most common API.
-	config.force_format = TRUE;
+    config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM;
+	config.force_format     = TRUE;
     return config;
 }

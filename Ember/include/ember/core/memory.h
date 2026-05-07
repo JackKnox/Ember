@@ -6,6 +6,19 @@
 #include <stdlib.h>
 
 /**
+ * @brief Categorises allocations for debugging, profiling, and leak detection.
+ */
+typedef enum memory_tag {
+	MEMORY_TAG_CORE,     /**< Allocated by ember_core */
+	MEMORY_TAG_TEMP,     /**< Used for temporary data */
+	MEMORY_TAG_FRAME,    /**< Per-frame data for any subsystem */
+	MEMORY_TAG_DEVICE,   /**< Internal memory used by internal systems */
+	MEMORY_TAG_PLATFORM, /**< Allocated by ember_plat */
+	MEMORY_TAG_RENDERER, /**< Allocated by ember_gpu */
+	MEMORY_TAG_MAX_TAGS,
+} memory_tag;
+
+/**
  * @brief Alias for standard memcpy, used for maximum compatibility.
  */
 #define em_memcpy memcpy
@@ -28,7 +41,7 @@
  */
 #define MEMORY_POISON_VALUE 0xfe
 
-struct ember_allocator;
+struct em_allocator;
 
 /**
  * @brief Function pointer type for custom memory allocation.
@@ -39,7 +52,7 @@ struct ember_allocator;
  *
  * @return Pointer to allocated memory, or NULL on failure.
  */
-typedef void* (*PFN_allocate_mem)(struct ember_allocator* allocator, u64 size, u64 alignment);
+typedef void* (*PFN_allocate_mem)(struct em_allocator* allocator, u64 size, u64 alignment, memory_tag tag);
 
 /**
  * @brief Function pointer type for custom memory deallocation.
@@ -49,7 +62,7 @@ typedef void* (*PFN_allocate_mem)(struct ember_allocator* allocator, u64 size, u
  * @param size Original allocation size.
  * @param alignment Alignment used during allocation.
  */
-typedef void (*PFN_free_mem)(struct ember_allocator* allocator, void* block, u64 size, u64 alignment);
+typedef void (*PFN_free_mem)(struct em_allocator* allocator, void* block, u64 size, u64 alignment, memory_tag tag);
 
 /**
  * @brief Function pointer type for custom memory reallocation.
@@ -60,27 +73,14 @@ typedef void (*PFN_free_mem)(struct ember_allocator* allocator, void* block, u64
  * @param new_size New allocation size.
  * @param alignment Alignment used during allocation.
  */
-typedef void* (*PFN_reallocate_mem)(struct ember_allocator* allocator, void* block, u64 old_size, u64 new_size, u64 alignment);
-
-/**
- * @brief Categorises allocations for debugging, profiling, and leak detection.
- */
-typedef enum memory_tag {
-	MEMORY_TAG_CORE,     /**< Allocated by ember_core */
-	MEMORY_TAG_TEMP,     /**< Used for temporary data */
-	MEMORY_TAG_FRAME,    /**< Per-frame data for any subsystem */
-	MEMORY_TAG_DEVICE,   /**< Internal memory used by internal systems */
-	MEMORY_TAG_PLATFORM, /**< Allocated by ember_plat */
-	MEMORY_TAG_RENDERER, /**< Allocated by ember_gpu */
-	MEMORY_TAG_MAX_TAGS,
-} memory_tag;
+typedef void* (*PFN_reallocate_mem)(struct em_allocator* allocator, void* block, u64 old_size, u64 new_size, u64 alignment, memory_tag tag);
 
 /**
  * @brief Generic allocator interface used across the library.
  *
  * Allows pluggable memory systems (default malloc, arena allocators, etc.).
  */
-typedef struct ember_allocator {
+typedef struct em_allocator {
 	/** @brief Allocation function. */
     PFN_allocate_mem alloc;
 
@@ -94,20 +94,20 @@ typedef struct ember_allocator {
     void* user_data;       
 
     /** @brief Optional parent allocator used for backing allocations. */
-	struct ember_allocator* parent;
+	struct em_allocator* parent;
 
 #if !EMBER_DIST
 	/** @brief Debug-only validation marker for allocator integrity */
     u8 magic; 
 #endif
-} ember_allocator;
+} em_allocator;
 
 /**
  * @brief Creates the default system allocator (malloc/free backed).
  *
  * @return Initialized allocator instance.
  */
-ember_allocator em_allocator_default();
+em_allocator em_allocator_default();
 
 /**
  * @brief Aligns a value to the specified alignment.
@@ -128,7 +128,7 @@ u64 alignment_ptr(u64 v, u64 alignment);
  * 
  * @note If @p allocator is NULL, allocates using the default system allocator.
  */
-void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag);
+void* mem_allocate(em_allocator* allocator, u64 size, memory_tag tag);
 
 /**
  * @brief Frees memory allocated with mem_allocate.
@@ -140,7 +140,7 @@ void* mem_allocate(ember_allocator* allocator, u64 size, memory_tag tag);
  * 
  * @note If @p allocator is NULL, frees using the default system allocator.
  */
-void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag);
+void mem_free(em_allocator* allocator, void* block, u64 size, memory_tag tag);
 
 /**
  * @brief Reallocates memory in place allocated with mem_allocate.
@@ -151,7 +151,7 @@ void mem_free(ember_allocator* allocator, void* block, u64 size, memory_tag tag)
  * @param new_size New allocation size.
  * @param tag Memory category used at allocation time.
  */
-void* mem_reallocate(ember_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag);
+void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag);
 
 /**
  * @brief Internal bookkeeping: records allocation event.

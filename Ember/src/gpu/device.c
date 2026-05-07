@@ -1,6 +1,7 @@
 #include "ember/core.h"
 #include "ember/gpu/device.h"
 
+
 #include "vulkan/vulkan_backend.h"
 
 const char* emgpu_backend_type_string(emgpu_device_backend device_backend) {
@@ -21,10 +22,10 @@ const char* emgpu_device_type_string(emgpu_device_type device_type) {
     }
 }
 
-em_result emgpu_device_init(const emgpu_device_config* config, ember_allocator* allocator, emgpu_device* out_device) {
+em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* allocator, emgpu_device* out_device) {
     EM_ASSERT(config != NULL && out_device != NULL && "Invalid arguments passed to emgpu_device_init");
 
-    if (config->api_type == EMBER_DEVICE_BACKEND_VULKAN) {
+    if (config->backend_api == EMBER_DEVICE_BACKEND_VULKAN) {
         out_device->initialize                  = vulkan_device_initialize;
         out_device->shutdown                    = vulkan_device_shutdown;
         out_device->retreive_capabilities       = vulkan_device_capabilities;
@@ -45,14 +46,14 @@ em_result emgpu_device_init(const emgpu_device_config* config, ember_allocator* 
         out_device->destroy_texture             = vulkan_texture_destroy;
     }
     else {
-        EM_ERROR("Gpu", "Unsupported backend type (%i).", config->api_type);
+        EM_ERROR("Gpu", "Unsupported backend type (%i).", config->backend_api);
         return EMBER_RESULT_UNAVAILABLE_API;
     }
 
-    EM_INFO("Gpu", "Initializing rendering device: %s", emgpu_backend_type_string(config->api_type));
+    EM_INFO("Gpu", "Initializing rendering device: %s", emgpu_backend_type_string(config->backend_api));
     EM_TRACE("Gpu", "Application name: %s", config->application_name);
 
-    out_device->frame_allocator = em_allocator_default();
+    out_device->frame_allocator = config->frame_allocator;
     return out_device->initialize(out_device, config);
 }
 
@@ -60,7 +61,7 @@ void emgpu_device_shutdown(emgpu_device* device) {
     EM_ASSERT(device != NULL && "Invalid arguments passed to emgpu_device_shutdown");
     if (device->shutdown) 
         device->shutdown(device);
-    
+
     if (device->capabilities) mem_free(NULL, device->capabilities, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
     em_memset(device, 0, sizeof(emgpu_device));
 }

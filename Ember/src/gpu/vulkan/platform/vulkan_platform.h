@@ -2,7 +2,7 @@
 
 #include "ember/core.h"
 
-#include "ember/platform/window.h"
+#include "ember/gpu/device.h"
 
 #include <vulkan/vulkan.h>
 
@@ -16,7 +16,7 @@
  * 
  * @return Vulkan return code (VkResult)
  */
-VkResult vulkan_platform_create_surface(VkInstance instance, emplat_window* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* out_surface);
+VkResult vulkan_platform_create_surface(VkInstance instance, const emgpu_platform_data* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* out_surface);
 
 /**
  * @brief Returns the Vulkan instance extensions required by the current platform.

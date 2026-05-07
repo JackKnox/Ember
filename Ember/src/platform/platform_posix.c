@@ -2,6 +2,7 @@
 
 #ifdef EM_PLATFORM_POSIX
 #include "ember/platform/system.h"
+#include "ember/platform/time.h"
 #include "ember/platform/threading.h"
 
 #include <unistd.h>
@@ -12,6 +13,14 @@
 #include <sys/wait.h>
 #include <dlfcn.h>
 #include <errno.h>
+
+f64 emplat_current_time() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return (f64)ts.tv_sec * 1000.0 +
+           (f64)ts.tv_nsec / 1000000.0;
+}
 
 const char* emplat_system_get_env(const char* name) {
     return getenv(name);

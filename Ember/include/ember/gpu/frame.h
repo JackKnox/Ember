@@ -28,9 +28,6 @@ typedef struct emgpu_frame {
     /** @brief Current index for allocating frame-local resources. */
     u32 current_resource_idx;
 
-    /** @brief Allocator used for all frame-local allocations. */
-    ember_allocator* local_allocator;
-
     /** @brief Linear buffer storing all recorded commands. */
     datastream commands;
 
@@ -39,8 +36,6 @@ typedef struct emgpu_frame {
     u32 curr_command_idx;
 } emgpu_frame;
 
-struct emgpu_device;
-
 /**
  * @brief Initializes a frame for recording commands.
  *
@@ -48,7 +43,7 @@ struct emgpu_device;
  * @param device Rendering device to attach frame to.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_frame_init(emgpu_frame* frame, struct emgpu_device* device);
+em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator);
 
 /**
  * @brief Validates the recorded commands in the frame.

@@ -2,6 +2,7 @@
 #include "vulkan_renderpass.h"
 
 #include "ember/core/darray.h"
+#include "ember/core/hashmap.h"
 
 em_result vulkan_renderpass_create(
     emgpu_device* device,
@@ -78,7 +79,7 @@ em_result vulkan_renderpass_create(
     darray_destroy(attachment_descs);
     if (colour_attachments) darray_destroy(colour_attachments);
 
-    internal_renderpass->framebuffers = darray_create(vulkan_renderpass_framebuffer, NULL, MEMORY_TAG_RENDERER);
+    internal_renderpass->framebuffers = hashmap_create(VkFramebuffer, NULL, MEMORY_TAG_RENDERER);
     return EMBER_RESULT_OK;
 }
 
@@ -92,16 +93,16 @@ void vulkan_renderpass_destroy(
     if (!internal_renderpass)
         return;
     
-    for (u32 i = 0; i < darray_length(internal_renderpass->framebuffers); ++i) {
-        if (internal_renderpass->framebuffers[i].framebuffer) {
+    for (u32 i = 0; i < hashmap_length(internal_renderpass->framebuffers); ++i) {
+        if (internal_renderpass->framebuffers[i]) {
             vkDestroyFramebuffer(
                 context->logical_device,
-                internal_renderpass->framebuffers[i].framebuffer,
+                internal_renderpass->framebuffers[i],
                 context->allocator);
         }
     }
 
-    darray_destroy(internal_renderpass->framebuffers);
+    hashmap_destroy(internal_renderpass->framebuffers);
 
     if (internal_renderpass->handle)
         vkDestroyRenderPass(context->logical_device, internal_renderpass->handle, context->allocator);

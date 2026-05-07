@@ -3,10 +3,10 @@
 #ifdef EM_PLATFORM_LINUX
 #include "vulkan_platform.h"
 
-#include "ember/platform/window.h"
+#include "ember/window/window.h"
 
-VkResult vulkan_platform_create_surface(VkInstance instance, emplat_window* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* out_surface) {
-    return glfwCreateWindowSurface(instance, window->wayland.handle, allocator, out_surface);
+VkResult vulkan_platform_create_surface(VkInstance instance, const emgpu_platform_data* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* out_surface) {
+    return glfwCreateWindowSurface(instance, window->handle, allocator, out_surface);
 }
 
 const char** vulkan_platform_get_required_extensions(u32* out_extension_count) {

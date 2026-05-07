@@ -1,7 +1,7 @@
 #include "ember/core.h"
 #include "ember/core/darray.h"
 
-void* _darray_create(u64 stride, u32 capacity, ember_allocator* allocator, memory_tag memtag) {
+void* _darray_create(u64 stride, u32 capacity, em_allocator* allocator, memory_tag memtag) {
     u64 size = stride * capacity;
     darray_header* new_array = mem_allocate(allocator, sizeof(darray_header) + size, memtag);
     new_array->capacity = capacity;
@@ -12,7 +12,7 @@ void* _darray_create(u64 stride, u32 capacity, ember_allocator* allocator, memor
     return em_memset(new_array + 1, 0, size);
 }
 
-void* _darry_from_data(u64 stride, u32 length, const void* from_data, ember_allocator* allocator, memory_tag memtag) {
+void* _darry_from_data(u64 stride, u32 length, const void* from_data, em_allocator* allocator, memory_tag memtag) {
     void* new_array = _darray_create(stride, length, allocator, memtag);
     _darray_header(new_array)->length = length;
 

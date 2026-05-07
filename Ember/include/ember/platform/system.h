@@ -3,23 +3,6 @@
 #include "ember/core.h"
 
 /**
- * @brief Returns the current time in milliseconds.
- *
- * The time is typically measured from an unspecified starting point
- * (e.g., application start or system uptime).
- *
- * @return Current time in milliseconds as a f64.
- */
-f64 emplat_current_time();
-
-/**
- * @brief Suspends execution for a specified duration.
- *
- * @param ms Duration to sleep in milliseconds.
- */
-void emplat_sleep_ms(f64 ms);
-
-/**
  * @brief Gets the value of an environment variable.
  *
  * @param name The name of the environment variable.
@@ -91,30 +74,6 @@ void* emplat_system_library_symbol(emplat_library lib, const char* name);
  * @note After unloading, the handle becomes invalid and must not be used.
  */
 void emplat_system_library_unload(emplat_library lib);
-
-/**
- * @brief Put UTF-8 text into the clipboard.
- *
- * @param text The text to store in the clipboard.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
- */
-em_result emplat_set_clipboard_text(const char* text);
-
-/**
- * @brief Get UTF-8 text from the clipboard.
- *
- * @return the clipboard text on success, or NULL on failure.
- * 
- * @note The returned string must be freed manually using `emc_free`.
- */
-char* emplat_get_clipboard_text();
-
-/**
- * @brief Query whether the clipboard exists and contains a non-empty text string.
- *
- * @return true if the clipboard has text, or false if it does not.
- */
-b8 emplat_has_clipboard_text();
 
 /**
  * @brief Get the number of logical CPU cores available.

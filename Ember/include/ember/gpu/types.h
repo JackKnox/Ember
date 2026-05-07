@@ -318,8 +318,11 @@ typedef struct emgpu_device_config {
     /** @brief Name of the application. */
     const char* application_name;
     
+    /** @brief Allocator used to manage per-frame data. */
+    em_allocator frame_allocator;
+
     /** @brief Selected backend API type. */
-    emgpu_device_backend api_type;
+    emgpu_device_backend backend_api;
 
     /** @brief Version of the cretaed app in `em_version` format. */
     em_version application_version;

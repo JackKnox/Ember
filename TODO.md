@@ -6,7 +6,6 @@ This items in thi lst are not in any particular order. This list will be updated
 - File watcher API (ember_plat)
 - Filesystem API
 - IPC (Unix Files)
-- Seperate window + graphics into own module
 - More protocols for ember_net (TLS, QUIC)
 - Legacy platform support
     - X11
@@ -24,12 +23,11 @@ This items in thi lst are not in any particular order. This list will be updated
 - [x] Error codes
 - [ ] Documentation website (Doxygen)
 - [x] Memory subsystem
-- [x] Allocators
-    - [ ] Scratch allocator
-    - [x] Burst allocator
-    - [x] `freelist` allocator
-    - [x] `darray` object
-    - [ ] Pool allocator
+- [x] Custom allocators
+- [x] Data structures
+    - [x] `datastream`
+    - [x] `darray`
+    - [x] `hashmap`
 - [x] Subsystems
     - [x] `ember_platform` — windowing, input, time, and system info
     - [x] `ember_gpu` — low-level graphics API abstraction
@@ -38,25 +36,25 @@ This items in thi lst are not in any particular order. This list will be updated
 
 ## Supported platforms
 - [ ] Windows 7 and later
-    - [ ] Win32                     - windowing / input
-    - [ ] XInput                    - gamepads
-    - [ ] DirectX 12                - gpu interface
-    - [ ] WASAPI                    - audio
-    - [ ] Winsock                   - network
+    - [ ] Win32                     — windowing / input
+    - [ ] XInput                    — gamepads
+    - [ ] DirectX 12                — gpu interface
+    - [ ] WASAPI                    — audio
+    - [ ] Winsock                   — network
 
 - [ ] macOS 11 and later
-    - [ ] Cocoa                     - windowing / input
-    - [ ] Game Controller Framework - gamepads
-    - [ ] Metal4                    - gpu interface
-    - [ ] Core Audio                - audio
-    - [ ] POSIX                     - network
+    - [ ] Cocoa                     — windowing / input
+    - [ ] Game Controller Framework — gamepads
+    - [ ] Metal4                    — gpu interface
+    - [ ] Core Audio                — audio
+    - [ ] POSIX                     — network
 
 - [ ] Linux 
-    - [ ] Wayland                   - windowing / input
-    - [ ] XInput2                   - gamepads
-    - [ ] Vulkan                    - gpu interface
-    - [ ] ALSA                      - audio
-    - [ ] POSIX                     - network
+    - [ ] Wayland                   — windowing / input
+    - [ ] XInput2                   — gamepads
+    - [ ] Vulkan                    — gpu interface
+    - [ ] ALSA                      — audio
+    - [ ] POSIX                     — network
 
 ## ember_platform
 - [x] Basic platform layer

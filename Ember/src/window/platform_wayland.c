@@ -1,9 +1,8 @@
 #include "ember/core.h"
+#include "ember/window/window.h"
+#include "ember/window/input.h"
 
 #ifdef EM_PLATFORM_LINUX
-#include "ember/platform/system.h"
-#include "ember/platform/window.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,24 +10,19 @@
 #include <time.h>
 #include <unistd.h>
 
-f64 emplat_current_time() {
-    return 1000.0f * glfwGetTime();
-}
-
 void GLFWErrorCallback(int error, const char* description) {
 	EM_ERROR("Platform", "Error code: %i '%s'", error, description);
 }
 
-emplat_window_config emplat_window_default() {
-	emplat_window_config config = {};
-	config.window_mode = EMBER_WINDOW_MODE_WINDOWED;
-	config.window_centered = TRUE;
-	config.size.width = 640;
-	config.size.height = 360;
-	return config;
+void* emwin_desktop_handle(emwin_desktop* desktop) {
+	return NULL;
 }
 
-em_result emplat_window_open(const emplat_window_config* config, ember_allocator* allocator, emplat_window* last_window, emplat_window* out_window) {
+void* emwin_window_handle(emwin_window* window) {
+	return window->wayland.handle;
+}
+
+em_result emwin_window_open(const emwin_window_config* config, em_allocator* allocator, emwin_window* last_window, emwin_window* out_window) {
     glfwSetErrorCallback(GLFWErrorCallback);
 	if (glfwInit() == 0) {
 		EM_ERROR("Platform", "Failed to initialize GLFW.");
@@ -79,7 +73,7 @@ em_result emplat_window_open(const emplat_window_config* config, ember_allocator
     return EMBER_RESULT_OK;
 }
 
-void emplat_window_close(emplat_window* window) {
+void emwin_window_close(emwin_window* window) {
 	mem_free(NULL, window->title, strlen(window->title) + 1, MEMORY_TAG_PLATFORM);
 	window->title = NULL;
 
@@ -87,17 +81,17 @@ void emplat_window_close(emplat_window* window) {
     glfwTerminate();
 }
 
-em_result emplat_window_pump_messages(emplat_window* window) {
+em_result emwin_desktop_pump_messages(emwin_desktop* desktop) {
 	glfwPollEvents();
 	return EMBER_RESULT_OK;
 }
 
-em_result emplat_window_wait_messages(emplat_window* window) {
+em_result emwin_desktop_wait_messages(emwin_desktop* desktop) {
 	glfwWaitEvents();
 	return EMBER_RESULT_OK;
 }
 
-b8 emplat_window_should_close(emplat_window* window) {
+b8 emwin_window_should_close(emwin_window* window) {
     return glfwWindowShouldClose(window->wayland.handle);
 }
 

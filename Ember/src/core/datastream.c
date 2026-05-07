@@ -3,7 +3,7 @@
 
 #include "ember/core/darray.h"
 
-datastream datastream_create(ember_allocator* allocator, memory_tag memtag) {
+datastream datastream_create(em_allocator* allocator, memory_tag memtag) {
     datastream stream = {};
     stream.allocator = allocator;
     stream.memtag = memtag;

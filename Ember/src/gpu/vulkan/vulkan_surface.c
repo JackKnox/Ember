@@ -8,17 +8,16 @@ em_result vulkan_surface_create(
     const emgpu_surface_config* config,
     emgpu_surface* out_surface) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
-    config->window->internal_renderer_state = out_surface;
     
     out_surface->internal_data = mem_allocate(NULL, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
     internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)out_surface->internal_data;
 
-    EM_INFO("Vulkan", "Creating Vulkan surface on window: '%s'", config->window->title);
+    EM_INFO("Vulkan", "Creating Vulkan surface on window: '%s'", config->window.debug_name);
 
     CHECK_VKRESULT(
         vulkan_platform_create_surface(
             context->instance, 
-            config->window, 
+            &config->window, 
             context->allocator, 
             &internal_surface->surface), 
         "Failed to create internal Vulkan surface (VkSurfaceKHR)");
@@ -66,7 +65,7 @@ em_result vulkan_surface_create(
 
     mem_free(NULL, formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
 
-    return vulkan_surface_recreate(device, out_surface, config->window->size);
+    return vulkan_surface_recreate(device, out_surface, config->size);
 }
 
 void vulkan_surface_destroy(
@@ -181,6 +180,26 @@ em_result vulkan_surface_recreate(
             device, &swapchain_texture_config, &internal_surface->swapchain_images[i]);
         if (result != EMBER_RESULT_OK) return result;
     }
+
+    // Acquire first image before submitting frames
+    // --------------------------------------
+    VkFence temp_fence = VK_NULL_HANDLE;
+    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+
+    CHECK_VKRESULT(
+        vkCreateFence(context->logical_device, &fence_create_info, context->allocator, &temp_fence),
+        "Failed to temporary Vulkan surface fence");
+
+    CHECK_VKRESULT(
+        vulkan_surface_accquire(device, surface, UINT64_MAX, VK_NULL_HANDLE, temp_fence),
+        "Failed to acquire first Vulkan swapchain image");
+
+    CHECK_VKRESULT(
+        vkWaitForFences(context->logical_device, 1, &temp_fence, TRUE, UINT64_MAX),
+        "Failed to acquire first Vulkan swapchain image");
+
+    vkDestroyFence(context->logical_device, temp_fence, context->allocator);
+    // --------------------------------------
 
     mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;

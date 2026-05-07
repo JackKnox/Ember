@@ -2,7 +2,7 @@
 #include "vulkan_backend.h"
 
 #include "ember/core/darray.h"
-#include "ember/core/allocators.h"
+#include "ember/core/hashmap.h"
 
 #include "ember/gpu/frame_internal.h"
 
@@ -67,89 +67,39 @@ em_result vulkan_frame_new_semaphore(emgpu_device* device, vulkan_frame_context*
     return EMBER_RESULT_OK;
 }
 
-em_result vulkan_frame_framebuffer(
-    emgpu_device* device, 
-    vulkan_frame_context* frame_context,
-    emgpu_renderpass* renderpass,
-    uvec2 renderarea,
-    emgpu_frame_texture* attachments,
-    u32 attachment_count, 
-    VkFramebuffer* out_framebuffer) {
+em_result vulkan_frame_framebuffer(emgpu_device* device, emgpu_renderpass* renderpass, uvec2 renderarea, VkImageView* attachments, u32 attachment_count, VkFramebuffer* out_framebuffer) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)renderpass->internal_data;
 
-    u32 new_size = internal_renderpass->total_cycle_framebuffers / context->frames_in_flight;
-    if (device->current_frame == context->frames_in_flight - 1 && new_size < darray_length(internal_renderpass->framebuffers)) {
-        for (u32 i = new_size; i < darray_length(internal_renderpass->framebuffers); ++i) {
-            vkDestroyFramebuffer(
-                context->logical_device, 
-                internal_renderpass->framebuffers[i].framebuffer, 
-                context->allocator);
-        }
+    u64 hash = hash_bytes(attachments, attachment_count);
 
-        internal_renderpass->framebuffers = darray_resize(internal_renderpass->framebuffers, new_size);
-    }
-
-    VkImageView* views = darray_create(VkImageView, NULL, MEMORY_TAG_TEMP);
-
-    u64 hash = 1469598103934665603ULL; // FNV offset basis
-    for (u32 i = 0; i < attachment_count; ++i) {
-        const emgpu_texture* texture = frame_context->frame_textures[attachments[i]];
-        internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)texture->internal_data;
-        darray_push(views, internal_texture->view);
-
-        hash ^= (u64)internal_texture->view;
-        hash *= 1099511628211ULL; // FNV prime
-    }
-
-    for (u32 i = 0; i < darray_length(internal_renderpass->framebuffers); ++i) {
-        const vulkan_renderpass_framebuffer* entry = &internal_renderpass->framebuffers[i];
-
-        if (hash == entry->cache_id) {
-            *out_framebuffer = entry->framebuffer;
-            return EMBER_RESULT_OK;
-        }
-    }
+    if (hashmap_get(internal_renderpass->framebuffers, hash, out_framebuffer) && *out_framebuffer)
+        return EMBER_RESULT_OK;
 
     VkFramebufferCreateInfo create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
     create_info.renderPass      = internal_renderpass->handle;
     create_info.attachmentCount = attachment_count;
-    create_info.pAttachments    = views;
+    create_info.pAttachments    = attachments;
     create_info.width           = renderarea.width;
     create_info.height          = renderarea.height;
     create_info.layers          = 1;
 
-    VkFramebuffer framebuffer;
     CHECK_VKRESULT(
-        vkCreateFramebuffer(context->logical_device, &create_info, context->allocator, &framebuffer),
+        vkCreateFramebuffer(context->logical_device, &create_info, context->allocator, out_framebuffer),
         "Failed to create Vulkan framebuffer during frame submission")
-
-    vulkan_renderpass_framebuffer* entry = darray_push_empty(internal_renderpass->framebuffers);
-    entry->cache_id = hash;
-    entry->framebuffer = framebuffer;
-
-    *out_framebuffer = entry->framebuffer;
-    return EMBER_RESULT_OK;
-}
-
-em_result vulkan_frame_context_init(const emgpu_frame* init_frame, vulkan_frame_context* out_context) {
-    out_context->submissions = darray_create(vulkan_frame_submission, NULL, MEMORY_TAG_FRAME);
-    out_context->managed_surfaces = darray_create(vulkan_frame_surface_entry, NULL, MEMORY_TAG_FRAME);
-    out_context->wait_present_semaphores = darray_create(VkSemaphore, NULL, MEMORY_TAG_FRAME);
-    out_context->frame_textures = mem_allocate(NULL, sizeof(emgpu_texture*) * (init_frame->current_resource_idx + 1), MEMORY_TAG_FRAME);
-
+    
+    hashmap_set(internal_renderpass->framebuffers, hash, out_framebuffer);
     return EMBER_RESULT_OK;
 }
 
 em_result vulkan_device_process_frame(emgpu_device* device, const emgpu_frame* frame, vulkan_frame_context* frame_context) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    em_result result = vulkan_frame_context_init(frame, frame_context);
-    if (result != EMBER_RESULT_OK) {
-        EM_ERROR("Vulkan", "Failed to init local Vulkan frame context: %s", em_result_string(result, EMBER_BUILD_DEBUG));
-        return result;
-    }
+    frame_context->submissions        = darray_create(vulkan_frame_submission, &device->frame_allocator, MEMORY_TAG_FRAME);
+    frame_context->managed_surfaces   = darray_create(vulkan_frame_surface_entry, &device->frame_allocator, MEMORY_TAG_FRAME);
+    frame_context->present_semaphores = darray_create(VkSemaphore, &device->frame_allocator, MEMORY_TAG_FRAME);
+    frame_context->frame_textures     = mem_allocate(&device->frame_allocator, sizeof(emgpu_texture*) * (frame->current_resource_idx + 1), MEMORY_TAG_FRAME);
 
     vulkan_frame_submission* curr_submission = NULL;
 
@@ -219,7 +169,7 @@ em_result vulkan_device_process_frame(emgpu_device* device, const emgpu_frame* f
                 curr_submission->wait_semaphore = surface_entry->image_available_semaphore;
                 vulkan_frame_new_semaphore(device, frame_context, &curr_submission->signal_semaphore);
 
-                darray_push(frame_context->wait_present_semaphores, curr_submission->signal_semaphore);
+                darray_push(frame_context->present_semaphores, curr_submission->signal_semaphore);
 
                 internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface_entry->surface->internal_data;
                 frame_context->frame_textures[payload->next_surface_texture.dst_texture] = &internal_surface->swapchain_images[internal_surface->image_index];   
@@ -234,7 +184,6 @@ em_result vulkan_device_process_frame(emgpu_device* device, const emgpu_frame* f
             case RENDERCMD_BEGIN_RENDERPASS: {
                 emgpu_renderpass* renderpass = payload->bind_renderpass.renderpass;
                 internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)renderpass->internal_data;
-                if (device->current_frame == 0) internal_renderpass->total_cycle_framebuffers = 0;
                 
                 uvec2 renderarea = frame_context->frame_textures[payload->bind_renderpass.attachments[0]]->size;
 
@@ -253,9 +202,18 @@ em_result vulkan_device_process_frame(emgpu_device* device, const emgpu_frame* f
                 begin_info.clearValueCount          = 1;
                 begin_info.pClearValues             = &clear_value;
 
+                u64 views_size = sizeof(VkImageView) * renderpass->attachment_count;
+                VkImageView* views = mem_allocate(&device->frame_allocator, views_size, MEMORY_TAG_FRAME);
+                for (u32 i = 0; i < renderpass->attachment_count; ++i) {
+                    internal_vulkan_texture* internal_texture = (internal_vulkan_texture*)frame_context->frame_textures[payload->bind_renderpass.attachments[i]]->internal_data;
+                    views[i] = internal_texture->view;
+                }
+                    
                 em_result result = vulkan_frame_framebuffer(
-                    device, frame_context, renderpass, renderarea, payload->bind_renderpass.attachments, renderpass->attachment_count, &begin_info.framebuffer);
+                    device, renderpass, renderarea, views, renderpass->attachment_count, &begin_info.framebuffer);
                 
+                mem_free(&device->frame_allocator, views, views_size, MEMORY_TAG_FRAME);
+
                 if (result != EMBER_RESULT_OK) {
                     EM_ERROR("Vulkan", "Failed to retrieve Vulkan framebuffer while beginning renderpass: %s", em_result_string(result, EMBER_BUILD_DEBUG));
                     return result;
@@ -406,8 +364,8 @@ em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* fr
 
     // Batch then present all the surface at once.
     // --------------------------------------
-    VkSwapchainKHR* swapchains = mem_allocate(NULL, sizeof(VkSwapchainKHR) * darray_length(frame_context.managed_surfaces), MEMORY_TAG_TEMP);
-    u32* image_indices = mem_allocate(NULL, sizeof(u32) * darray_length(frame_context.managed_surfaces), MEMORY_TAG_TEMP);
+    VkSwapchainKHR* swapchains = mem_allocate(&device->frame_allocator, sizeof(VkSwapchainKHR) * darray_length(frame_context.managed_surfaces), MEMORY_TAG_TEMP);
+    u32* image_indices = mem_allocate(&device->frame_allocator, sizeof(u32) * darray_length(frame_context.managed_surfaces), MEMORY_TAG_TEMP);
 
     for (u32 i = 0; i < darray_length(frame_context.managed_surfaces); ++i) {
         internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)frame_context.managed_surfaces[i].surface->internal_data;
@@ -416,8 +374,8 @@ em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* fr
     }
 
     VkPresentInfoKHR present_info = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-    present_info.waitSemaphoreCount = darray_length(frame_context.wait_present_semaphores);
-    present_info.pWaitSemaphores    = frame_context.wait_present_semaphores;
+    present_info.waitSemaphoreCount = darray_length(frame_context.present_semaphores);
+    present_info.pWaitSemaphores    = frame_context.present_semaphores;
     present_info.swapchainCount     = darray_length(frame_context.managed_surfaces);
     present_info.pSwapchains        = swapchains;
     present_info.pImageIndices      = image_indices;
