@@ -144,6 +144,12 @@ em_result vulkan_pipeline_create_graphics(
         descriptor->binding  = 0;
         descriptor->format   = format_to_vulkan_type(attribute);
         descriptor->offset   = attribute_stride;
+
+        if (descriptor->format == VK_FORMAT_UNDEFINED) {
+            EM_ERROR("Vulkan", "Unsupported format in vertex attributes");
+            return EMBER_RESULT_UNSUPPORTED_FORMAT;
+        }
+
         attribute_stride += EMBER_FORMAT_SIZE(attribute);
     }
 

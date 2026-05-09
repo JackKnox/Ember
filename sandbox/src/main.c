@@ -85,6 +85,8 @@ int main(int argc, char** argv) {
 			emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
 			emgpu_frame_end_renderpass(&frame);
 
+			emgpu_frame_flush(&frame);
+
 			CHECK_FUNC(
 				device.submit_frame(&device, &frame), 
 				"Failed to submit device frame");

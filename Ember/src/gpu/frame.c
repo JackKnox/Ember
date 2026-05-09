@@ -11,7 +11,6 @@ rendercmd_payload* add_command(emgpu_frame* frame, emgpu_ops_type mode, rendercm
 
     payload->hdr.type = type;
     payload->hdr.command_mode = mode;
-    ++frame->curr_command_idx;
     return payload_size > 0 ? payload : NULL;
 }
 
@@ -36,7 +35,7 @@ void emgpu_frame_dummy(emgpu_frame* frame) {
 
 emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_surface* surface) {
     rendercmd_payload* payload; // * DO NOT CHANGE MODE.
-    payload = add_command(frame, EMBER_OPER_TYPE_GRAPHICS, RENDERCMD_BIND_NEXT_SURFACE_TEXTURE, sizeof(payload->next_surface_texture));
+    payload = add_command(frame, EMBER_OPER_TYPE_GRAPHICS, RENDERCMD_NEXT_SURFACE_TEXTURE, sizeof(payload->next_surface_texture));
     payload->next_surface_texture.surface = surface;
     payload->next_surface_texture.dst_texture = frame->current_resource_idx++;
 
@@ -45,7 +44,7 @@ emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_s
 
 emgpu_frame_texture emgpu_frame_import_texture(emgpu_frame* frame, emgpu_texture* texture) {
     rendercmd_payload* payload;
-    payload = add_command(frame, EMBER_OPER_TYPE_UNIVERSAL, RENDERCMD_BIND_IMPORT_TEXTURE, sizeof(payload->import_texture));
+    payload = add_command(frame, EMBER_OPER_TYPE_UNIVERSAL, RENDERCMD_IMPORT_TEXTURE, sizeof(payload->import_texture));
     payload->import_texture.texture = texture;
     payload->import_texture.dst_texture = frame->current_resource_idx++;
 
@@ -73,15 +72,6 @@ void emgpu_frame_end_renderpass(emgpu_frame* frame) {
     add_command(frame, EMBER_OPER_TYPE_GRAPHICS, RENDERCMD_END_RENDERPASS, 0);
 }
 
-void emgpu_frame_memory_barrier(emgpu_frame* frame, emgpu_pipeline* src_pipeline, emgpu_pipeline* dst_pipeline, emgpu_access_flags src_access, emgpu_access_flags dst_access) {
-    rendercmd_payload* payload;
-    payload = add_command(frame, EMBER_OPER_TYPE_UNIVERSAL, RENDERCMD_MEMORY_BARRIER, sizeof(payload->memory_barrier));
-    payload->memory_barrier.src_pipeline = src_pipeline;
-    payload->memory_barrier.dst_pipeline = dst_pipeline;
-    payload->memory_barrier.src_access = src_access;
-    payload->memory_barrier.dst_access = dst_access;
-}
-
 void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline) {
     rendercmd_payload* payload;
     payload = add_command(frame, pipeline->type, RENDERCMD_BIND_PIPELINE, sizeof(payload->bind_pipeline));
@@ -106,4 +96,9 @@ void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size) {
     rendercmd_payload* payload;
     payload = add_command(frame, EMBER_OPER_TYPE_COMPUTE, RENDERCMD_DISPATCH, sizeof(payload->dispatch));
     payload->dispatch.group_size = group_size;
+}
+
+void emgpu_frame_flush(emgpu_frame* frame) {
+    rendercmd_payload* payload;
+    payload = add_command(frame, EMBER_OPER_TYPE_UNIVERSAL, RENDERCMD_FLUSH, 0);
 }

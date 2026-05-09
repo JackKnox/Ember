@@ -30,10 +30,6 @@ typedef struct emgpu_frame {
 
     /** @brief Linear buffer storing all recorded commands. */
     datastream commands;
-
-    // TODO: Remove. Two points of truth for datastream.
-    /** @brief Current command index within the command stream. */
-    u32 curr_command_idx;
 } emgpu_frame;
 
 /**
@@ -112,25 +108,6 @@ void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpa
 void emgpu_frame_end_renderpass(emgpu_frame* frame);
 
 /**
- * @brief Inserts a memory barrier between pipeline.
- *
- * Ensures proper synchronization between GPU operations by specifying
- * source and destination stages along with access masks.
- *
- * @param frame Pointer to the frame.
- * @param src_pipeline Source pipeline.
- * @param dst_pipeline Destination pipeline.
- * @param src_access Source access flags.
- * @param dst_access Destination access flags.
- */
-void emgpu_frame_memory_barrier(
-    emgpu_frame* frame,
-    emgpu_pipeline* src_pipeline,
-    emgpu_pipeline* dst_pipeline,
-    emgpu_access_flags src_access,
-    emgpu_access_flags dst_access);
-
-/**
  * @brief Binds a pipeline to the frame.
  *
  * A pipeline defines a sequence of GPU operations on how to draw, dispatch or trace.
@@ -163,3 +140,5 @@ void emgpu_frame_draw_indexed(emgpu_frame* frame, u32 index_count, u32 instance_
  * @param group_size Number of workgroups in 3D space.
  */
 void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size);
+
+void emgpu_frame_flush(emgpu_frame* frame);

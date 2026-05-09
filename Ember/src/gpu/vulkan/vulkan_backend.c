@@ -355,48 +355,69 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
         EM_TRACE("Vulkan", "Creating global Vulkan graphics command ring");
 
+        context->graphics_commandbufs = mem_allocate(NULL, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-        allocate_info.commandPool = context->mode_queues[queue_type].pool;
-        allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = 1;
+        allocate_info.commandPool        = context->mode_queues[queue_type].pool;
+        allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocate_info.commandBufferCount = context->frames_in_flight;
 
         CHECK_VKRESULT(
             vkAllocateCommandBuffers(
                 context->logical_device, 
                 &allocate_info, 
-                &context->graphics_commandbuf),
+                context->graphics_commandbufs),
             "Failed to create Vulkan graphics command buffers");
+        
+        VkSemaphoreTypeCreateInfoKHR timeline_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR };
+        timeline_create_info.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR;
+        timeline_create_info.initialValue  = 0;
+
+        VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        create_info.pNext = &timeline_create_info;
+
+        CHECK_VKRESULT(
+            vkCreateSemaphore(
+                context->logical_device, 
+                &create_info, 
+                context->allocator, 
+                &context->graphics_timeline), 
+            "Failed to create global Vulkan graphics timeline semaphore");
 	}
 
 	if (context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_COMPUTE;
         EM_TRACE("Vulkan", "Creating global Vulkan compute command ring");
 
+        context->compute_commandbufs = mem_allocate(NULL, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-        allocate_info.commandPool = context->mode_queues[queue_type].pool;
-        allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocate_info.commandBufferCount = 1;
+        allocate_info.commandPool        = context->mode_queues[queue_type].pool;
+        allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocate_info.commandBufferCount = context->frames_in_flight;
 
         CHECK_VKRESULT(
             vkAllocateCommandBuffers(
                 context->logical_device, 
                 &allocate_info, 
-                &context->compute_commandbuf),
+                context->compute_commandbufs),
             "Failed to create Vulkan compute command buffers");
+        
+        VkSemaphoreTypeCreateInfoKHR timeline_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR };
+        timeline_create_info.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR;
+        timeline_create_info.initialValue  = 0;
+
+        VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        create_info.pNext = &timeline_create_info;
+
+        CHECK_VKRESULT(
+            vkCreateSemaphore(
+                context->logical_device, 
+                &create_info, 
+                context->allocator, 
+                &context->compute_timeline), 
+            "Failed to create global Vulkan compute timeline semaphore");
 	}
-
-    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    CHECK_VKRESULT(
-        vkCreateFence(
-            context->logical_device,
-            &fence_create_info,
-            context->allocator,
-            &context->in_flight_fence),
-        "Failed to create Vulkan sync objects");
-
-    context->semaphore_pool = darray_create(VkSemaphore, NULL, MEMORY_TAG_RENDERER);
 
     EM_INFO("Vulkan", "Rendering device fully initiailized.");
     return EMBER_RESULT_OK;
@@ -406,40 +427,28 @@ void vulkan_device_shutdown(emgpu_device* device) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 
-    for (u32 i = 0; i < darray_length(context->semaphore_pool); ++i) {
-        if (context->semaphore_pool[i]) {
-            vkDestroySemaphore(
-                context->logical_device, 
-                context->semaphore_pool[i], 
-                context->allocator);
-        }
-    }
-
-    darray_destroy(context->semaphore_pool);
-
-    if (context->in_flight_fence) {
-        vkDestroyFence(
-            context->logical_device, 
-            context->in_flight_fence,
-            context->allocator);
-    }
-
-    if (context->compute_commandbuf) {
+    if (context->compute_commandbufs) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_COMPUTE;
+
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            1, 
-            &context->compute_commandbuf);
+            context->frames_in_flight, 
+            context->compute_commandbufs);
+        
+        mem_free(NULL, context->compute_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
-    if (context->graphics_commandbuf) {
+    if (context->graphics_commandbufs) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
+
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
-            1, 
-            &context->graphics_commandbuf);
+            context->frames_in_flight, 
+            context->graphics_commandbufs);
+        
+        mem_free(NULL, context->graphics_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
     for (u32 i = 0; i < EM_ARRAYSIZE(context->mode_queues); ++i) {

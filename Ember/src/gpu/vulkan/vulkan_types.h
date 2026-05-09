@@ -61,6 +61,9 @@ typedef struct internal_vulkan_surface {
     VkSwapchainKHR swapchain;
     emgpu_texture* swapchain_images;
     u32 image_index;
+
+    VkSemaphore* image_available_semaphores;
+    VkSemaphore* render_complete_semaphores;
 } internal_vulkan_surface;
 
 typedef struct internal_vulkan_renderpass {
@@ -108,28 +111,23 @@ typedef struct internal_vulkan_texture {
     b8 ownes_image;
 } internal_vulkan_texture;
 
+typedef enum vulkan_submit_break_type {
+    VULKAN_BREAK_SWITCH_OPS,
+    VULKAN_BREAK_WAIT_ON_BINARY,
+    VULKAN_BREAK_SIGNAL_ON_BINARY,
+} vulkan_submit_break_type;
 
-// Describes one VkQueueSubmit call, outputted by frame command buffer.
-typedef struct vulkan_frame_submission {
-    VkCommandBuffer handle;
-    vulkan_queue_type queue;
-    VkSemaphore wait_semaphore, signal_semaphore;
+typedef struct vulkan_frame_submission { 
+
 } vulkan_frame_submission;
 
-// Describes a managed surface within one frame submit call.
-typedef struct vulkan_frame_surface_entry {
-    emgpu_surface* surface;
-    VkSemaphore image_available_semaphore;
-} vulkan_frame_surface_entry;
+typedef struct vulkan_submission_break {
+    vulkan_submit_break_type type;
+} vulkan_submission_break;
 
 // Internal data for processing emgpu_frame.
 typedef struct vulkan_frame_context {
-    u32 semaphore_index;
-    emgpu_ops_type curr_mode;
     vulkan_frame_submission* submissions;
-    vulkan_frame_surface_entry* managed_surfaces;
-    VkSemaphore* present_semaphores;
-    emgpu_texture** frame_textures;
 } vulkan_frame_context;
 
 // Represents the global Vulkan backend context.
@@ -147,15 +145,10 @@ typedef struct vulkan_context {
     VkPhysicalDevice physical_device;
     VkDevice logical_device;
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
-    
-    // Stuff for frame submission
-    // --------------------------------------
-    VkFence in_flight_fence;
-    VkSemaphore* semaphore_pool;
-    u32 semaphores_total_refresh;
-    // --------------------------------------
 
-    VkCommandBuffer graphics_commandbuf, compute_commandbuf;
+    u64 timeline_counter;
+    VkCommandBuffer* graphics_commandbufs, * compute_commandbufs;
+    VkSemaphore      graphics_timeline,      compute_timeline;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.

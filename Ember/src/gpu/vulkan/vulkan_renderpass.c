@@ -43,6 +43,11 @@ em_result vulkan_renderpass_create(
         desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         desc->finalLayout = attachment_type_to_image_layout(attachment->type);
 
+        if (desc->format == VK_FORMAT_UNDEFINED) {
+            EM_ERROR("Vulkan", "Unsupported format in renderpass descriptor");
+            return EMBER_RESULT_UNSUPPORTED_FORMAT;
+        }
+
         reference->attachment = i;
         reference->layout = desc->finalLayout;
 

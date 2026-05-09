@@ -201,6 +201,29 @@ em_result vulkan_surface_recreate(
     vkDestroyFence(context->logical_device, temp_fence, context->allocator);
     // --------------------------------------
 
+    internal_surface->image_available_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * surface->image_count, MEMORY_TAG_RENDERER);
+    internal_surface->render_complete_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * surface->image_count, MEMORY_TAG_RENDERER);
+
+    for (u32 i = 0; i < surface->image_count; ++i) {
+        VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        
+        CHECK_VKRESULT(
+            vkCreateSemaphore(
+                context->logical_device, 
+                &create_info, 
+                context->allocator,
+                &internal_surface->image_available_semaphores[i]),
+            "Failed to image available semaphore in Vulkan surface");
+        
+        CHECK_VKRESULT(
+            vkCreateSemaphore(
+                context->logical_device, 
+                &create_info, 
+                context->allocator,
+                &internal_surface->render_complete_semaphores[i]),
+            "Failed to image available semaphore in Vulkan surface");
+    }
+
     mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
 }

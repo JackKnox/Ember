@@ -11,17 +11,17 @@
  * into backend-specific API calls (OpenGL, Vulkan, etc.).
  */
 typedef enum rendercmd_payload_type {
+    RENDERCMD_NEXT_SURFACE_TEXTURE,
+    RENDERCMD_IMPORT_TEXTURE,
     RENDERCMD_SET_RENDERAREA,
-    RENDERCMD_BIND_NEXT_SURFACE_TEXTURE,
-    RENDERCMD_BIND_IMPORT_TEXTURE,
     RENDERCMD_BEGIN_RENDERPASS,
     RENDERCMD_END_RENDERPASS,
-    RENDERCMD_MEMORY_BARRIER,
     RENDERCMD_BIND_PIPELINE,
     RENDERCMD_DRAW,
     RENDERCMD_DRAW_INDEXED,
     RENDERCMD_DISPATCH,
 
+    RENDERCMD_FLUSH,
     RENDERCMD_DUMMY,
 } rendercmd_payload_type;
 
@@ -33,10 +33,6 @@ typedef struct rendercmd_payload {
 
     union {
         struct {
-            uvec2 origin, size;
-        } set_renderarea;
-
-        struct {
             emgpu_surface* surface;
             emgpu_frame_texture dst_texture;
         } next_surface_texture;
@@ -47,15 +43,14 @@ typedef struct rendercmd_payload {
         } import_texture;
 
         struct {
+            uvec2 origin, size;
+        } set_renderarea;
+
+        struct {
             emgpu_renderpass* renderpass;
             emgpu_frame_texture* attachments;
             u32 attachment_count;
         } bind_renderpass;
-
-        struct {
-            emgpu_pipeline* src_pipeline, * dst_pipeline;
-            emgpu_access_flags src_access, dst_access;
-        } memory_barrier;
 
         struct {
             emgpu_pipeline* pipeline;
