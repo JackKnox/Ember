@@ -2,6 +2,10 @@
 
 #include "ember/core.h"
 
+#define FNV_OFFSET_BASIS 1469598103934665603ULL
+
+#define FNV_PRIME_NUMBER 1099511628211ULL
+
 u64 hash_bytes(void* ptr, u64 size);
 
 void* _hashmap_create(u64 stride, em_allocator* allocator, memory_tag memtag);

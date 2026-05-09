@@ -238,6 +238,26 @@ emgpu_texture* vulkan_surface_curr_texture(
     return &internal_surface->swapchain_images[internal_surface->image_index];
 }
 
+VkSemaphore* vulkan_surface_wait_semaphore(
+    emgpu_device* device,
+    emgpu_surface* surface) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
+
+    return &internal_surface->image_available_semaphores[internal_surface->image_index];
+}
+
+VkSemaphore* vulkan_surface_signal_semaphore(
+    emgpu_device* device,
+    emgpu_surface* surface) {
+    vulkan_context* context = (vulkan_context*)device->internal_context;
+    
+    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
+
+    return &internal_surface->render_complete_semaphores[internal_surface->image_index];
+}
+
 VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,

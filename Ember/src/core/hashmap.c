@@ -54,13 +54,12 @@ static void hashmap_resize(void** map_ptr, u64 new_capacity) {
 }
 
 u64 hash_bytes(void* ptr, u64 size) {
-    // FNV-1a
     u8* data = (u8*)ptr;
-    u64 hash = 1469598103934665603ULL;
+    u64 hash = FNV_OFFSET_BASIS;
 
     for (u64 i = 0; i < size; i++) {
         hash ^= data[i];
-        hash *= 1099511628211ULL;
+        hash *= FNV_PRIME_NUMBER;
     }
 
     return hash;

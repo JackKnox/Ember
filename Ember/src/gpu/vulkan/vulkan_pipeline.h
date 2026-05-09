@@ -22,9 +22,9 @@ em_result vulkan_pipeline_update_descriptors(
     u32 descriptor_count);
 
 void vulkan_pipeline_bind(
-    emgpu_device* device, 
     VkCommandBuffer command_buffer,
-    emgpu_pipeline* pipeline);
+    emgpu_pipeline* pipeline,
+    u32 descriptor_index);
 
 void vulkan_pipeline_destroy(
     emgpu_device* device, 

@@ -305,7 +305,12 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     VkPhysicalDeviceFeatures device_features = {};
     if (context->enabled_modes & EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY) device_features.samplerAnisotropy = TRUE;  // Request anisotropy
 
+    VkPhysicalDeviceTimelineSemaphoreFeatures timeline_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES };
+    timeline_features.timelineSemaphore = TRUE;
+
     VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    device_create_info.pNext = &timeline_features;
+    
     device_create_info.queueCreateInfoCount = darray_length(queue_create_info);
     device_create_info.pQueueCreateInfos = queue_create_info;
     device_create_info.enabledExtensionCount = darray_length(required_device_extensions);

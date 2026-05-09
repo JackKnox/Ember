@@ -24,6 +24,14 @@ emgpu_texture* vulkan_surface_curr_texture(
     emgpu_device* device,
     emgpu_surface* surface);
 
+VkSemaphore* vulkan_surface_wait_semaphore(
+    emgpu_device* device,
+    emgpu_surface* surface);
+
+VkSemaphore* vulkan_surface_signal_semaphore(
+    emgpu_device* device,
+    emgpu_surface* surface);
+
 // Acquires the next available swapchain image for rendering.
 VkResult vulkan_surface_accquire(
     emgpu_device* device,

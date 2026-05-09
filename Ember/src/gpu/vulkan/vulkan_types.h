@@ -113,21 +113,43 @@ typedef struct internal_vulkan_texture {
 
 typedef enum vulkan_submit_break_type {
     VULKAN_BREAK_SWITCH_OPS,
-    VULKAN_BREAK_WAIT_ON_BINARY,
-    VULKAN_BREAK_SIGNAL_ON_BINARY,
+    VULKAN_BREAK_BINARY_SEMAPHORES,
 } vulkan_submit_break_type;
 
-typedef struct vulkan_frame_submission { 
+typedef struct vulkan_managed_surface {
+    emgpu_surface* handle;
+} vulkan_managed_surface;
 
+typedef struct vulkan_frame_submission {
+    VkCommandBuffer commandbuf;
+    emgpu_ops_type ops_type;
+    vulkan_managed_surface* managed_surfaces;
 } vulkan_frame_submission;
 
 typedef struct vulkan_submission_break {
     vulkan_submit_break_type type;
+
+    union {
+        struct {
+            emgpu_ops_type new;
+        } switch_ops;
+
+        struct {
+            VkSemaphore* wait_semaphores;
+            u32 wait_semaphore_count;
+            VkSemaphore* signal_semaphores;
+            u32 signal_semaphore_count;
+        } binary_semaphores;
+    };
 } vulkan_submission_break;
 
 // Internal data for processing emgpu_frame.
 typedef struct vulkan_frame_context {
+    emgpu_ops_type curr_ops;
+    uvec2 render_origin, render_size;
+
     vulkan_frame_submission* submissions;
+    emgpu_texture** frame_textures;
 } vulkan_frame_context;
 
 // Represents the global Vulkan backend context.
