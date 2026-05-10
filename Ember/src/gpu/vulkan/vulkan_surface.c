@@ -191,7 +191,7 @@ em_result vulkan_surface_recreate(
         "Failed to temporary Vulkan surface fence");
 
     CHECK_VKRESULT(
-        vulkan_surface_accquire(device, surface, UINT64_MAX, VK_NULL_HANDLE, temp_fence),
+        vulkan_surface_accquire(device, surface, UINT64_MAX, temp_fence),
         "Failed to acquire first Vulkan swapchain image");
 
     CHECK_VKRESULT(
@@ -262,7 +262,7 @@ VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,
     u64 timeout,
-    VkSemaphore signal_semaphore, VkFence signal_fence) {
+    VkFence signal_fence) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
@@ -271,6 +271,7 @@ VkResult vulkan_surface_accquire(
         context->logical_device, 
         internal_surface->swapchain, 
         timeout, 
-        signal_semaphore, signal_fence, 
+        internal_surface->image_available_semaphores[internal_surface->image_index], 
+        signal_fence, 
         &internal_surface->image_index);
 }

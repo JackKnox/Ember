@@ -37,4 +37,4 @@ VkResult vulkan_surface_accquire(
     emgpu_device* device,
     emgpu_surface* surface,
     u64 timeout, 
-    VkSemaphore signal_semaphore, VkFence signal_fence);
+    VkFence signal_fence);

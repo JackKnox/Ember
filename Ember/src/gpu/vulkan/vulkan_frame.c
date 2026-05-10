@@ -85,11 +85,10 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         case RENDERCMD_NEXT_SURFACE_TEXTURE: {
             ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
 
-            if (!curr_submission->managed_surfaces)
-                curr_submission->managed_surfaces = darray_create(vulkan_managed_surface, &device->frame_allocator, MEMORY_TAG_FRAME);
-            vulkan_managed_surface* managed_surface = darray_push_empty(curr_submission->managed_surfaces);
-
+            vulkan_managed_surface* managed_surface = darray_push_empty(frame_context->managed_surfaces);
             managed_surface->handle = payload->next_surface_texture.surface;
+            managed_surface->submission_index = darray_length(frame_context->submissions) - 1;
+
             frame_context->frame_textures[payload->next_surface_texture.dst_texture] = vulkan_surface_curr_texture(device, managed_surface->handle);
 
             out_break_info->type = VULKAN_BREAK_BINARY_SEMAPHORES;
@@ -273,7 +272,54 @@ em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* fr
 
     // Hit flush command, drain frame context and execute submission calls.
     // --------------------------------------
+    if (context->timeline_counter >= context->frames_in_flight) {
+        uint64_t wait_values[] = { context->timeline_counter - context->frames_in_flight };
+
+        VkSemaphoreWaitInfo wait_info = { VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO };
+        wait_info.semaphoreCount = 1;
+        wait_info.pSemaphores    = &context->graphics_timeline;
+        wait_info.pValues        = wait_values;
+
+        CHECK_VKRESULT(
+            vkWaitSemaphores(context->logical_device, &wait_info, UINT64_MAX), 
+            "Failed to wait for next frame in flight");
+    }
+
+    context->timeline_counter++;
+    u64 signal_value = context->timeline_counter;
     
+    for (u32 i = 0; i < darray_length(frame_context.managed_surfaces); ++i) {
+        emgpu_surface* surface = frame_context.managed_surfaces[i].handle;
+
+        CHECK_VKRESULT(
+            vulkan_surface_accquire(device, surface, UINT64_MAX, VK_NULL_HANDLE), 
+            "Failed to acquire internal Vulkan swapchain");
+    }
+
+    for (u32 i = 0; i < darray_length(frame_context.submissions); ++i) {
+        const vulkan_frame_submission* submission = &frame_context.submissions[i];
+
+        VkPipelineStageFlags wait_stages = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
+
+        VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+        submit_info.waitSemaphoreCount   = darray_length(submission->binary_waits);
+        submit_info.pWaitSemaphores      = submission->binary_waits;
+        submit_info.pWaitDstStageMask    = wait_stages;
+        submit_info.commandBufferCount   = 1;
+        submit_info.pCommandBuffers      = &submission->commandbuf;
+        if (submission->binary_signals) {
+            submit_info.signalSemaphoreCount = darray_length(submission->binary_signals);
+            submit_info.pSignalSemaphores    = submission->binary_signals;
+        }
+
+        CHECK_VKRESULT(
+            vkQueueSubmit(
+                context->mode_queues[ops_type_to_queue_type(submission->ops_type)].handle, 
+                1, 
+                &submit_info, 
+                VK_NULL_HANDLE),
+            "Failed to submit Vulkan command buffer");
+    }
     // --------------------------------------
 
     device->current_frame = (device->current_frame + 1) % context->frames_in_flight;

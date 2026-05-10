@@ -118,12 +118,14 @@ typedef enum vulkan_submit_break_type {
 
 typedef struct vulkan_managed_surface {
     emgpu_surface* handle;
+    u32 submission_index;
 } vulkan_managed_surface;
 
 typedef struct vulkan_frame_submission {
     VkCommandBuffer commandbuf;
     emgpu_ops_type ops_type;
-    vulkan_managed_surface* managed_surfaces;
+    VkSemaphore* binary_waits;
+    VkSemaphore* binary_signals;
 } vulkan_frame_submission;
 
 typedef struct vulkan_submission_break {
@@ -149,6 +151,7 @@ typedef struct vulkan_frame_context {
     uvec2 render_origin, render_size;
 
     vulkan_frame_submission* submissions;
+    vulkan_managed_surface* managed_surfaces;
     emgpu_texture** frame_textures;
 } vulkan_frame_context;
 
