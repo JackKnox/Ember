@@ -118,6 +118,7 @@ typedef enum vulkan_submit_break_type {
 
 typedef struct vulkan_managed_surface {
     emgpu_surface* handle;
+    u32 usable_image_index;
     u32 submission_index;
 } vulkan_managed_surface;
 
@@ -170,17 +171,13 @@ typedef struct vulkan_context {
     VkPhysicalDevice physical_device;
     VkDevice logical_device;
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
-
-    u64 timeline_counter;
+    
+    VkFence* in_flight_fences;
     VkCommandBuffer* graphics_commandbufs, * compute_commandbufs;
-    VkSemaphore      graphics_timeline,      compute_timeline;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.
 i32 find_memory_index(vulkan_context* context, u32 type_filter, VkMemoryPropertyFlags property_flags);
-
-// Finds the necessary usage flags for a texture config.
-VkImageUsageFlags vulkan_texture_usage(vulkan_context* context, const emgpu_texture_config* config);
 
 // Finds the necessary usage flags for a buffer config.
 VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buffer_config* config);

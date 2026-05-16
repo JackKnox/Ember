@@ -16,8 +16,12 @@ em_result vulkan_texture_create(
     out_texture->size = config->size;
     out_texture->image_format = config->image_format;
     internal_texture->usage = config->usage;
+
+    // By default the engine owns the VkImage.
+    // Swapchain images are an exception because Vulkan owns them.
     internal_texture->ownes_image = TRUE;
 
+    // Allows external Vulkan images to be wrapped as engine textures.
     if (config->api_next != NULL) {
         vulkan_texture_ext_config* ext_config = (vulkan_texture_ext_config*)config->api_next;
         internal_texture->handle = ext_config->existing_image;
@@ -29,16 +33,19 @@ em_result vulkan_texture_create(
         return EMBER_RESULT_INVALID_VALUE;
     }
 
+    // Only create a sampler if the texture will actually be sampled inside shaders.
+    // Storage images / render targets may not need one.
     if (config->usage & EMBER_TEXTURE_USAGE_SAMPLED) {
         VkSamplerCreateInfo sampler_create_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-        sampler_create_info.magFilter = sampler_create_info.minFilter = filter_to_vulkan_type(config->filter_type);
-        sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        sampler_create_info.addressModeU = sampler_create_info.addressModeV = sampler_create_info.addressModeW = address_mode_to_vulkan_type(config->address_mode);
+        sampler_create_info.magFilter = sampler_create_info.minFilter = filter_to_vulkan_type(config->filter_type); // Texture filtering mode.
+        sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR; // Proper mipmap generation support.
+        sampler_create_info.addressModeU = sampler_create_info.addressModeV = sampler_create_info.addressModeW = address_mode_to_vulkan_type(config->address_mode);  // Texture coordinate wrapping.
         
+        // Optional anisotropic filtering.
         sampler_create_info.anisotropyEnable = config->max_anisotropy > 0.0f;
         sampler_create_info.maxAnisotropy = config->max_anisotropy;
-        sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
-        sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS; // Used mainly for shadow samplers.
+        sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK; // Border color used when clamping outside image range.
     
         CHECK_VKRESULT(
             vkCreateSampler(

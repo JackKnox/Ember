@@ -50,7 +50,7 @@ typedef struct rendercmd_payload {
             emgpu_renderpass* renderpass;
             emgpu_frame_texture* attachments;
             u32 attachment_count;
-        } bind_renderpass;
+        } begin_renderpass;
 
         struct {
             emgpu_pipeline* pipeline;

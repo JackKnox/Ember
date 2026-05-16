@@ -60,12 +60,12 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size) {
 
 void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
     rendercmd_payload* payload;
-    payload = add_command(frame, EMBER_OPER_TYPE_GRAPHICS, RENDERCMD_BEGIN_RENDERPASS, sizeof(payload->bind_renderpass) + sizeof(emgpu_frame_texture) * attachment_count);
-    payload->bind_renderpass.renderpass = renderpass;
-    payload->bind_renderpass.attachments = (emgpu_frame_texture*)((u8*)payload + sizeof(payload->bind_renderpass));
-    payload->bind_renderpass.attachment_count = attachment_count;
+    payload = add_command(frame, EMBER_OPER_TYPE_GRAPHICS, RENDERCMD_BEGIN_RENDERPASS, sizeof(payload->begin_renderpass) + sizeof(emgpu_frame_texture) * attachment_count);
+    payload->begin_renderpass.renderpass = renderpass;
+    payload->begin_renderpass.attachments = (emgpu_frame_texture*)((u8*)&payload->begin_renderpass + sizeof(payload->begin_renderpass));
+    payload->begin_renderpass.attachment_count = attachment_count;
 
-    em_memcpy(payload->bind_renderpass.attachments, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
+    em_memcpy(payload->begin_renderpass.attachments, texture_attachments, sizeof(emgpu_frame_texture) * attachment_count);
 }
 
 void emgpu_frame_end_renderpass(emgpu_frame* frame) {

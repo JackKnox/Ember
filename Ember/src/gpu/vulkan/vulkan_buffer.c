@@ -68,7 +68,8 @@ em_result vulkan_buffer_upload(
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     internal_vulkan_buffer* internal_buffer = (internal_vulkan_buffer*)buffer->internal_data;
-
+    
+    // Like a staging buffer just map the memory.
     if (buffer->usage & EMBER_BUFFER_USAGE_CPU_VISIBLE) {
         void* mapped_ptr = NULL;
         CHECK_VKRESULT(
@@ -80,6 +81,8 @@ em_result vulkan_buffer_upload(
         return EMBER_RESULT_OK;
     }
 
+    // See?
+    // Create a staging buffer for upload this is kind of too high level but its just easier.
     emgpu_buffer_config staging_buffer_config = emgpu_buffer_default();
     staging_buffer_config.usage = EMBER_BUFFER_USAGE_CPU_VISIBLE;
     staging_buffer_config.buffer_size = region;

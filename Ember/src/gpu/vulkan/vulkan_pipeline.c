@@ -110,6 +110,7 @@ em_result vulkan_pipeline_create_graphics(
     out_graphics_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_graphics_pipeline->internal_data;
 
+    // Mark this as a graphics pipeline.
     out_graphics_pipeline->type = EMBER_OPER_TYPE_GRAPHICS;
     internal_pipeline->graphics.vertex_buffer = config->vertex_buffer;
     internal_pipeline->graphics.index_buffer = config->index_buffer;
@@ -118,11 +119,16 @@ em_result vulkan_pipeline_create_graphics(
     emgpu_shader_src shaders_srcs[] = { config->vertex_shader, config->fragment_shader };
     emgpu_shader_stage_type stage_types[] = { EMBER_SHADER_STAGE_TYPE_VERTEX, EMBER_SHADER_STAGE_TYPE_FRAGMENT };
 
+    // Create:
+    //  - Shader modules
+    //  - Descriptor set layouts
+    //  - Pipeline layout
+    //  - Shader stage infos
     em_result result = vulkan_pipeline_create_layout(
         device, shaders_srcs, stage_types, EM_ARRAYSIZE(shaders_srcs), config->descriptors, config->descriptor_count, shader_stages, out_graphics_pipeline);
     if (result != EMBER_RESULT_OK) return result;
     
-    // Dynamic states.
+    // Dynamic state allows some pipeline state to be changed without recreating the pipeline.
     // Viewports and scissor is needed to handle resizing.
     VkDynamicState dynamic_states[] = {
         VK_DYNAMIC_STATE_VIEWPORT ,
@@ -141,7 +147,7 @@ em_result vulkan_pipeline_create_graphics(
 
         VkVertexInputAttributeDescription* descriptor = darray_push_empty(attributes);
         descriptor->location = i;
-        descriptor->binding  = 0;
+        descriptor->binding  = 0; 
         descriptor->format   = format_to_vulkan_type(attribute);
         descriptor->offset   = attribute_stride;
 
@@ -235,6 +241,12 @@ em_result vulkan_pipeline_create_graphics(
     pipeline_create_info.layout = internal_pipeline->layout;
     pipeline_create_info.renderPass = attachted_renderpass->handle;
 
+    CHECK_VKRESULT(
+        vkCreateGraphicsPipelines(context->logical_device, 0, 1, &pipeline_create_info, context->allocator, &internal_pipeline->handle),
+        "Failed to create internal Vulkan pipeline");
+    
+    for (u32 i = 0; i < darray_length(shader_stages); ++i)
+        vkDestroyShaderModule(context->logical_device, shader_stages[i].module, context->allocator);
     darray_destroy(shader_stages);
     return EMBER_RESULT_OK;
 }

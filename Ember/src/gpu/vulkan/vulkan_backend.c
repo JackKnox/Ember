@@ -165,6 +165,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             queue_support[i].supported_modes = 0;
         }
 
+        // Look at device properties and compare against requirements.
         VkPhysicalDeviceProperties properties;
         vkGetPhysicalDeviceProperties(physical_device, &properties);
 
@@ -215,6 +216,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             }
         }
 
+        // TODO: Get rid of this, it's really ugly and not very descriptive to the user.
         if (((context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index == -1) ||
             ((context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  == -1) ||
             ((context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index == -1) ||
@@ -226,6 +228,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         EM_TRACE("Vulkan", "  Compute queue family:  %i", queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index); 
         EM_TRACE("Vulkan", "  Transfer queue family: %i", queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index);
 
+        // Verify exsistence of device extensions
         u32 supported_extension_count = 0;
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, NULL);
 
@@ -278,6 +281,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     f32 queue_priority = 1.0f;
     VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, NULL, MEMORY_TAG_TEMP);
 
+    // Remove duplicates in mode queue arrays for create infos.
     for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
         u32 family = queue_support[i].family_index;
         if (family == -1) continue;
@@ -305,12 +309,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     VkPhysicalDeviceFeatures device_features = {};
     if (context->enabled_modes & EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY) device_features.samplerAnisotropy = TRUE;  // Request anisotropy
 
-    VkPhysicalDeviceTimelineSemaphoreFeatures timeline_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES };
-    timeline_features.timelineSemaphore = TRUE;
-
     VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-    device_create_info.pNext = &timeline_features;
-    
     device_create_info.queueCreateInfoCount = darray_length(queue_create_info);
     device_create_info.pQueueCreateInfos = queue_create_info;
     device_create_info.enabledExtensionCount = darray_length(required_device_extensions);
@@ -353,8 +352,23 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
         if (!vulkan_result_is_success(result)) return result;
     }
     // --------------------------------------
-
+    
     EM_INFO("Vulkan", "Creating intermediate render objects");
+
+    context->in_flight_fences = darray_from_data(VkFence, context->frames_in_flight, NULL, NULL, MEMORY_TAG_RENDERER);
+
+    for (u32 i = 0; i < context->frames_in_flight; ++i) {
+        VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        
+        CHECK_VKRESULT(
+            vkCreateFence(
+                context->logical_device,
+                &fence_create_info, 
+                context->allocator, 
+                &context->in_flight_fences[i]), 
+            "Failed to create internal Vulkan fences");
+    }
 
     if (context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) {
 		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
@@ -373,21 +387,6 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
                 &allocate_info, 
                 context->graphics_commandbufs),
             "Failed to create Vulkan graphics command buffers");
-        
-        VkSemaphoreTypeCreateInfoKHR timeline_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR };
-        timeline_create_info.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR;
-        timeline_create_info.initialValue  = 0;
-
-        VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-        create_info.pNext = &timeline_create_info;
-
-        CHECK_VKRESULT(
-            vkCreateSemaphore(
-                context->logical_device, 
-                &create_info, 
-                context->allocator, 
-                &context->graphics_timeline), 
-            "Failed to create global Vulkan graphics timeline semaphore");
 	}
 
 	if (context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE) {
@@ -407,21 +406,6 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
                 &allocate_info, 
                 context->compute_commandbufs),
             "Failed to create Vulkan compute command buffers");
-        
-        VkSemaphoreTypeCreateInfoKHR timeline_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR };
-        timeline_create_info.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR;
-        timeline_create_info.initialValue  = 0;
-
-        VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-        create_info.pNext = &timeline_create_info;
-
-        CHECK_VKRESULT(
-            vkCreateSemaphore(
-                context->logical_device, 
-                &create_info, 
-                context->allocator, 
-                &context->compute_timeline), 
-            "Failed to create global Vulkan compute timeline semaphore");
 	}
 
     EM_INFO("Vulkan", "Rendering device fully initiailized.");

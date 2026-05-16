@@ -47,6 +47,22 @@ void* _darray_push(void** out_array, const void* value_ptr) {
     return addr;
 }
 
+void _darray_concat(void** out_array, u32 src_size, void* src_array) {
+    void* arr = *out_array;
+
+    // Resize if needed
+    u64 old_capacity = darray_capacity(arr);
+    if (darray_length(arr) + src_size > old_capacity) {
+        *out_array = darray_resize(arr, darray_length(arr) + src_size);
+    }
+
+    darray_header* hdr = _darray_header(*out_array);
+
+    void* addr = (u8*)(*out_array) + (hdr->length * hdr->stride);
+    em_memcpy(addr, src_array, hdr->stride * src_size);
+    hdr->length += src_size;
+}
+
 void darray_pop_at(void* array, u32 index, void* dest) {
     darray_header* hdr = _darray_header(array);
 

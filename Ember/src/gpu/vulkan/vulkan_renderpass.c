@@ -24,8 +24,9 @@ em_result vulkan_renderpass_create(
         VkAttachmentReference* reference = NULL;
         switch (attachment->type) {
             case EMBER_ATTACHMENT_TYPE_COLOUR:
+                // Lazily create the color attachment array only if needed.
                 if (!colour_attachments) colour_attachments = darray_create(VkAttachmentReference, NULL, MEMORY_TAG_TEMP);
-                reference = darray_push_empty(colour_attachments);
+                reference = darray_push_empty(colour_attachments); // Add new color attachment reference.
                 break;
             
             default:
@@ -34,14 +35,14 @@ em_result vulkan_renderpass_create(
         }
 
         VkAttachmentDescription* desc = darray_push_empty(attachment_descs);
-        desc->format = format_to_vulkan_type(attachment->format);
-        desc->samples = VK_SAMPLE_COUNT_1_BIT;
-        desc->loadOp = load_op_to_vulkan_type(attachment->load_op);
-        desc->storeOp = store_op_to_vulkan_type(attachment->store_op);
-        desc->stencilLoadOp = load_op_to_vulkan_type(attachment->stencil_load_op);
+        desc->format = format_to_vulkan_type(attachment->format); // Convert Ember format into Vulkan format.
+        desc->samples = VK_SAMPLE_COUNT_1_BIT; // No MSAA currently.
+        desc->loadOp = load_op_to_vulkan_type(attachment->load_op); // Controls how attachment contents are treated at renderpass start.
+        desc->storeOp = store_op_to_vulkan_type(attachment->store_op); // Controls what happens after rendering finishes.
+        desc->stencilLoadOp = load_op_to_vulkan_type(attachment->stencil_load_op); // Same operations for stencil component...
         desc->stencilStoreOp = store_op_to_vulkan_type(attachment->stencil_store_op);
-        desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        desc->finalLayout = attachment_type_to_image_layout(attachment->type);
+        desc->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // Initial image layout before renderpass begins. UNDEFINED means contents are discarded.
+        desc->finalLayout = attachment_type_to_image_layout(attachment->type); // Final attachment layout after renderpass completes.
 
         if (desc->format == VK_FORMAT_UNDEFINED) {
             EM_ERROR("Vulkan", "Unsupported format in renderpass descriptor");
@@ -51,20 +52,23 @@ em_result vulkan_renderpass_create(
         reference->attachment = i;
         reference->layout = desc->finalLayout;
 
+        // If this attachment will be presented to the screen, transition into PRESENT_SRC_KHR after rendering.
         if (attachment->presentable) 
             desc->finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     }
 
+    // Vulkan renderpasses contain one or more subpasses.
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = colour_attachments ? darray_length(colour_attachments) : 0;
     subpass.pColorAttachments    = colour_attachments;
 
+    // Mostly needed for swapchain attachment correctness.
     VkSubpassDependency dependency = {};
     dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass    = 0;
+    dependency.dstSubpass    = 0; // Wait for previous color attachment writes.
     dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
+    dependency.srcAccessMask = 0; // Allow this renderpass to write/read color attachments.
     dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     dependency.dependencyFlags = 0;

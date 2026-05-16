@@ -181,30 +181,10 @@ em_result vulkan_surface_recreate(
         if (result != EMBER_RESULT_OK) return result;
     }
 
-    // Acquire first image before submitting frames
-    // --------------------------------------
-    VkFence temp_fence = VK_NULL_HANDLE;
-    VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    internal_surface->image_available_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+    internal_surface->render_complete_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * context->frames_in_flight, MEMORY_TAG_RENDERER);
 
-    CHECK_VKRESULT(
-        vkCreateFence(context->logical_device, &fence_create_info, context->allocator, &temp_fence),
-        "Failed to temporary Vulkan surface fence");
-
-    CHECK_VKRESULT(
-        vulkan_surface_accquire(device, surface, UINT64_MAX, temp_fence),
-        "Failed to acquire first Vulkan swapchain image");
-
-    CHECK_VKRESULT(
-        vkWaitForFences(context->logical_device, 1, &temp_fence, TRUE, UINT64_MAX),
-        "Failed to acquire first Vulkan swapchain image");
-
-    vkDestroyFence(context->logical_device, temp_fence, context->allocator);
-    // --------------------------------------
-
-    internal_surface->image_available_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * surface->image_count, MEMORY_TAG_RENDERER);
-    internal_surface->render_complete_semaphores = mem_allocate(NULL, sizeof(VkSemaphore) * surface->image_count, MEMORY_TAG_RENDERER);
-
-    for (u32 i = 0; i < surface->image_count; ++i) {
+    for (u32 i = 0; i < context->frames_in_flight; ++i) {
         VkSemaphoreCreateInfo create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
         
         CHECK_VKRESULT(
@@ -226,52 +206,4 @@ em_result vulkan_surface_recreate(
 
     mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
     return EMBER_RESULT_OK;
-}
-
-emgpu_texture* vulkan_surface_curr_texture(
-    emgpu_device* device,
-    emgpu_surface* surface) {
-    vulkan_context* context = (vulkan_context*)device->internal_context;
-    
-    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
-
-    return &internal_surface->swapchain_images[internal_surface->image_index];
-}
-
-VkSemaphore* vulkan_surface_wait_semaphore(
-    emgpu_device* device,
-    emgpu_surface* surface) {
-    vulkan_context* context = (vulkan_context*)device->internal_context;
-    
-    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
-
-    return &internal_surface->image_available_semaphores[internal_surface->image_index];
-}
-
-VkSemaphore* vulkan_surface_signal_semaphore(
-    emgpu_device* device,
-    emgpu_surface* surface) {
-    vulkan_context* context = (vulkan_context*)device->internal_context;
-    
-    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
-
-    return &internal_surface->render_complete_semaphores[internal_surface->image_index];
-}
-
-VkResult vulkan_surface_accquire(
-    emgpu_device* device,
-    emgpu_surface* surface,
-    u64 timeout,
-    VkFence signal_fence) {
-    vulkan_context* context = (vulkan_context*)device->internal_context;
-
-    internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)surface->internal_data;
-    
-    return vkAcquireNextImageKHR(
-        context->logical_device, 
-        internal_surface->swapchain, 
-        timeout, 
-        internal_surface->image_available_semaphores[internal_surface->image_index], 
-        signal_fence, 
-        &internal_surface->image_index);
 }

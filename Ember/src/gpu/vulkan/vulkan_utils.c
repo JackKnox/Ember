@@ -15,16 +15,6 @@ i32 find_memory_index(vulkan_context *context, u32 type_filter, VkMemoryProperty
     return -1;
 }
 
-
-VkImageUsageFlags vulkan_texture_usage(vulkan_context* context, const emgpu_texture_config* config) {
-	VkImageUsageFlags image_usage = 0;
-    if (config->usage & EMBER_TEXTURE_USAGE_SAMPLED) image_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (config->usage & EMBER_TEXTURE_USAGE_STORAGE) image_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
-	if (context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-
-    return image_usage;
-}
-
 VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buffer_config* config) {
     VkBufferUsageFlags buffer_usage = 0;
 	if (config->usage & EMBER_BUFFER_USAGE_VERTEX)  buffer_usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
