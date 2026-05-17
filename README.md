@@ -1,4 +1,5 @@
 # The Ember Toolbox
+[![CMake - Full Build](https://github.com/JackKnox/Ember/actions/workflows/cmake-build.yml/badge.svg)](https://github.com/JackKnox/Ember/actions)
 
 ## Introduction
 Ember is an open source toolbox for platform abstraction. It provides well-structured, regularly maintained modules for interfacing with most parts of your chosen operating system (see [Supported Platforms](#supported-platforms)). **Ember is written in pure C99 with a CMake build system.**

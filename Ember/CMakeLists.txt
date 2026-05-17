@@ -31,8 +31,6 @@ target_include_directories(ember_window PRIVATE "src/window/")
 file(GLOB_RECURSE EMGPU_SOURCES "src/gpu/**.c")
 add_library(ember_gpu STATIC ${EMGPU_SOURCES})
 
-find_package(Vulkan REQUIRED)
-
-target_link_libraries(ember_gpu PUBLIC ember ember_window Vulkan::Vulkan)
+target_link_libraries(ember_gpu PUBLIC ember ember_window)
 target_include_directories(ember_gpu PRIVATE "src/gpu/")
 # --------------------------------

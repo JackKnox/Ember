@@ -32,7 +32,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt update
-        sudo apt install xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+        sudo apt install libwayland-dev libxkbcommon-dev wayland-protocols libvulkan-dev extra-cmake-modules
 
     - name: Configure CMake
       run: >
