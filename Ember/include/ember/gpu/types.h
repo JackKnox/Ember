@@ -283,7 +283,7 @@ typedef struct emgpu_shader_src {
 } emgpu_shader_src;
 
 /**
- * @brief Describes the capabilities of the active relevent device.
+ * @brief Describes the capabilities of the relevent device.
  */
 typedef struct emgpu_device_capabilities {
     /** @brief Internal graphics API used by the device. */

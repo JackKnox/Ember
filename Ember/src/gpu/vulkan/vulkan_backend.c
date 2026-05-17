@@ -355,7 +355,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     
     EM_INFO("Vulkan", "Creating intermediate render objects");
 
-    context->in_flight_fences = darray_from_data(VkFence, context->frames_in_flight, NULL, NULL, MEMORY_TAG_RENDERER);
+    context->in_flight_fences = mem_allocate(NULL, sizeof(VkFence) * context->frames_in_flight, MEMORY_TAG_RENDERER);
 
     for (u32 i = 0; i < context->frames_in_flight; ++i) {
         VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
@@ -440,6 +440,18 @@ void vulkan_device_shutdown(emgpu_device* device) {
         mem_free(NULL, context->graphics_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
+    if (context->in_flight_fences) {
+        for (u32 i = 0; i < context->frames_in_flight; ++i) {
+            if (!context->in_flight_fences[i]) continue;
+            vkDestroyFence(
+                context->logical_device,
+                context->in_flight_fences[i], 
+                context->allocator);
+        }
+
+        mem_free(NULL, context->in_flight_fences, sizeof(VkFence) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+    }
+
     for (u32 i = 0; i < EM_ARRAYSIZE(context->mode_queues); ++i) {
         if (context->mode_queues[i].pool) {
             vkDestroyCommandPool(
@@ -468,71 +480,66 @@ void vulkan_device_shutdown(emgpu_device* device) {
     device->internal_context = NULL;
 }
 
-emgpu_device_capabilities* vulkan_device_capabilities(emgpu_device* device) {
+em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabilities* out_capabilities) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    if (device->capabilities == NULL) {
-        // Query physical device properties from Vulkan
-        VkPhysicalDeviceProperties properties;
-        vkGetPhysicalDeviceProperties(context->physical_device, &properties);
+    // Query physical device properties from Vulkan
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(context->physical_device, &properties);
 
-        // --- Extended driver properties (Vulkan 1.1+)
-        VkPhysicalDeviceDriverProperties driver_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
+    // --- Extended driver properties (Vulkan 1.1+)
+    VkPhysicalDeviceDriverProperties driver_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES };
 
-        VkPhysicalDeviceProperties2 extended_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-        extended_props.pNext = &driver_props;
-        vkGetPhysicalDeviceProperties2(context->physical_device, &extended_props);
+    VkPhysicalDeviceProperties2 extended_props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+    extended_props.pNext = &driver_props;
+    vkGetPhysicalDeviceProperties2(context->physical_device, &extended_props);
 
-        device->capabilities = (emgpu_device_capabilities*)mem_allocate(NULL, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
-        em_memcpy(device->capabilities->device_name, properties.deviceName, sizeof(device->capabilities->device_name));
+    em_memcpy(out_capabilities->device_name, properties.deviceName, sizeof(out_capabilities->device_name));
 
-        switch (driver_props.driverID) {
-            case VK_DRIVER_ID_AMD_PROPRIETARY:
-            case VK_DRIVER_ID_AMD_OPEN_SOURCE:
-                device->capabilities->vendor_name = "AMD";
-                break;
-            case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
-                device->capabilities->vendor_name = "NVIDIA";
-                break;
-            case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
-            case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
-                device->capabilities->vendor_name = "Intel";
-                break;
-            case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
-                device->capabilities->vendor_name = "Imagination Technologies";
-                break;
-            case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
-                device->capabilities->vendor_name = "Qualcomm";
-                break;
-            case VK_DRIVER_ID_ARM_PROPRIETARY:
-                device->capabilities->vendor_name = "ARM";
-                break;
-            case VK_DRIVER_ID_MOLTENVK:
-                device->capabilities->vendor_name = "MoltenVK";
-                break;
-            case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
-                device->capabilities->vendor_name = "Samsung";
-                break;
-        }
-
-        // Populate capability fields
-        device->capabilities->api_type = EMBER_DEVICE_BACKEND_VULKAN;
-        device->capabilities->enabled_modes = context->enabled_modes;
-        device->capabilities->device_type = (emgpu_device_type)properties.deviceType;
-        device->capabilities->max_anisotropy = properties.limits.maxSamplerAnisotropy;
-
-        // Convert Vulkan API version into library-specific version format
-        device->capabilities->internal_api_version = EMBER_MAKE_VERSION(
-            VK_API_VERSION_MAJOR(properties.apiVersion),
-            VK_API_VERSION_MINOR(properties.apiVersion),
-            VK_API_VERSION_PATCH(properties.apiVersion));
-
-        // Convert Vulkan driver version into library-specific version format
-        device->capabilities->driver_version = EMBER_MAKE_VERSION(
-            VK_API_VERSION_MAJOR(properties.driverVersion),
-            VK_API_VERSION_MINOR(properties.driverVersion),
-            VK_API_VERSION_PATCH(properties.driverVersion));
+    switch (driver_props.driverID) {
+        case VK_DRIVER_ID_AMD_PROPRIETARY:
+        case VK_DRIVER_ID_AMD_OPEN_SOURCE:
+            out_capabilities->vendor_name = "AMD";
+            break;
+        case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
+            out_capabilities->vendor_name = "NVIDIA";
+            break;
+        case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
+        case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
+            out_capabilities->vendor_name = "Intel";
+            break;
+        case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+            out_capabilities->vendor_name = "Imagination Technologies";
+            break;
+        case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
+            out_capabilities->vendor_name = "Qualcomm";
+            break;
+        case VK_DRIVER_ID_ARM_PROPRIETARY:
+            out_capabilities->vendor_name = "ARM";
+            break;
+        case VK_DRIVER_ID_MOLTENVK:
+            out_capabilities->vendor_name = "MoltenVK";
+            break;
+        case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
+            out_capabilities->vendor_name = "Samsung";
+            break;
     }
 
-    return device->capabilities;
+    // Populate capability fields
+    out_capabilities->api_type = EMBER_DEVICE_BACKEND_VULKAN;
+    out_capabilities->enabled_modes = context->enabled_modes;
+    out_capabilities->device_type = (emgpu_device_type)properties.deviceType;
+    out_capabilities->max_anisotropy = properties.limits.maxSamplerAnisotropy;
+
+    // Convert Vulkan API version into library-specific version format
+    out_capabilities->internal_api_version = EMBER_MAKE_VERSION(
+        VK_API_VERSION_MAJOR(properties.apiVersion),
+        VK_API_VERSION_MINOR(properties.apiVersion),
+        VK_API_VERSION_PATCH(properties.apiVersion));
+
+    // Convert Vulkan driver version into library-specific version format
+    out_capabilities->driver_version = EMBER_MAKE_VERSION(
+        VK_API_VERSION_MAJOR(properties.driverVersion),
+        VK_API_VERSION_MINOR(properties.driverVersion),
+        VK_API_VERSION_PATCH(properties.driverVersion));
 }

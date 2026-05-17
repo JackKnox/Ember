@@ -103,10 +103,11 @@ void vulkan_renderpass_destroy(
         return;
     
     for (u32 i = 0; i < hashmap_length(internal_renderpass->framebuffers); ++i) {
-        if (internal_renderpass->framebuffers[i]) {
+        VkFramebuffer framebuffer = VK_NULL_HANDLE;
+        if (hashmap_get_index(internal_renderpass->framebuffers, i, &framebuffer) && framebuffer) {
             vkDestroyFramebuffer(
                 context->logical_device,
-                internal_renderpass->framebuffers[i],
+                framebuffer,
                 context->allocator);
         }
     }

@@ -21,13 +21,6 @@ typedef struct emgpu_device {
     /** @brief Allocator used to manage per-frame resources. */
     em_allocator frame_allocator;
 
-    /** 
-     * @brief Pointer to dynamicaly allocated capabilities struct, may be NULL.
-     * 
-     * Pointer becomes valid when polling `capabilities()` on the device.
-     */
-    emgpu_device_capabilities* capabilities;
-
     /**
      * @brief Initializes the GPU device.
      *
@@ -51,7 +44,7 @@ typedef struct emgpu_device {
      * @param out_capabilities Output capabilties structure.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    emgpu_device_capabilities* (*retreive_capabilities)(struct emgpu_device* device);
+    em_result (*retreive_capabilities)(struct emgpu_device* device, emgpu_device_capabilities* out_capabilities);
 
     /**
      * @brief Submits a frame for execution on the GPU.
@@ -230,4 +223,4 @@ void emgpu_device_shutdown(emgpu_device* device);
  * @param device Pointer to the device instance.
  * @param level Log level when printing info.
  */
-em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level);
+void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level);

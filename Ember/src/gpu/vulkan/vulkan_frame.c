@@ -375,6 +375,15 @@ em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* fr
             "Failed to present Vulkan swapchains");
     }
 
+    for (u32 i = 0; i < darray_length(frame_context.submissions); ++i) {
+        const vulkan_frame_submission* submission = &frame_context.submissions[i];
+        darray_destroy(submission->binary_signals);
+        darray_destroy(submission->binary_waits);
+    }
+    darray_destroy(frame_context.submissions);
+    darray_destroy(frame_context.managed_surfaces); 
+    mem_free(&device->frame_allocator, frame_context.frame_textures, sizeof(emgpu_texture*) * (frame->current_resource_idx + 1), MEMORY_TAG_FRAME);
+
     device->current_frame = (device->current_frame + 1) % context->frames_in_flight;
     return EMBER_RESULT_OK;
 }

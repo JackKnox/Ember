@@ -78,6 +78,38 @@ void vulkan_surface_destroy(
     if (!internal_surface) 
         return;
 
+    // Image available semaphores
+    if (internal_surface->image_available_semaphores) {
+        for (u32 i = 0; i < context->frames_in_flight; ++i) {
+            if (internal_surface->image_available_semaphores[i]) {
+                vkDestroySemaphore(
+                    context->logical_device,
+                    internal_surface->image_available_semaphores[i],
+                    context->allocator);
+            }
+        }
+
+        mem_free(NULL, internal_surface->image_available_semaphores,
+            sizeof(VkSemaphore) * context->frames_in_flight,
+            MEMORY_TAG_RENDERER);
+    }
+
+    // Render complete semaphores
+    if (internal_surface->render_complete_semaphores) {
+        for (u32 i = 0; i < context->frames_in_flight; ++i) {
+            if (internal_surface->render_complete_semaphores[i]) {
+                vkDestroySemaphore(
+                    context->logical_device,
+                    internal_surface->render_complete_semaphores[i],
+                    context->allocator);
+            }
+        }
+
+        mem_free(NULL, internal_surface->render_complete_semaphores,
+            sizeof(VkSemaphore) * context->frames_in_flight,
+            MEMORY_TAG_RENDERER);
+    }
+    
     if (internal_surface->swapchain_images) {
         for (u32 i = 0; i < surface->image_count; ++i)
             vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);

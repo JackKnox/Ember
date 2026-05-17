@@ -82,7 +82,7 @@ void* _hashmap_create(u64 stride, em_allocator* allocator, memory_tag memtag) {
     void* map = (void*)(hdr + 1);
 
     // zero entries
-    memset(map, 0, capacity * (sizeof(hashmap_entry) + stride));
+    em_memset(map, 0, capacity * (sizeof(hashmap_entry) + stride));
 
     return map;
 }
@@ -92,6 +92,16 @@ void hashmap_destroy(void* hashmap) {
 
     hashmap_header* hdr = hashmap_get_header(hashmap);
     mem_free(hdr->allocator, hdr, sizeof(hashmap_header) + hdr->capacity * (sizeof(hashmap_entry) + hdr->stride), hdr->memtag);
+}
+
+b8 hashmap_get_index(void* hashmap, u64 idx, void* out_item) {
+    hashmap_header* hdr = hashmap_get_header(hashmap);
+
+    hashmap_entry* entry = hashmap_get_entry(hdr, idx);
+    if (!entry->occupied) return FALSE;
+
+    em_memcpy(out_item, hashmap_get_value(entry), hdr->stride);
+    return TRUE;
 }
 
 b8 hashmap_get(void* hashmap, u64 hash, void* out_item) {
@@ -107,7 +117,7 @@ b8 hashmap_get(void* hashmap, u64 hash, void* out_item) {
         }
 
         if (entry->hash == hash) {
-            memcpy(out_item, hashmap_get_value(entry), hdr->stride);
+            em_memcpy(out_item, hashmap_get_value(entry), hdr->stride);
             return TRUE;
         }
 
@@ -138,7 +148,7 @@ void hashmap_set(void* hashmap, u64 hash, void* in_item) {
 
             entry->occupied = TRUE;
             entry->hash = hash;
-            memcpy(hashmap_get_value(entry), in_item, hdr->stride);
+            em_memcpy(hashmap_get_value(entry), in_item, hdr->stride);
             return;
         }
 

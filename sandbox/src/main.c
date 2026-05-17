@@ -34,8 +34,12 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		emgpu_device_init(&device_config, &system_alloc, &device), 
 		"Failed to create rendering device");
-
-	emgpu_device_print_capabilities(&device, LOG_LEVEL_TRACE);
+	
+	emgpu_device_capabilities capabilities = {};
+	CHECK_FUNC(
+		device.retreive_capabilities(&device, &capabilities),
+		"Failed to retrieve device capabilities");
+	emgpu_device_print_capabilities(&device, &capabilities, LOG_LEVEL_TRACE);
 
 	emgpu_surface_config surface_config = emgpu_surface_default();
 	surface_config.size = window.size;

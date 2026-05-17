@@ -62,13 +62,10 @@ void emgpu_device_shutdown(emgpu_device* device) {
     if (device->shutdown) 
         device->shutdown(device);
 
-    if (device->capabilities) mem_free(NULL, device->capabilities, sizeof(emgpu_device_capabilities), MEMORY_TAG_RENDERER);
     em_memset(device, 0, sizeof(emgpu_device));
 }
 
-em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level) {
-    emgpu_device_capabilities* capabilities = device->retreive_capabilities(device);
-
+void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level) {
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s %i.%i.%i - %s [%i.%i.%i]", 
         emgpu_backend_type_string(capabilities->api_type),
@@ -76,5 +73,4 @@ em_result emgpu_device_print_capabilities(emgpu_device* device, log_level level)
         capabilities->vendor_name,
         EMBER_VERSION_MAJOR(capabilities->driver_version), EMBER_VERSION_MINOR(capabilities->driver_version),  EMBER_VERSION_PATCH(capabilities->driver_version));
     EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
-    return EMBER_RESULT_OK;
 }
