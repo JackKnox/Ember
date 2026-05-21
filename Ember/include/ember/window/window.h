@@ -90,7 +90,7 @@ typedef struct emwin_window {
      */
     char* title;
 
-    emwin_desktop* global_desktop;
+    emwin_desktop* desktop;
 
     /** @brief Platform-specific window state. */
     EMBER_PLATFORM_WINDOW_STATE
@@ -136,7 +136,7 @@ em_result emwin_window_open(const emwin_window_config* config, em_allocator* all
  *
  * @param window Pointer to the window to destroy.
  */
-void emwin_window_close(emwin_window* window);
+void emwin_window_close(em_allocator* allocator, emwin_window* window);
 
 /**
  * @brief Checks whether the window has been requested to close.

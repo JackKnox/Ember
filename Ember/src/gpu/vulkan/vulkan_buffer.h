@@ -6,6 +6,7 @@
 
 em_result vulkan_buffer_create(
     emgpu_device* device, 
+    em_allocator* allocator, 
     const emgpu_buffer_config* config, 
     emgpu_buffer* out_buffer);
 
@@ -17,4 +18,5 @@ em_result vulkan_buffer_upload(
 
 void vulkan_buffer_destroy(
     emgpu_device* device, 
+    em_allocator* allocator, 
     emgpu_buffer* buffer);

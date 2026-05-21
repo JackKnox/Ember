@@ -5,6 +5,7 @@
 
 em_result vulkan_surface_create(
     emgpu_device* device,
+    em_allocator* allocator, 
     const emgpu_surface_config* config,
     emgpu_surface* out_surface) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
@@ -12,15 +13,15 @@ em_result vulkan_surface_create(
     out_surface->internal_data = mem_allocate(NULL, sizeof(internal_vulkan_surface), MEMORY_TAG_RENDERER);
     internal_vulkan_surface* internal_surface = (internal_vulkan_surface*)out_surface->internal_data;
 
-    EM_INFO("Vulkan", "Creating Vulkan surface on window: '%s'", config->window.debug_name);
+    EM_INFO("Vulkan", "Creating Vulkan surface on window: '%s'", config->debug_name);
 
-    CHECK_VKRESULT(
-        vulkan_platform_create_surface(
-            context->instance, 
-            &config->window, 
-            context->allocator, 
-            &internal_surface->surface), 
-        "Failed to create internal Vulkan surface (VkSurfaceKHR)");
+    //CHECK_VKRESULT(
+    //    vulkan_platform_create_surface(
+    //        context->instance, 
+    //        &config->window, 
+    //        context->allocator, 
+    //        &internal_surface->surface), 
+    //    "Failed to create internal Vulkan surface (VkSurfaceKHR)");
 
     // Query swapchain support info.
     // --------------------------------------
@@ -69,7 +70,8 @@ em_result vulkan_surface_create(
 }
 
 void vulkan_surface_destroy(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator,
     emgpu_surface* surface) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
@@ -112,7 +114,7 @@ void vulkan_surface_destroy(
     
     if (internal_surface->swapchain_images) {
         for (u32 i = 0; i < surface->image_count; ++i)
-            vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);
+            vulkan_texture_destroy(device, NULL, &internal_surface->swapchain_images[i]);
         
         mem_free(NULL, internal_surface->swapchain_images, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
     }
@@ -196,7 +198,7 @@ em_result vulkan_surface_recreate(
         internal_surface->swapchain_images = (emgpu_texture*)mem_allocate(NULL, sizeof(emgpu_texture) * surface->image_count, MEMORY_TAG_RENDERER);
         
     for (u32 i = 0; i < surface->image_count; ++i) {
-        vulkan_texture_destroy(device, &internal_surface->swapchain_images[i]);
+        vulkan_texture_destroy(device, NULL, &internal_surface->swapchain_images[i]);
 
         vulkan_texture_ext_config ext_config = {};
         ext_config.existing_image = images[i];
@@ -209,7 +211,7 @@ em_result vulkan_surface_recreate(
         swapchain_texture_config.api_next = &ext_config;
 
         em_result result = vulkan_texture_create(
-            device, &swapchain_texture_config, &internal_surface->swapchain_images[i]);
+            device, NULL, &swapchain_texture_config, &internal_surface->swapchain_images[i]);
         if (result != EMBER_RESULT_OK) return result;
     }
 

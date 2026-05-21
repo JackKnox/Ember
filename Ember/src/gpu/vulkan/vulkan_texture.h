@@ -5,7 +5,8 @@
 #include "vulkan_types.h"
 
 em_result vulkan_texture_create(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator, 
     const emgpu_texture_config* config, 
     emgpu_texture* out_texture);
 
@@ -21,5 +22,6 @@ em_result vulkan_texture_upload(
     uvec2 start_offset, uvec2 region);
 
 void vulkan_texture_destroy(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator, 
     emgpu_texture* texture);

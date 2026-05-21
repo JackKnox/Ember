@@ -27,7 +27,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 	return VK_FALSE;
 }
 
-em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_config* config) {
+em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator, const emgpu_device_config* config) {
     device->internal_context = mem_allocate(NULL, sizeof(vulkan_context), MEMORY_TAG_RENDERER);
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
@@ -37,7 +37,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     // Global Vulkan init code
     // --------------------------------------
     u32 platform_extension_count = 0;
-    const char** platform_extensions = vulkan_platform_get_required_extensions(&platform_extension_count);
+    const char** platform_extensions = NULL; //vulkan_platform_get_required_extensions(&platform_extension_count);
 
 	// Obtain a list of required extensions
 	const char** required_extensions = darray_from_data(const char*, platform_extension_count, platform_extensions, NULL, MEMORY_TAG_TEMP);
@@ -74,13 +74,13 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
 	// Fill create info
 	VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 	app_info.apiVersion       = VK_API_VERSION_1_3;
-    app_info.pApplicationName = config->application_name;
+    app_info.pApplicationName = config->debug_name;
 	app_info.pEngineName      = "ember_gpu";
 
     app_info.applicationVersion = VK_MAKE_API_VERSION(0, 
-        EMBER_VERSION_MAJOR(config->application_version), 
-        EMBER_VERSION_MINOR(config->application_version), 
-        EMBER_VERSION_PATCH(config->application_version));
+        EMBER_VERSION_MAJOR(config->app_version), 
+        EMBER_VERSION_MINOR(config->app_version), 
+        EMBER_VERSION_PATCH(config->app_version));
 
 	app_info.engineVersion = VK_MAKE_API_VERSION(0, 
         EMBER_VERSION_MAJOR(EMBER_VERSION), 
@@ -210,10 +210,10 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
             }
 
             // Present queue?
-            if (vulkan_platform_presentation_support(context->instance, physical_device, i)) {
-                queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index = i;
-                queue_support[VULKAN_QUEUE_TYPE_PRESENT].supported_modes |= EMBER_DEVICE_MODE_PRESENT;
-            }
+            //if (vulkan_platform_presentation_support(context->instance, physical_device, i)) {
+            //    queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index = i;
+            //    queue_support[VULKAN_QUEUE_TYPE_PRESENT].supported_modes |= EMBER_DEVICE_MODE_PRESENT;
+            //}
         }
 
         // TODO: Get rid of this, it's really ugly and not very descriptive to the user.
@@ -412,7 +412,7 @@ em_result vulkan_device_initialize(emgpu_device* device, const emgpu_device_conf
     return EMBER_RESULT_OK;
 }
 
-void vulkan_device_shutdown(emgpu_device* device) {
+void vulkan_device_shutdown(emgpu_device* device, em_allocator* allocator) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);
 

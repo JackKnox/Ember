@@ -51,16 +51,16 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
     }
 
     EM_INFO("Gpu", "Initializing rendering device: %s", emgpu_backend_type_string(config->backend_api));
-    EM_TRACE("Gpu", "Application name: %s", config->application_name);
+    EM_TRACE("Gpu", "Application name: %s", config->debug_name);
 
     out_device->frame_allocator = config->frame_allocator;
-    return out_device->initialize(out_device, config);
+    return out_device->initialize(out_device, allocator, config);
 }
 
-void emgpu_device_shutdown(emgpu_device* device) {
+void emgpu_device_shutdown(em_allocator* allocator, emgpu_device* device) {
     EM_ASSERT(device != NULL && "Invalid arguments passed to emgpu_device_shutdown");
     if (device->shutdown) 
-        device->shutdown(device);
+        device->shutdown(device, allocator);
 
     em_memset(device, 0, sizeof(emgpu_device));
 }

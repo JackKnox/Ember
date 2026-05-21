@@ -4,7 +4,8 @@
 #include "vulkan_command_buffer.h"
 
 em_result vulkan_buffer_create(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator, 
     const emgpu_buffer_config* config, 
     emgpu_buffer* out_buffer) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
@@ -88,7 +89,7 @@ em_result vulkan_buffer_upload(
     staging_buffer_config.buffer_size = region;
 
     emgpu_buffer staging_buffer = {};
-    em_result result = vulkan_buffer_create(device, &staging_buffer_config, &staging_buffer);
+    em_result result = vulkan_buffer_create(device, NULL, &staging_buffer_config, &staging_buffer);
     if (result != EMBER_RESULT_OK) {
         EM_ERROR("Vulkan", "Failed to create staging buffer for buffer upload.");
         return result;
@@ -123,12 +124,13 @@ em_result vulkan_buffer_upload(
             "Failed to transfer Vulkan texture data to GPU");
     }
 
-    vulkan_buffer_destroy(device, &staging_buffer);
+    vulkan_buffer_destroy(device, NULL, &staging_buffer);
     return EMBER_RESULT_OK;
 }
 
 void vulkan_buffer_destroy(
     emgpu_device* device, 
+    em_allocator* allocator, 
     emgpu_buffer* buffer) {
 
 }

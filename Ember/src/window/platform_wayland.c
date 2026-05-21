@@ -73,7 +73,7 @@ em_result emwin_window_open(const emwin_window_config* config, em_allocator* all
     return EMBER_RESULT_OK;
 }
 
-void emwin_window_close(emwin_window* window) {
+void emwin_window_close(em_allocator* allocator, emwin_window* window) {
 	mem_free(NULL, window->title, strlen(window->title) + 1, MEMORY_TAG_PLATFORM);
 	window->title = NULL;
 

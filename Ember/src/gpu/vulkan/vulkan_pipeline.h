@@ -6,12 +6,14 @@
 
 em_result vulkan_pipeline_create_graphics(
     emgpu_device* device, 
+    em_allocator* allocator,
     const emgpu_graphics_pipeline_config* config, 
     emgpu_renderpass* bound_renderpass, 
     emgpu_pipeline* out_graphics_pipeline);
 
 em_result vulkan_pipeline_create_compute(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator,
     const emgpu_compute_pipeline_config* config, 
     emgpu_pipeline* out_compute_pipeline);
 
@@ -27,5 +29,6 @@ void vulkan_pipeline_bind(
     u32 descriptor_index);
 
 void vulkan_pipeline_destroy(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator,
     emgpu_pipeline* pipeline);

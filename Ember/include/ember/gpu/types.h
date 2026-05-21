@@ -316,7 +316,7 @@ typedef struct emgpu_device_capabilities {
  */
 typedef struct emgpu_device_config {
     /** @brief Name of the application. */
-    const char* application_name;
+    const char* debug_name;
     
     /** @brief Allocator used to manage per-frame data. */
     em_allocator frame_allocator;
@@ -325,7 +325,7 @@ typedef struct emgpu_device_config {
     emgpu_device_backend backend_api;
 
     /** @brief Version of the cretaed app in `em_version` format. */
-    em_version application_version;
+    em_version app_version;
 
     /** @brief Required modes for the device to function (bitmask). */
     emgpu_device_mode required_modes;
@@ -333,7 +333,7 @@ typedef struct emgpu_device_config {
     /** 
      * @brief Optional device modes that may or may not be supported (bitmask). 
      * 
-     * @note See final modes in capabilities structure . 
+     * @note See final modes in capabilities structure. 
      */
     emgpu_device_mode optional_modes;
 

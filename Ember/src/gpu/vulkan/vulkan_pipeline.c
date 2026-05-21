@@ -101,7 +101,8 @@ em_result vulkan_pipeline_create_layout(
 }
 
 em_result vulkan_pipeline_create_graphics(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator, 
     const emgpu_graphics_pipeline_config* config, 
     emgpu_renderpass* bound_renderpass, 
     emgpu_pipeline* out_graphics_pipeline) {
@@ -252,7 +253,8 @@ em_result vulkan_pipeline_create_graphics(
 }
 
 em_result vulkan_pipeline_create_compute(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator,
     const emgpu_compute_pipeline_config* config, 
     emgpu_pipeline* out_compute_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
@@ -320,7 +322,8 @@ void vulkan_pipeline_bind(
 }
 
 void vulkan_pipeline_destroy(
-    emgpu_device* device, 
+    emgpu_device* device,
+    em_allocator* allocator,
     emgpu_pipeline* pipeline) {
 
 }

@@ -4,7 +4,7 @@
 
 #include "ember/gpu/device.h"
 
-#include "platform/vulkan_platform.h"
+#include <vulkan/vulkan.h>
 
 // Checks the given Vulkan expression for success and fatally aborts on failure.
 // Intended for calls that must never fail in a valid engine state.

@@ -6,6 +6,7 @@
 
 em_result vulkan_renderpass_create(
     emgpu_device* device,
+    em_allocator* allocator, 
     const emgpu_renderpass_config* config,
     emgpu_renderpass* out_renderpass) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
@@ -94,6 +95,7 @@ em_result vulkan_renderpass_create(
 
 void vulkan_renderpass_destroy(
     emgpu_device* device,
+    em_allocator* allocator, 
     emgpu_renderpass* renderpass) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
     if (context->logical_device) vkDeviceWaitIdle(context->logical_device);

@@ -28,14 +28,14 @@ typedef struct emgpu_device {
      * @param config Configuration parameters for initialization.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*initialize)(struct emgpu_device* device, const emgpu_device_config* config);
+    em_result (*initialize)(struct emgpu_device* device, em_allocator* allocator, const emgpu_device_config* config);
 
     /**
      * @brief Shuts down the GPU device and releases all associated resources.
      *
      * @param device Pointer to the device instance.
      */
-    void (*shutdown)(struct emgpu_device* device);
+    void (*shutdown)(struct emgpu_device* device, em_allocator* allocator);
 
     /**
      * @brief Retreives capabilties of the rendering device.
@@ -56,22 +56,12 @@ typedef struct emgpu_device {
     em_result (*submit_frame)(struct emgpu_device* device, const emgpu_frame* frame);
 
     /**
-     * @brief Creates a rendering surface for a window.
-     *
-     * @param device Pointer to the device instance.
-     * @param config Surface configuration.
-     * @param out_surface Output surface.
-     * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
-     */
-    em_result (*create_surface)(struct emgpu_device* device, const emgpu_surface_config* config, emgpu_surface* out_surface);
-
-    /**
      * @brief Destroys a rendering surface.
      *
      * @param device Pointer to the device instance.
      * @param surface Surface to destroy.
      */
-    void (*destroy_surface)(struct emgpu_device* device, emgpu_surface* surface);
+    void (*destroy_surface)(struct emgpu_device* device, em_allocator* allocator, emgpu_surface* surface);
 
     /**
      * @brief Creates a render pass.
@@ -81,7 +71,7 @@ typedef struct emgpu_device {
      * @param out_renderpass Output render pass.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_renderpass)(struct emgpu_device* device, const emgpu_renderpass_config* config, emgpu_renderpass* out_renderpass);
+    em_result (*create_renderpass)(struct emgpu_device* device, em_allocator* allocator, const emgpu_renderpass_config* config, emgpu_renderpass* out_renderpass);
 
     /**
      * @brief Destroys a render pass.
@@ -89,7 +79,7 @@ typedef struct emgpu_device {
      * @param device Pointer to the device instance.
      * @param renderpass Pass to destroy.
      */
-    void (*destroy_renderpass)(struct emgpu_device* device, emgpu_renderpass* renderpass);
+    void (*destroy_renderpass)(struct emgpu_device* device, em_allocator* allocator, emgpu_renderpass* renderpass);
 
     /**
      * @brief Creates a graphics pipeline.
@@ -100,7 +90,7 @@ typedef struct emgpu_device {
      * @param out_graphics_pipeline Output pipeline.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_graphics_pipeline)(struct emgpu_device* device, const emgpu_graphics_pipeline_config* config, emgpu_renderpass* bound_renderpass, emgpu_pipeline* out_graphics_pipeline);
+    em_result (*create_graphics_pipeline)(struct emgpu_device* device, em_allocator* allocator, const emgpu_graphics_pipeline_config* config, emgpu_renderpass* bound_renderpass, emgpu_pipeline* out_graphics_pipeline);
 
     /**
      * @brief Creates a compute pipeline.
@@ -110,7 +100,7 @@ typedef struct emgpu_device {
      * @param out_compute_pipeline Output pipeline.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_compute_pipeline)(struct emgpu_device* device, const emgpu_compute_pipeline_config* config, emgpu_pipeline* out_compute_pipeline);
+    em_result (*create_compute_pipeline)(struct emgpu_device* device, em_allocator* allocator, const emgpu_compute_pipeline_config* config, emgpu_pipeline* out_compute_pipeline);
 
     /**
      * @brief Updates descriptor bindings for a pipeline.
@@ -129,7 +119,7 @@ typedef struct emgpu_device {
      * @param device Pointer to the device instance.
      * @param pipeline Pipeline to destroy.
      */
-    void (*destroy_pipeline)(struct emgpu_device* device, emgpu_pipeline* pipeline);
+    void (*destroy_pipeline)(struct emgpu_device* device, em_allocator* allocator, emgpu_pipeline* pipeline);
 
     /**
      * @brief Creates a GPU buffer.
@@ -139,7 +129,7 @@ typedef struct emgpu_device {
      * @param out_buffer Output buffer.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_buffer)(struct emgpu_device* device, const emgpu_buffer_config* config, emgpu_buffer* out_buffer);
+    em_result (*create_buffer)(struct emgpu_device* device, em_allocator* allocator, const emgpu_buffer_config* config, emgpu_buffer* out_buffer);
 
     /**
      * @brief Uploads data to a buffer.
@@ -159,7 +149,7 @@ typedef struct emgpu_device {
      * @param device Pointer to the device instance.
      * @param buffer Buffer to destroy.
      */
-    void (*destroy_buffer)(struct emgpu_device* device, emgpu_buffer* buffer);
+    void (*destroy_buffer)(struct emgpu_device* device, em_allocator* allocator, emgpu_buffer* buffer);
 
     /**
      * @brief Creates a texture.
@@ -169,7 +159,7 @@ typedef struct emgpu_device {
      * @param out_texture Output texture.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_texture)(struct emgpu_device* device, const emgpu_texture_config* config, emgpu_texture* out_texture);
+    em_result (*create_texture)(struct emgpu_device* device, em_allocator* allocator, const emgpu_texture_config* config, emgpu_texture* out_texture);
 
     /**
      * @brief Uploads data to a texture.
@@ -189,7 +179,7 @@ typedef struct emgpu_device {
      * @param device Pointer to the device instance.
      * @param texture Texture to destroy.
      */
-    void (*destroy_texture)(struct emgpu_device* device, emgpu_texture* texture);
+    void (*destroy_texture)(struct emgpu_device* device, em_allocator* allocator, emgpu_texture* texture);
 } emgpu_device;
 
 /**
@@ -212,7 +202,7 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
  *
  * @param device Pointer to the device instance.
  */
-void emgpu_device_shutdown(emgpu_device* device);
+void emgpu_device_shutdown(em_allocator* allocator, emgpu_device* device);
 
 /**
  * @brief Print rendering device info to Ember standard log.
