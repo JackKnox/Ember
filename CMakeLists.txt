@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(Ember VERSION 0.2.0 LANGUAGES C)
+project(Ember VERSION 0.5.0 LANGUAGES C)
 
 include(FetchContent)
 
@@ -13,8 +13,8 @@ endif()
 option(EMBER_DIST "Strip ember of all safety features for distribution, not recommended for development")
 option(EMBER_DEV  "Build ember with developer-only tooling" ${MAIN_PROJECT})
 
-add_subdirectory(Ember)
-add_subdirectory(sandbox)
+add_subdirectory(src)
+add_subdirectory(examples)
 
 FetchContent_Declare(
     GLFW

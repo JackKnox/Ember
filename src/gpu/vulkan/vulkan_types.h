@@ -1,0 +1,227 @@
+#pragma once
+
+#include "ember/core.h"
+
+#include "ember/gpu/device.h"
+
+#include <vulkan/vulkan.h>
+
+// Checks the given Vulkan expression for success and fatally aborts on failure.
+// Intended for calls that must never fail in a valid engine state.
+#define VK_CHECK(expr)                                    \
+    {                                                     \
+        VkResult r = expr;                                \
+        if (!vulkan_result_is_success(r))                 \
+            EM_FATAL("VK_CHECK failed: (Line = %i) " __FILE__ "  (Error code: %s) ", \
+                     __LINE__, vulkan_result_string(r, 1)); \
+    }
+
+// Checks a Vulkan call and logs an error on failure.
+// Intended for recoverable errors during initialization or runtime.
+#define CHECK_VKRESULT(func, message)                     \
+    {                                                     \
+        VkResult result = func;                           \
+        if (!vulkan_result_is_success(result)) {          \
+            EM_ERROR("Vulkan", message ": %s",             \
+                     vulkan_result_string(result, EMBER_BUILD_DEBUG)); \
+            return em_result_from_vulkan_result(result);  \
+        }                                                 \
+    }
+
+// Only provided by extensions.
+typedef b8 (*PFN_GetPhysicalDevicePresentationSupportKHR)(emgpu_device* device, void* extension_data, VkPhysicalDevice physical_device, u32 queue_family_index);
+
+typedef enum vulkan_queue_type {
+    VULKAN_QUEUE_TYPE_GRAPHICS,
+    VULKAN_QUEUE_TYPE_COMPUTE,
+    VULKAN_QUEUE_TYPE_TRANSFER,
+    VULKAN_QUEUE_TYPE_PRESENT,
+    VULKAN_QUEUE_TYPE_MAX,
+} vulkan_queue_type;
+
+// Represents a queue handle together with the command pool used to allocate command buffers for that queue family.
+typedef struct vulkan_queue {
+    VkQueue handle;
+    VkCommandPool pool;
+    emgpu_device_mode supported_modes;
+    i32 family_index;
+} vulkan_queue;
+
+// Represents a ring Vulkan command buffers and its current state.
+typedef struct vulkan_command_buffer {
+    VkCommandBuffer* handles;
+    vulkan_queue* owner;
+    u32 buffer_count;
+    u32 curr_buffer;
+} vulkan_command_buffer;
+
+// Internal Vulkan implementation of a emgpu_surface.
+typedef struct internal_vulkan_surface {
+    VkSurfaceKHR surface;
+    VkSurfaceCapabilitiesKHR capabilities;
+    VkColorSpaceKHR colour_space;
+
+    VkSwapchainKHR swapchain;
+    emgpu_texture* swapchain_images;
+    u32 image_index;
+
+    VkSemaphore* image_available_semaphores;
+    VkSemaphore* render_complete_semaphores;
+} internal_vulkan_surface;
+
+typedef struct internal_vulkan_renderpass {
+    VkRenderPass handle;
+    VkFramebuffer* framebuffers;
+} internal_vulkan_renderpass;
+
+// Internal Vulkan implementation of a emgpu_pipeline.
+typedef struct internal_vulkan_pipeline {
+    VkPipeline handle;
+    VkPipelineLayout layout;
+    VkDescriptorPool descriptor_pool;
+    VkDescriptorSet* descriptor_sets;
+    VkDescriptorSetLayout descriptor;
+} internal_vulkan_pipeline;
+
+// Internal Vulkan implementation of a emgpu_buffer.
+typedef struct internal_vulkan_buffer {
+    VkBuffer handle;
+    VkDeviceMemory memory;
+} internal_vulkan_buffer;
+
+// Structure for extra texture configuration specific to this backend.
+typedef struct vulkan_texture_ext_config {
+    VkImage existing_image;
+    b8 ownes_provided_image;
+} vulkan_texture_ext_config;
+
+// Internal Vulkan implementation of a emgpu_texture.
+typedef struct internal_vulkan_texture {
+    VkImage handle;
+    emgpu_texture_usage usage;
+    VkDeviceMemory memory;
+    
+    VkImageView view;
+    VkSampler sampler;
+
+    VkImageLayout curr_layout;
+    b8 ownes_image;
+} internal_vulkan_texture;
+
+typedef enum vulkan_submit_break_type {
+    VULKAN_BREAK_SWITCH_OPS,
+    VULKAN_BREAK_BINARY_SEMAPHORES,
+} vulkan_submit_break_type;
+
+typedef struct vulkan_managed_surface {
+    emgpu_surface* handle;
+    u32 usable_image_index;
+    u32 submission_index;
+} vulkan_managed_surface;
+
+typedef struct vulkan_frame_submission {
+    VkCommandBuffer commandbuf;
+    emgpu_ops_type ops_type;
+    VkSemaphore* binary_waits;
+    VkSemaphore* binary_signals;
+} vulkan_frame_submission;
+
+typedef struct vulkan_submission_break {
+    vulkan_submit_break_type type;
+
+    union {
+        struct {
+            emgpu_ops_type new;
+        } switch_ops;
+
+        struct {
+            VkSemaphore* wait_semaphores;
+            u32 wait_semaphore_count;
+            VkSemaphore* signal_semaphores;
+            u32 signal_semaphore_count;
+        } binary_semaphores;
+    };
+} vulkan_submission_break;
+
+// Internal data for processing emgpu_frame.
+typedef struct vulkan_frame_context {
+    emgpu_ops_type curr_ops;
+    uvec2 render_origin, render_size;
+
+    vulkan_frame_submission* submissions;
+    vulkan_managed_surface* managed_surfaces;
+    emgpu_texture** frame_textures;
+} vulkan_frame_context;
+
+// Represents the global Vulkan backend context.
+// Owns the Vulkan instance, device, swapchain, synchronization primitives, and per-frame resources.
+typedef struct vulkan_context {
+    u32 frames_in_flight;
+    emgpu_device_mode enabled_modes;
+
+    VkInstance instance;
+    VkAllocationCallbacks* allocator;
+    PFN_GetPhysicalDevicePresentationSupportKHR vkGetPhysicalDevicePresentationSupportKHR;
+    void* wsi_extension_data;
+#ifdef EMBER_DEV
+    VkDebugUtilsMessengerEXT debug_messenger;
+#endif
+
+    VkPhysicalDevice physical_device;
+    VkDevice logical_device;
+    vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
+    
+    VkFence* in_flight_fences;
+    VkCommandBuffer* graphics_commandbufs, * compute_commandbufs;
+} vulkan_context;
+
+// Finds a compatible memory type index on the physical device.
+i32 find_memory_index(vulkan_context* context, u32 type_filter, VkMemoryPropertyFlags property_flags);
+
+// Finds the necessary usage flags for a buffer config.
+VkBufferUsageFlags vulkan_buffer_usage(vulkan_context* context, const emgpu_buffer_config* config);
+
+// Converts engine shader stage flags to Vulkan shader stage flags.
+VkShaderStageFlags shader_type_to_vulkan_type(emgpu_shader_stage_type type);
+
+// Converts engine descriptor type to a Vulkan descriptor type.
+VkDescriptorType descriptor_type_to_vulkan_type(emgpu_descriptor_type descriptor_type);
+
+// Converts engine filter mode to a Vulkan filter.
+VkFilter filter_to_vulkan_type(emgpu_filter_type filter_type);
+
+// Converts engine filter mode to a Vulkan queue type.
+vulkan_queue_type ops_type_to_queue_type(emgpu_ops_type type);
+
+// Converts engine address mode to a Vulkan sampler address mode.
+VkSamplerAddressMode address_mode_to_vulkan_type(emgpu_address_mode address);
+
+// Converts engine primitive type to a Vulkan enum.
+VkPrimitiveTopology primitive_to_vulkan_type(emgpu_primitive_type type);
+
+// Converts engine render format to a Vulkan format.
+VkFormat format_to_vulkan_type(emgpu_format format);
+
+// Converts Vulkan format to engine render format, use sparingly.
+emgpu_format vulkan_format_to_engine(VkFormat format);
+
+// Coverts engine ops type to a pipeline bind point.
+VkPipelineBindPoint ops_type_to_bind_point(emgpu_ops_type type);
+
+// Converts engine load op format to a Vulkan format.
+VkAttachmentLoadOp load_op_to_vulkan_type(emgpu_load_op load_op);
+
+// Converts engine store op format to a Vulkan format.
+VkAttachmentStoreOp store_op_to_vulkan_type(emgpu_store_op store_op);
+
+// Converts engine attachment to a final image layout of a renderpass attachment.
+VkImageLayout attachment_type_to_image_layout(emgpu_attachment_type type);
+
+// Converts Vulkan error code to engine result code.
+em_result em_result_from_vulkan_result(VkResult result);
+
+// Returns a human-readable string for a Vulkan result code.
+const char* vulkan_result_string(VkResult result, b8 get_extended);
+
+// Determines whether a Vulkan result represents a success code.
+b8 vulkan_result_is_success(VkResult result);
