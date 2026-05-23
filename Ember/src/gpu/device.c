@@ -28,9 +28,8 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
     if (config->backend_api == EMBER_DEVICE_BACKEND_VULKAN) {
         out_device->initialize                  = vulkan_device_initialize;
         out_device->shutdown                    = vulkan_device_shutdown;
-        out_device->retreive_capabilities       = vulkan_device_capabilities;
+        out_device->retrieve_capabilities       = vulkan_device_capabilities;
         out_device->submit_frame                = vulkan_device_submit_frame;
-        out_device->create_surface              = vulkan_surface_create;
         out_device->destroy_surface             = vulkan_surface_destroy;
         out_device->create_renderpass           = vulkan_renderpass_create;
         out_device->destroy_renderpass          = vulkan_renderpass_destroy;

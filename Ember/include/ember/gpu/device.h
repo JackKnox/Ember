@@ -4,6 +4,101 @@
 
 #include "ember/gpu/resources.h"
 #include "ember/gpu/frame.h"
+#include "ember/gpu/extension.h"
+
+/**
+ * @brief Describes the capabilities of the relevent device.
+ */
+typedef struct emgpu_device_capabilities {
+    /** @brief Internal graphics API used by the device. */
+    emgpu_device_backend api_type;
+
+    /** @brief Device classification. */
+    emgpu_device_type device_type;
+
+    /** @brief Enabled modes in device. */
+    emgpu_device_mode enabled_modes;
+
+    /** @brief Version of the internal API used by the device. */
+    em_version internal_api_version;
+
+    /** @brief Version of the OS driver used by the device. */
+    em_version driver_version;
+
+    /** @brief Maximum supported anisotropic filtering level. */
+    f32 max_anisotropy;
+
+    /** @brief Human-readable name for driver vendor. */
+    const char* vendor_name;
+
+    /** @brief Human-readable device name. */
+    char device_name[32];
+} emgpu_device_capabilities;
+
+/**
+ * @brief Configuration used for creating a GPU device.
+ */
+typedef struct emgpu_device_config {
+    /** @brief Name of the application (used for debugging/profiling). */
+    const char* debug_name;
+
+    /** @brief Allocator used for per-frame allocations. */
+    em_allocator frame_allocator;
+
+    /** @brief Selected backend API (e.g. Vulkan, Metal, etc.). */
+    emgpu_device_backend backend_api;
+
+    /** @brief Application version encoded as em_version. */
+    em_version app_version;
+
+    /**
+     * @brief Required device modes.
+     *
+     * The device must support all modes in this bitmask or initialization fails.
+     */
+    emgpu_device_mode required_modes;
+
+    /**
+     * @brief Optional device modes.
+     *
+     * These will be enabled if supported. Unsupported modes are ignored.
+     *
+     * @note Final enabled modes are exposed via the device capabilities.
+     */
+    emgpu_device_mode optional_modes;
+
+    /**
+     * @brief Number of frames that can be processed concurrently.
+     *
+     * Must be greater than 1 for proper buffering and synchronization.
+     */
+    u32 frames_in_flight;
+
+    /**
+     * @brief Array of requested device extensions.
+     *
+     * Extensions may enable additional features or platform support.
+     */
+    emgpu_extension_desc* extensions;
+
+    /** @brief Number of requested extensions. */
+    u32 extension_count;
+
+    /**
+     * @brief Optional output array for resolved extension instances.
+     *
+     * If non-null, will be populated with pointers to active extension
+     * instances matching the requested extensions.
+     */
+    void** out_extensions;
+} emgpu_device_config;
+
+/**
+ * @brief Creates a default rendering device configuration.
+ *
+ * @return A default-initialized emgpu_device_config.
+ */
+emgpu_device_config emgpu_device_default();
 
 /**
  * @brief Renderer device interface.
@@ -44,7 +139,7 @@ typedef struct emgpu_device {
      * @param out_capabilities Output capabilties structure.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*retreive_capabilities)(struct emgpu_device* device, emgpu_device_capabilities* out_capabilities);
+    em_result (*retrieve_capabilities)(struct emgpu_device* device, emgpu_device_capabilities* out_capabilities);
 
     /**
      * @brief Submits a frame for execution on the GPU.

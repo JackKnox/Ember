@@ -9,7 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(stb)
 FetchContent_GetProperties(stb)
 
-target_link_libraries(Sandbox PRIVATE ember glfw ember_window ember_gpu)
+target_link_libraries(Sandbox PRIVATE ember glfw ember_window ember_gpu ember_gpu_wayland_surface)
 target_include_directories(Sandbox PRIVATE ${stb_SOURCE_DIR})
 
 add_custom_command(TARGET Sandbox POST_BUILD

@@ -22,7 +22,7 @@ target_include_directories(ember_platform PRIVATE "src/platform/")
 file(GLOB_RECURSE EMWIN_SOURCES "src/window/**.c")
 add_library(ember_window STATIC ${EMWIN_SOURCES})
 
-target_link_libraries(ember_window PUBLIC ember glfw)
+target_link_libraries(ember_window PUBLIC ember ember_platform glfw)
 target_include_directories(ember_window PRIVATE "src/window/")
 # --------------------------------
 
@@ -31,6 +31,12 @@ target_include_directories(ember_window PRIVATE "src/window/")
 file(GLOB_RECURSE EMGPU_SOURCES "src/gpu/**.c")
 add_library(ember_gpu STATIC ${EMGPU_SOURCES})
 
-target_link_libraries(ember_gpu PUBLIC ember)
+find_package(Vulkan REQUIRED)
+target_link_libraries(ember_gpu PUBLIC ember ember_platform Vulkan::Vulkan)
 target_include_directories(ember_gpu PRIVATE "src/gpu/")
 # --------------------------------
+
+add_library(ember_gpu_wayland_surface STATIC "src/gpu/ext/wayland_surface.c"
+                                             "src/gpu/ext/vulkan_wayland_surface.c")
+target_link_libraries(ember_gpu_wayland_surface PUBLIC ember_gpu)
+target_include_directories(ember_gpu_wayland_surface PRIVATE "src/gpu/")

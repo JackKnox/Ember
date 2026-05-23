@@ -90,7 +90,7 @@ emgpu_buffer_config emgpu_buffer_default();
  */
 typedef struct emgpu_graphics_pipeline_config {
     /** @brief Describes how vertices are turned into primitives. */
-    emgpu_primitive_type vertex_topology;
+    emgpu_primitive_type topology;
 
     /** @brief Enables or disables blending. */
     b8 blend_enabled;
@@ -112,16 +112,10 @@ typedef struct emgpu_graphics_pipeline_config {
     emgpu_blend_op alpha_op;
 
     /** @brief Number of active vertex attributes. */
-    u32 vertex_attribute_count;
+    u32 attribute_count;
     
     /** @brief Vertex attribute formats in binding order. */
-    emgpu_format* vertex_attributes;
-
-    /** @brief Optional vertex buffer bound to this pipeline. */
-    emgpu_buffer* vertex_buffer;
-
-    /** @brief Optional index buffer bound to this pipeline. */
-    emgpu_buffer* index_buffer;
+    emgpu_format* attributes;
 
     /** @brief Number of active descriptor bindings. */
 	u32 descriptor_count;
@@ -147,7 +141,7 @@ typedef struct emgpu_compute_pipeline_config {
     emgpu_descriptor_desc* descriptors;
 
     /** @brief Shader stage ran per-compute cell, must be valid. */
-    emgpu_shader_src compute_shader;
+    emgpu_shader_src shader;
 } emgpu_compute_pipeline_config;
 
 /**

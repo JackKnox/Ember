@@ -20,6 +20,8 @@ typedef enum rendercmd_payload_type {
     RENDERCMD_DRAW,
     RENDERCMD_DRAW_INDEXED,
     RENDERCMD_DISPATCH,
+    RENDERCMD_EXPORT_RESOURCE,
+    RENDERCMD_USE_RESOURCE,
 
     RENDERCMD_FLUSH,
     RENDERCMD_DUMMY,
@@ -28,7 +30,6 @@ typedef enum rendercmd_payload_type {
 typedef struct rendercmd_payload {
     struct {
         rendercmd_payload_type type;
-        emgpu_ops_type command_mode;
     } hdr;
 
     union {
@@ -54,6 +55,7 @@ typedef struct rendercmd_payload {
 
         struct {
             emgpu_pipeline* pipeline;
+            emgpu_buffer* vertex_buffer, * index_buffer;
         } bind_pipeline;
 
         struct {
@@ -67,5 +69,15 @@ typedef struct rendercmd_payload {
         struct {
             uvec3 group_size;
         } dispatch;
+
+        struct {
+            emgpu_access_flags resource_access;
+            u32 descriptor_index;
+        } export_resource;
+
+        struct {
+            emgpu_access_flags resource_access;
+            u32 descriptor_index;
+        } use_resource;
     };
 } rendercmd_payload;

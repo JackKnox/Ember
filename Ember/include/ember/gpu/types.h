@@ -173,10 +173,10 @@ typedef enum emgpu_store_op {
  * Usage flags may be combined.
  */
 typedef enum emgpu_access_flags {
-    EMBER_ACCESS_FLAGS_SHADER_WRITE            = 1 << 0,  /**< Written by a shader */
-    EMBER_ACCESS_FLAGS_SHADER_READ             = 1 << 1,  /**< Resource read by a shader */
-    EMBER_ACCESS_FLAGS_VERTEX_ATTRIBUTE_READ   = 1 << 2,  /**< Read as a vertex attribute during vertex input */
-    EMBER_ACCESS_FLAGS_COLOUR_ATTACHMENT_WRITE = 1 << 3,  /**< Written as a colour attachment during rendering */
+    EMBER_ACCESS_SHADER_WRITE            = 1 << 0,  /**< Written by a shader */
+    EMBER_ACCESS_SHADER_READ             = 1 << 1,  /**< Resource read by a shader */
+    EMBER_ACCESS_VERTEX_ATTRIBUTE_READ   = 1 << 2,  /**< Read as a vertex attribute during vertex input */
+    EMBER_ACCESS_COLOUR_ATTACHMENT_WRITE = 1 << 3,  /**< Written as a colour attachment during rendering */
 } emgpu_access_flags;
 
 /**
@@ -281,73 +281,3 @@ typedef struct emgpu_shader_src {
     /** @brief Name of function in shader ran by the rendering device. */
     const char* entry_point;
 } emgpu_shader_src;
-
-/**
- * @brief Describes the capabilities of the relevent device.
- */
-typedef struct emgpu_device_capabilities {
-    /** @brief Internal graphics API used by the device. */
-    emgpu_device_backend api_type;
-
-    /** @brief Device classification. */
-    emgpu_device_type device_type;
-
-    /** @brief Enabled modes in device. */
-    emgpu_device_mode enabled_modes;
-
-    /** @brief Version of the internal API used by the device. */
-    em_version internal_api_version;
-
-    /** @brief Version of the OS driver used by the device. */
-    em_version driver_version;
-
-    /** @brief Maximum supported anisotropic filtering level. */
-    f32 max_anisotropy;
-
-    /** @brief Human-readable name for driver vendor. */
-    const char* vendor_name;
-
-    /** @brief Human-readable device name. */
-    char device_name[32];
-} emgpu_device_capabilities;
-
-/**
- * @brief Configuration for creating a renderer backend.
- */
-typedef struct emgpu_device_config {
-    /** @brief Name of the application. */
-    const char* debug_name;
-    
-    /** @brief Allocator used to manage per-frame data. */
-    em_allocator frame_allocator;
-
-    /** @brief Selected backend API type. */
-    emgpu_device_backend backend_api;
-
-    /** @brief Version of the cretaed app in `em_version` format. */
-    em_version app_version;
-
-    /** @brief Required modes for the device to function (bitmask). */
-    emgpu_device_mode required_modes;
-
-    /** 
-     * @brief Optional device modes that may or may not be supported (bitmask). 
-     * 
-     * @note See final modes in capabilities structure. 
-     */
-    emgpu_device_mode optional_modes;
-
-    /**
-     * @brief Number of frames processed concurrently.
-     *
-     * Must be greater than 1.
-     */
-    u32 frames_in_flight;
-} emgpu_device_config;
-
-/**
- * @brief Creates a default rendering device configuration.
- *
- * @return A default-initialized emgpu_device_config.
- */
-emgpu_device_config emgpu_device_default();

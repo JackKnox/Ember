@@ -5,7 +5,7 @@
 
 em_result vulkan_pipeline_create_layout(
     emgpu_device* device, 
-    emgpu_shader_src* shader_sources, emgpu_shader_stage_type* stage_types, u32 shader_source_count, 
+    const emgpu_shader_src* shader_sources, const emgpu_shader_stage_type* stage_types, u32 shader_source_count, 
     emgpu_descriptor_desc* descriptors, u32 descriptor_count, 
     VkPipelineShaderStageCreateInfo* out_shader_stages,
     emgpu_pipeline* out_pipeline) {
@@ -113,8 +113,6 @@ em_result vulkan_pipeline_create_graphics(
 
     // Mark this as a graphics pipeline.
     out_graphics_pipeline->type = EMBER_OPER_TYPE_GRAPHICS;
-    internal_pipeline->graphics.vertex_buffer = config->vertex_buffer;
-    internal_pipeline->graphics.index_buffer = config->index_buffer;
 
     VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
     emgpu_shader_src shaders_srcs[] = { config->vertex_shader, config->fragment_shader };
@@ -140,11 +138,11 @@ em_result vulkan_pipeline_create_graphics(
     // Vertex input configuration
     // Calculate total vertex stride and fill attribute descriptions.   
     VkVertexInputBindingDescription binding_desc = {};
-    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, config->vertex_attribute_count, NULL, MEMORY_TAG_TEMP);
+    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, config->attribute_count, NULL, MEMORY_TAG_TEMP);
 
     u64 attribute_stride = 0;
-    for (u32 i = 0; i < config->vertex_attribute_count; ++i) {
-        emgpu_format attribute = config->vertex_attributes[i];
+    for (u32 i = 0; i < config->attribute_count; ++i) {
+        emgpu_format attribute = config->attributes[i];
 
         VkVertexInputAttributeDescription* descriptor = darray_push_empty(attributes);
         descriptor->location = i;
@@ -215,7 +213,7 @@ em_result vulkan_pipeline_create_graphics(
     VkPipelineVertexInputStateCreateInfo vertex_input_state = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 
     // Only configure if vertex attributes exist
-    if (config->vertex_attribute_count > 0) {
+    if (config->attribute_count > 0) {
         vertex_input_state.vertexAttributeDescriptionCount = darray_length(attributes);
         vertex_input_state.pVertexAttributeDescriptions    = attributes;
         vertex_input_state.vertexBindingDescriptionCount   = 1;
@@ -224,7 +222,7 @@ em_result vulkan_pipeline_create_graphics(
 
     // Input assembly state
     VkPipelineInputAssemblyStateCreateInfo input_assembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
-    input_assembly.topology = primitive_to_vulkan_type(config->vertex_topology);
+    input_assembly.topology = primitive_to_vulkan_type(config->topology);
 
     internal_vulkan_renderpass* attachted_renderpass = (internal_vulkan_renderpass*)bound_renderpass->internal_data;
 
@@ -265,11 +263,10 @@ em_result vulkan_pipeline_create_compute(
     out_compute_pipeline->type = EMBER_OPER_TYPE_COMPUTE;
 
     VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
-    emgpu_shader_src shaders_srcs[] = { config->compute_shader };
-    emgpu_shader_stage_type stage_types[] = { EMBER_SHADER_STAGE_TYPE_COMPUTE };
+    emgpu_shader_stage_type stage_type = EMBER_SHADER_STAGE_TYPE_COMPUTE;
 
     em_result result = vulkan_pipeline_create_layout(
-        device, shaders_srcs, stage_types, EM_ARRAYSIZE(shaders_srcs), config->descriptors, config->descriptor_count, shader_stages, out_compute_pipeline);
+        device, &config->shader, &stage_type, 1, config->descriptors, config->descriptor_count, shader_stages, out_compute_pipeline);
     if (result != EMBER_RESULT_OK) return result;
 
     VkComputePipelineCreateInfo pipeline_create_info = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
@@ -306,19 +303,6 @@ void vulkan_pipeline_bind(
 
     if (internal_pipeline->descriptor_sets)
         vkCmdBindDescriptorSets(command_buffer, bind_point, internal_pipeline->layout, 0, 1, &internal_pipeline->descriptor_sets[descriptor_index], 0, 0);
-    
-    // Bind vertex and index buffers.
-    if (bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS && internal_pipeline->graphics.vertex_buffer) {
-        VkDeviceSize offset = 0;
-
-        internal_vulkan_buffer* vertex_buffer = (internal_vulkan_buffer*)internal_pipeline->graphics.vertex_buffer->internal_data;
-        vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer->handle, &offset);
-
-        if (internal_pipeline->graphics.index_buffer) {
-            internal_vulkan_buffer* index_buffer = (internal_vulkan_buffer*)internal_pipeline->graphics.index_buffer->internal_data;
-            vkCmdBindIndexBuffer(command_buffer, index_buffer->handle, offset, VK_INDEX_TYPE_UINT16); // TODO: Customize index type?
-        }
-    }
 }
 
 void vulkan_pipeline_destroy(

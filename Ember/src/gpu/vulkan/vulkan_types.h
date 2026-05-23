@@ -78,12 +78,6 @@ typedef struct internal_vulkan_pipeline {
     VkDescriptorPool descriptor_pool;
     VkDescriptorSet* descriptor_sets;
     VkDescriptorSetLayout descriptor;
-
-    union {
-        struct {
-            emgpu_buffer* vertex_buffer, * index_buffer;
-        } graphics;
-    };
 } internal_vulkan_pipeline;
 
 // Internal Vulkan implementation of a emgpu_buffer.

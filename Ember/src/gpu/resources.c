@@ -21,6 +21,14 @@ emgpu_buffer_config emgpu_buffer_default() {
 
 emgpu_graphics_pipeline_config emgpu_pipeline_default_graphics() {
 	emgpu_graphics_pipeline_config config = {};
+    config.topology      = EMBER_PRIMITIVE_TYPE_TRIANGLE_LIST;
+    config.blend_enabled = FALSE;
+    config.src_color     = EMBER_BLEND_FACTOR_SRC_ALPHA;
+    config.dst_color     = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    config.color_op      = EMBER_BLEND_OP_ADD;
+    config.src_alpha     = EMBER_BLEND_FACTOR_SRC_ALPHA;
+    config.dst_alpha     = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    config.alpha_op      = EMBER_BLEND_OP_ADD;
     return config;
 }
 
@@ -45,12 +53,5 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture) {
 
 emgpu_renderpass_config emgpu_renderpass_default() {
     emgpu_renderpass_config config = {};
-    return config;
-}
-
-emgpu_surface_config emgpu_surface_default() {
-    emgpu_surface_config config = {};
-    config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM;
-	config.force_format     = TRUE;
     return config;
 }

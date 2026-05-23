@@ -542,4 +542,5 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
         VK_API_VERSION_MAJOR(properties.driverVersion),
         VK_API_VERSION_MINOR(properties.driverVersion),
         VK_API_VERSION_PATCH(properties.driverVersion));
+    return EMBER_RESULT_OK;
 }
