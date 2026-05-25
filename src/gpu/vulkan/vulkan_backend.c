@@ -543,8 +543,6 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
         case VK_DRIVER_ID_MESA_VENUS:
         case VK_DRIVER_ID_MESA_DOZEN:
         case VK_DRIVER_ID_MESA_NVK:
-        case VK_DRIVER_ID_MESA_HONEYKRISP:
-        case VK_DRIVER_ID_MESA_KOSMICKRISP:
             out_capabilities->vendor_name = "Mesa";
             break;
         case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
@@ -586,9 +584,9 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
         case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
             out_capabilities->vendor_name = "Samsung";
             break;
-            break;
-        case VK_DRIVER_ID_VULKAN_SC_EMULATION_ON_VULKAN:
-            out_capabilities->vendor_name = "Vulkan SC";
+        
+        default:
+            out_capabilities->vendor_name = "Unknown Vendor";
             break;
     }
 
