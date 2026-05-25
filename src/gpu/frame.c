@@ -59,18 +59,14 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size) {
 
 void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
     rendercmd_payload* payload;
-    // Total size must account for alignment padding between the struct and the
-    // trailing array. offsetof gives us the correctly-padded boundary.
     u64 attachments_offset = EM_OFFSETOF(rendercmd_payload, begin_renderpass.attachments);
     u64 payload_size       = attachments_offset 
-                             + sizeof(emgpu_frame_texture) * attachment_count
-                             - sizeof(payload->hdr);
+                            + sizeof(emgpu_frame_texture) * attachment_count
+                            - sizeof(payload->hdr);
 
     payload = add_command(frame, RENDERCMD_BEGIN_RENDERPASS, payload_size);
     payload->begin_renderpass.renderpass       = renderpass;
     payload->begin_renderpass.attachment_count = attachment_count;
-
-    // Now use the struct member directly rather than manual pointer arithmetic
     em_memcpy(payload->begin_renderpass.attachments,
               texture_attachments,
               sizeof(emgpu_frame_texture) * attachment_count);
@@ -113,11 +109,14 @@ emgpu_frame_resource emgpu_frame_export_resource(emgpu_frame* frame, u32 descrip
     payload = add_command(frame, RENDERCMD_EXPORT_RESOURCE, sizeof(payload->export_resource));
     payload->export_resource.descriptor_index = descriptor_index;
     payload->export_resource.resource_access  = resource_access;
+    payload->export_resource.dst_resource     = frame->current_resource_idx++; 
+    return payload->export_resource.dst_resource;
 }
 
 void emgpu_frame_use_resource(emgpu_frame* frame, emgpu_frame_resource resource, u32 descriptor_index, emgpu_access_flags resource_access) {
     rendercmd_payload* payload;
     payload = add_command(frame, RENDERCMD_USE_RESOURCE, sizeof(payload->use_resource));
+    payload->use_resource.src_resource     = resource;
     payload->use_resource.descriptor_index = descriptor_index;
     payload->use_resource.resource_access  = resource_access;
 }

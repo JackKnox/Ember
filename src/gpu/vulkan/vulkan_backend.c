@@ -352,7 +352,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
     // Create the device.
     VkResult result = vkCreateDevice(context->physical_device, &device_create_info, context->allocator, &context->logical_device);
-    if (!vulkan_result_is_success(result)) return result;
+    if (!vulkan_result_is_success(result)) return em_result_from_vulkan_result(result);
 
     darray_destroy(required_device_extensions);
     darray_destroy(queue_create_info);
@@ -383,7 +383,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
         pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         VkResult result = vkCreateCommandPool(context->logical_device, &pool_create_info, context->allocator, &mode->pool);
-        if (!vulkan_result_is_success(result)) return result;
+        if (!vulkan_result_is_success(result)) return em_result_from_vulkan_result(result);
     }
     // --------------------------------------
     
@@ -531,9 +531,21 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
     em_memcpy(out_capabilities->device_name, properties.deviceName, sizeof(out_capabilities->device_name));
 
     switch (driver_props.driverID) {
-        case VK_DRIVER_ID_AMD_PROPRIETARY:
         case VK_DRIVER_ID_AMD_OPEN_SOURCE:
+        case VK_DRIVER_ID_AMD_PROPRIETARY:
             out_capabilities->vendor_name = "AMD";
+            break;
+        case VK_DRIVER_ID_MESA_RADV:
+        case VK_DRIVER_ID_MESA_LLVMPIPE:
+        case VK_DRIVER_ID_MESA_TURNIP:
+        case VK_DRIVER_ID_MESA_V3DV:
+        case VK_DRIVER_ID_MESA_PANVK:
+        case VK_DRIVER_ID_MESA_VENUS:
+        case VK_DRIVER_ID_MESA_DOZEN:
+        case VK_DRIVER_ID_MESA_NVK:
+        case VK_DRIVER_ID_MESA_HONEYKRISP:
+        case VK_DRIVER_ID_MESA_KOSMICKRISP:
+            out_capabilities->vendor_name = "Mesa";
             break;
         case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
             out_capabilities->vendor_name = "NVIDIA";
@@ -543,6 +555,7 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
             out_capabilities->vendor_name = "Intel";
             break;
         case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+        case VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA:
             out_capabilities->vendor_name = "Imagination Technologies";
             break;
         case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
@@ -551,11 +564,31 @@ em_result vulkan_device_capabilities(emgpu_device* device, emgpu_device_capabili
         case VK_DRIVER_ID_ARM_PROPRIETARY:
             out_capabilities->vendor_name = "ARM";
             break;
+        case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
+        case VK_DRIVER_ID_GGP_PROPRIETARY:
+            out_capabilities->vendor_name = "Google";
+            break;
+        case VK_DRIVER_ID_BROADCOM_PROPRIETARY:
+            out_capabilities->vendor_name = "Broadcom";
+            break;
         case VK_DRIVER_ID_MOLTENVK:
-            out_capabilities->vendor_name = "MoltenVK";
+            out_capabilities->vendor_name = "MoltenVK (MacOS)";
+            break;
+        case VK_DRIVER_ID_COREAVI_PROPRIETARY:
+            out_capabilities->vendor_name = "Coravi (Vulkan SC)";
+            break;
+        case VK_DRIVER_ID_JUICE_PROPRIETARY:
+            out_capabilities->vendor_name = "Juice";
+            break;
+        case VK_DRIVER_ID_VERISILICON_PROPRIETARY:
+            out_capabilities->vendor_name = "Verisilicon";
             break;
         case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
             out_capabilities->vendor_name = "Samsung";
+            break;
+            break;
+        case VK_DRIVER_ID_VULKAN_SC_EMULATION_ON_VULKAN:
+            out_capabilities->vendor_name = "Vulkan SC";
             break;
     }
 

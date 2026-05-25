@@ -3,10 +3,11 @@ add_library(ember STATIC ${EMBER_SOURCES})
 target_include_directories(ember PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 target_compile_definitions(ember PUBLIC
-    $<$<CONFIG:Debug>:EMBER_BUILD_DEBUG>
-    $<$<CONFIG:Release>:EMBER_BUILD_RELEASE>
-    $<$<BOOL:${EMBER_DEV}>:EMBER_DEV>
-    $<$<BOOL:${EMBER_DIST}>:EMBER_DIST>)
+    EMBER_BUILD_DEBUG=$<IF:$<CONFIG:Debug>,1,0>
+    EMBER_BUILD_RELEASE=$<IF:$<CONFIG:Release>,1,0>
+
+    EMBER_DEV=$<IF:$<BOOL:${EMBER_DEV}>,1,0>
+    EMBER_DIST=$<IF:$<BOOL:${EMBER_DIST}>,1,0>)
 
 # Ember platform abstraction module
 # --------------------------------

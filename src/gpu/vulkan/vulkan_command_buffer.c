@@ -93,10 +93,11 @@ VkResult vulkan_command_buffer_end_single_use(
     vulkan_context* context,
     vulkan_command_buffer* command_buffer) {
     // End the command buffer.
-    vulkan_command_buffer_end(command_buffer);
+    VkResult result = vulkan_command_buffer_end(command_buffer);
+    if (!vulkan_result_is_success(result)) return result;
 
     // Submit the queue
-    VkResult result = vulkan_command_buffer_submit(command_buffer, 0, 0, NULL, 0, NULL, NULL, VK_NULL_HANDLE);
+    result = vulkan_command_buffer_submit(command_buffer, 0, 0, NULL, 0, NULL, NULL, VK_NULL_HANDLE);
     if (!vulkan_result_is_success(result)) return result;
 
     // Wait for it to finish
@@ -105,4 +106,5 @@ VkResult vulkan_command_buffer_end_single_use(
 
     // Free the command buffer.
     vulkan_command_buffer_free(context, command_buffer);
+    return VK_SUCCESS;
 }

@@ -74,11 +74,13 @@ typedef struct rendercmd_payload {
         struct {
             emgpu_access_flags resource_access;
             u32 descriptor_index;
+            emgpu_frame_texture dst_resource;
         } export_resource;
 
         struct {
             emgpu_access_flags resource_access;
             u32 descriptor_index;
+            emgpu_frame_texture src_resource;
         } use_resource;
     };
 } rendercmd_payload;
