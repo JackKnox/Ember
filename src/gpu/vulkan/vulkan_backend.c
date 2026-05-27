@@ -83,6 +83,28 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
     darray_push(required_validation_layers, "VK_LAYER_KHRONOS_validation");
 #endif
 
+    // Verify exsistence of extensions
+    u32 supported_extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(NULL, &supported_extension_count, NULL);
+
+    VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_TEMP);
+    vkEnumerateInstanceExtensionProperties(NULL, &supported_extension_count, supported_extensions);
+
+    for (u32 i = 0; i < darray_length(required_extensions); ++i) {
+		b8 found = FALSE;
+		for (u32 j = 0; j < darray_length(supported_extensions); ++j) {
+			if (strcmp(required_extensions[i], supported_extensions[j].extensionName) == 0) {
+				found = TRUE;
+				break;
+			}
+		}
+
+		if (!found) {
+			EM_ERROR("Vulkan", "Required Vulkan extension is missing: %s.", required_extensions[i]);
+			return EMBER_RESULT_UNAVAILABLE_API;
+		}
+	}
+
     // Verify exsistence of validation layers
 	u32 supported_layer_count = 0;
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, NULL);
@@ -101,7 +123,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
 		if (!found) {
 			EM_ERROR("Vulkan", "Required Vulkan validation layer is missing: %s.", required_validation_layers[i]);
-			return FALSE;
+			return EMBER_RESULT_UNAVAILABLE_API;
 		}
 	}
 
@@ -220,8 +242,8 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
             // Graphics queue?
             if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index = i;
-                queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].supported_modes |= EMBER_DEVICE_MODE_GRAPHICS;
+                queue_support[VULKAN_QUEUE_TYPE_RASTER].family_index = i;
+                queue_support[VULKAN_QUEUE_TYPE_RASTER].supported_modes |= EMBER_DEVICE_MODE_RASTER;
                 ++current_transfer_score;
             }
 
@@ -251,14 +273,14 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
         }
 
         // TODO: Get rid of this, it's really ugly and not very descriptive to the user.
-        if (((context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) && queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index == -1) ||
+        if (((context->enabled_modes & EMBER_DEVICE_MODE_RASTER)   && queue_support[VULKAN_QUEUE_TYPE_RASTER].family_index == -1) ||
             ((context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE)  && queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index  == -1) ||
             ((context->enabled_modes & EMBER_DEVICE_MODE_TRANSFER) && queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index == -1) ||
             ((context->enabled_modes & EMBER_DEVICE_MODE_PRESENT)  && queue_support[VULKAN_QUEUE_TYPE_PRESENT].family_index  == -1)) {
             continue;
         }
 
-        EM_TRACE("Vulkan", "  Graphics queue family: %i", queue_support[VULKAN_QUEUE_TYPE_GRAPHICS].family_index);
+        EM_TRACE("Vulkan", "  Raster queue family: %i", queue_support[VULKAN_QUEUE_TYPE_RASTER].family_index);
         EM_TRACE("Vulkan", "  Compute queue family:  %i", queue_support[VULKAN_QUEUE_TYPE_COMPUTE].family_index); 
         EM_TRACE("Vulkan", "  Transfer queue family: %i", queue_support[VULKAN_QUEUE_TYPE_TRANSFER].family_index);
 
@@ -404,11 +426,11 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
             "Failed to create internal Vulkan fences");
     }
 
-    if (context->enabled_modes & EMBER_DEVICE_MODE_GRAPHICS) {
-		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
-        EM_TRACE("Vulkan", "Creating global Vulkan graphics command ring");
+    if (context->enabled_modes & EMBER_DEVICE_MODE_RASTER) {
+		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_RASTER;
+        EM_TRACE("Vulkan", "Creating global Vulkan raster command ring");
 
-        context->graphics_commandbufs = mem_allocate(NULL, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+        context->raster_commandbufs = mem_allocate(NULL, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
 
         VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         allocate_info.commandPool        = context->mode_queues[queue_type].pool;
@@ -419,8 +441,8 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
             vkAllocateCommandBuffers(
                 context->logical_device, 
                 &allocate_info, 
-                context->graphics_commandbufs),
-            "Failed to create Vulkan graphics command buffers");
+                context->raster_commandbufs),
+            "Failed to create Vulkan raster command buffers");
 	}
 
 	if (context->enabled_modes & EMBER_DEVICE_MODE_COMPUTE) {
@@ -462,16 +484,16 @@ void vulkan_device_shutdown(emgpu_device* device, em_allocator* allocator) {
         mem_free(NULL, context->compute_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
-    if (context->graphics_commandbufs) {
-		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_GRAPHICS;
+    if (context->raster_commandbufs) {
+		vulkan_queue_type queue_type = VULKAN_QUEUE_TYPE_RASTER;
 
         vkFreeCommandBuffers(
             context->logical_device, 
             context->mode_queues[queue_type].pool, 
             context->frames_in_flight, 
-            context->graphics_commandbufs);
+            context->raster_commandbufs);
         
-        mem_free(NULL, context->graphics_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
+        mem_free(NULL, context->raster_commandbufs, sizeof(VkCommandBuffer) * context->frames_in_flight, MEMORY_TAG_RENDERER);
     }
 
     if (context->in_flight_fences) {
