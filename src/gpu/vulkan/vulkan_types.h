@@ -32,7 +32,7 @@
 typedef b8 (*PFN_GetPhysicalDevicePresentationSupportKHR)(emgpu_device* device, void* extension_data, VkPhysicalDevice physical_device, u32 queue_family_index);
 
 typedef enum vulkan_queue_type {
-    VULKAN_QUEUE_TYPE_GRAPHICS,
+    VULKAN_QUEUE_TYPE_RASTER,
     VULKAN_QUEUE_TYPE_COMPUTE,
     VULKAN_QUEUE_TYPE_TRANSFER,
     VULKAN_QUEUE_TYPE_PRESENT,
@@ -172,7 +172,7 @@ typedef struct vulkan_context {
     vulkan_queue mode_queues[VULKAN_QUEUE_TYPE_MAX];
     
     VkFence* in_flight_fences;
-    VkCommandBuffer* graphics_commandbufs, * compute_commandbufs;
+    VkCommandBuffer* raster_commandbufs, * compute_commandbufs;
 } vulkan_context;
 
 // Finds a compatible memory type index on the physical device.

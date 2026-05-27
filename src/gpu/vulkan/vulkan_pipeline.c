@@ -7,11 +7,13 @@ em_result vulkan_pipeline_create_layout(
     emgpu_device* device, 
     const emgpu_shader_src* shader_sources, const emgpu_shader_stage_type* stage_types, u32 shader_source_count, 
     emgpu_descriptor_desc* descriptors, u32 descriptor_count, 
-    VkPipelineShaderStageCreateInfo* out_shader_stages,
+    VkPipelineShaderStageCreateInfo** out_shader_stages,
     emgpu_pipeline* out_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_pipeline->internal_data;
+
+    *out_shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
 
     for (u32 i = 0; i < shader_source_count; ++i) {
         const emgpu_shader_src* src = &shader_sources[i];
@@ -21,7 +23,7 @@ em_result vulkan_pipeline_create_layout(
         module_create_info.codeSize = src->size;
         module_create_info.pCode = src->data;
 
-        VkPipelineShaderStageCreateInfo* stage_create_info = darray_push_empty(out_shader_stages);
+        VkPipelineShaderStageCreateInfo* stage_create_info = darray_push_empty(*out_shader_stages);
         stage_create_info->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         stage_create_info->stage = shader_type_to_vulkan_type(stage_types[i]);
         stage_create_info->pName = src->entry_point;
@@ -100,21 +102,21 @@ em_result vulkan_pipeline_create_layout(
     return EMBER_RESULT_OK;
 }
 
-em_result vulkan_pipeline_create_graphics(
-    emgpu_device* device,
-    em_allocator* allocator, 
-    const emgpu_graphics_pipeline_config* config, 
+em_result vulkan_pipeline_create_raster(
+    emgpu_device* device, 
+    em_allocator* allocator,
+    const emgpu_raster_pipeline_config* config, 
     emgpu_renderpass* bound_renderpass, 
-    emgpu_pipeline* out_graphics_pipeline) {
+    emgpu_pipeline* out_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    out_graphics_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
-    internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_graphics_pipeline->internal_data;
+    out_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
+    internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_pipeline->internal_data;
 
-    // Mark this as a graphics pipeline.
-    out_graphics_pipeline->type = EMBER_OPER_TYPE_GRAPHICS;
+    // Mark this as a raster pipeline.
+    out_pipeline->type = EMBER_OPER_TYPE_RASTER;
 
-    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
+    VkPipelineShaderStageCreateInfo* shader_stages = NULL;
     emgpu_shader_src shaders_srcs[] = { config->vertex_shader, config->fragment_shader };
     emgpu_shader_stage_type stage_types[] = { EMBER_SHADER_STAGE_TYPE_VERTEX, EMBER_SHADER_STAGE_TYPE_FRAGMENT };
 
@@ -123,58 +125,9 @@ em_result vulkan_pipeline_create_graphics(
     //  - Descriptor set layouts
     //  - Pipeline layout
     //  - Shader stage infos
-    em_result result = vulkan_pipeline_create_layout(
-        device, shaders_srcs, stage_types, EM_ARRAYSIZE(shaders_srcs), config->descriptors, config->descriptor_count, shader_stages, out_graphics_pipeline);
+    em_result result = vulkan_pipeline_create_layout(device, shaders_srcs, stage_types, EM_ARRAYSIZE(shaders_srcs), config->descriptors, config->descriptor_count, &shader_stages, out_pipeline);
     if (result != EMBER_RESULT_OK) return result;
     
-    // Dynamic state allows some pipeline state to be changed without recreating the pipeline.
-    // Viewports and scissor is needed to handle resizing.
-    VkDynamicState dynamic_states[] = {
-        VK_DYNAMIC_STATE_VIEWPORT ,
-        VK_DYNAMIC_STATE_SCISSOR ,
-        //VK_DYNAMIC_STATE_LINE_WIDTH,
-    };
-
-    // Vertex input configuration
-    // Calculate total vertex stride and fill attribute descriptions.   
-    VkVertexInputBindingDescription binding_desc = {};
-    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, config->attribute_count, NULL, MEMORY_TAG_TEMP);
-
-    u64 attribute_stride = 0;
-    for (u32 i = 0; i < config->attribute_count; ++i) {
-        emgpu_format attribute = config->attributes[i];
-
-        VkVertexInputAttributeDescription* descriptor = darray_push_empty(attributes);
-        descriptor->location = i;
-        descriptor->binding  = 0; 
-        descriptor->format   = format_to_vulkan_type(attribute);
-        descriptor->offset   = attribute_stride;
-
-        if (descriptor->format == VK_FORMAT_UNDEFINED) {
-            EM_ERROR("Vulkan", "Unsupported format in vertex attributes");
-            return EMBER_RESULT_UNSUPPORTED_FORMAT;
-        }
-
-        attribute_stride += EMBER_FORMAT_SIZE(attribute);
-    }
-
-    binding_desc.binding = 0;
-    binding_desc.stride  = attribute_stride;
-    binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    // Colour attachments 
-    VkPipelineColorBlendAttachmentState colour_blending = {};
-    colour_blending.blendEnable = FALSE; // TODO: Enable / disable blending.
-    colour_blending.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    colour_blending.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colour_blending.colorBlendOp        = VK_BLEND_OP_ADD;
-    colour_blending.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    colour_blending.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colour_blending.alphaBlendOp        = VK_BLEND_OP_ADD;
-
-    colour_blending.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
     // Rasterization state
     VkPipelineRasterizationStateCreateInfo rasterizer = { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
     rasterizer.depthClampEnable        = FALSE;
@@ -196,13 +149,47 @@ em_result vulkan_pipeline_create_graphics(
     depth_stencil.depthCompareOp        = VK_COMPARE_OP_LESS;
     depth_stencil.depthBoundsTestEnable = FALSE;
     depth_stencil.stencilTestEnable     = FALSE;
+    
+    // Dynamic state allows some pipeline state to be changed without recreating the pipeline.
+    // Viewports and scissor is needed to handle resizing.
+    VkDynamicState dynamic_states[] = {
+        VK_DYNAMIC_STATE_VIEWPORT ,
+        VK_DYNAMIC_STATE_SCISSOR ,
+        VK_DYNAMIC_STATE_LINE_WIDTH,
+    };
+
+    b8 enable_blending = (config->blend_state != NULL);
+
+    emgpu_raster_blend_config blend_state_config = emgpu_raster_blend_default();
+    if (config->blend_state != NULL) blend_state_config = *config->blend_state;
+
+    emgpu_raster_vertex_config vertex_input_config = emgpu_raster_vertex_default();
+    if (config->vertex_input != NULL) vertex_input_config = *config->vertex_input;
+
+    // Colour attachments 
+    VkPipelineColorBlendAttachmentState colour_blending = {};
+    colour_blending.blendEnable = enable_blending;
+    colour_blending.srcColorBlendFactor = blend_state_config.src_colour;
+    colour_blending.dstColorBlendFactor = blend_state_config.dst_colour;
+    colour_blending.colorBlendOp        = blend_state_config.colour_op;
+    colour_blending.srcAlphaBlendFactor = blend_state_config.src_alpha;
+    colour_blending.dstAlphaBlendFactor = blend_state_config.dst_alpha;
+    colour_blending.alphaBlendOp        = blend_state_config.alpha_op;
+    
+    colour_blending.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
     // Color blending state
     VkPipelineColorBlendStateCreateInfo color_blending = { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
-    color_blending.logicOpEnable   = FALSE;
-    color_blending.logicOp         = VK_LOGIC_OP_COPY;
     color_blending.attachmentCount = 1;
     color_blending.pAttachments    = &colour_blending;
+
+    // Viewport state
+    VkPipelineViewportStateCreateInfo viewport_state = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+    viewport_state.viewportCount = 1;
+    viewport_state.pViewports    = NULL;
+    viewport_state.scissorCount  = 1;
+    viewport_state.pScissors     = NULL;
 
     // Dynamic states
     VkPipelineDynamicStateCreateInfo dynamic_state = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
@@ -210,19 +197,40 @@ em_result vulkan_pipeline_create_graphics(
     dynamic_state.pDynamicStates    = dynamic_states;
 
     // Vertex input state
-    VkPipelineVertexInputStateCreateInfo vertex_input_state = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    VkVertexInputBindingDescription binding_desc = {};
+    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, vertex_input_config.attribute_count, NULL, MEMORY_TAG_TEMP);
 
-    // Only configure if vertex attributes exist
-    if (config->attribute_count > 0) {
-        vertex_input_state.vertexAttributeDescriptionCount = darray_length(attributes);
-        vertex_input_state.pVertexAttributeDescriptions    = attributes;
-        vertex_input_state.vertexBindingDescriptionCount   = 1;
-        vertex_input_state.pVertexBindingDescriptions      = &binding_desc;
+    u64 attribute_stride = 0;
+    for (u32 i = 0; i < vertex_input_config.attribute_count; ++i) {
+        emgpu_format attribute = vertex_input_config.attributes[i];
+
+        VkVertexInputAttributeDescription* descriptor = darray_push_empty(attributes);
+        descriptor->location = i;
+        descriptor->binding  = 0; 
+        descriptor->format   = format_to_vulkan_type(attribute);
+        descriptor->offset   = attribute_stride;
+
+        if (descriptor->format == VK_FORMAT_UNDEFINED) {
+            EM_ERROR("Vulkan", "Unsupported format in vertex attributes");
+            return EMBER_RESULT_UNSUPPORTED_FORMAT;
+        }
+
+        attribute_stride += EMBER_FORMAT_SIZE(attribute);
     }
+
+    binding_desc.binding = 0;
+    binding_desc.stride  = attribute_stride;
+    binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_state = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    vertex_input_state.vertexAttributeDescriptionCount = darray_length(attributes);
+    vertex_input_state.pVertexAttributeDescriptions    = attributes;
+    vertex_input_state.vertexBindingDescriptionCount   = 1;
+    vertex_input_state.pVertexBindingDescriptions      = &binding_desc;
 
     // Input assembly state
     VkPipelineInputAssemblyStateCreateInfo input_assembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
-    input_assembly.topology = primitive_to_vulkan_type(config->topology);
+    input_assembly.topology = primitive_to_vulkan_type(vertex_input_config.topology);
 
     internal_vulkan_renderpass* attachted_renderpass = (internal_vulkan_renderpass*)bound_renderpass->internal_data;
 
@@ -232,6 +240,7 @@ em_result vulkan_pipeline_create_graphics(
     pipeline_create_info.pStages = shader_stages;
     pipeline_create_info.pVertexInputState = &vertex_input_state;
     pipeline_create_info.pInputAssemblyState = &input_assembly;
+    pipeline_create_info.pViewportState = &viewport_state;
     pipeline_create_info.pRasterizationState = &rasterizer;
     pipeline_create_info.pMultisampleState = &multisampling;
     pipeline_create_info.pDepthStencilState = &depth_stencil;
@@ -247,6 +256,7 @@ em_result vulkan_pipeline_create_graphics(
     for (u32 i = 0; i < darray_length(shader_stages); ++i)
         vkDestroyShaderModule(context->logical_device, shader_stages[i].module, context->allocator);
     darray_destroy(shader_stages);
+    darray_destroy(attributes);
     return EMBER_RESULT_OK;
 }
 
@@ -254,19 +264,19 @@ em_result vulkan_pipeline_create_compute(
     emgpu_device* device,
     em_allocator* allocator,
     const emgpu_compute_pipeline_config* config, 
-    emgpu_pipeline* out_compute_pipeline) {
+    emgpu_pipeline* out_pipeline) {
     vulkan_context* context = (vulkan_context*)device->internal_context;
 
-    out_compute_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
-    internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_compute_pipeline->internal_data;
+    out_pipeline->internal_data = (internal_vulkan_pipeline*)mem_allocate(NULL, sizeof(internal_vulkan_pipeline), MEMORY_TAG_RENDERER);
+    internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_pipeline->internal_data;
 
-    out_compute_pipeline->type = EMBER_OPER_TYPE_COMPUTE;
+    out_pipeline->type = EMBER_OPER_TYPE_COMPUTE;
 
     VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
     emgpu_shader_stage_type stage_type = EMBER_SHADER_STAGE_TYPE_COMPUTE;
 
     em_result result = vulkan_pipeline_create_layout(
-        device, &config->shader, &stage_type, 1, config->descriptors, config->descriptor_count, shader_stages, out_compute_pipeline);
+        device, &config->shader, &stage_type, 1, config->descriptors, config->descriptor_count, &shader_stages, out_pipeline);
     if (result != EMBER_RESULT_OK) return result;
 
     VkComputePipelineCreateInfo pipeline_create_info = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };

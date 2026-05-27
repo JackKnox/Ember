@@ -33,7 +33,7 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
         out_device->destroy_surface             = vulkan_surface_destroy;
         out_device->create_renderpass           = vulkan_renderpass_create;
         out_device->destroy_renderpass          = vulkan_renderpass_destroy;
-        out_device->create_graphics_pipeline    = vulkan_pipeline_create_graphics;
+        out_device->create_raster_pipeline      = vulkan_pipeline_create_raster;
         out_device->create_compute_pipeline     = vulkan_pipeline_create_compute;
         out_device->update_pipeline_descriptors = vulkan_pipeline_update_descriptors;
         out_device->destroy_pipeline            = vulkan_pipeline_destroy;

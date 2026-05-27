@@ -30,7 +30,7 @@ Here is a list of some stuff to do if you're bored or fancy wrestling with Vulka
     to wait for that the semaphore implictly connects to. Compute this somehow as this is very good for performance.
 . Allocate more command buffers
     Right now on start the device creates a wheel of command buffers per-ops type
-    If two graphics submissions are split, maybe due to a memory barrier you need to allocate another command buffer temporally.
+    If two raster submissions are split, maybe due to a memory barrier you need to allocate another command buffer temporally.
 
 Just a little one here but can someone please put comments everywhere because
 next thing I know i'll forget everything.
@@ -101,7 +101,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
 
     switch (payload->hdr.type) {
         case RENDERCMD_NEXT_SURFACE_TEXTURE: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
 
             // Add to a list of 'managed surface's to later present at the end.
             vulkan_managed_surface* managed_surface = darray_push_empty(frame_context->managed_surfaces);
@@ -142,7 +142,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         }
 
         case RENDERCMD_SET_RENDERAREA: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
             frame_context->render_origin = payload->set_renderarea.origin;
             frame_context->render_size = payload->set_renderarea.size;
 
@@ -165,7 +165,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         }
 
         case RENDERCMD_BEGIN_RENDERPASS: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
             emgpu_renderpass* renderpass = payload->begin_renderpass.renderpass;
             internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)renderpass->internal_data;
 
@@ -202,7 +202,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         }
 
         case RENDERCMD_END_RENDERPASS: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
             vkCmdEndRenderPass(curr_submission->commandbuf);
             break;
         }
@@ -228,7 +228,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         }
 
         case RENDERCMD_DRAW: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
             vkCmdDraw(curr_submission->commandbuf,
                 payload->draw.vertex_count,
                 payload->draw.instance_count,
@@ -237,7 +237,7 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
         }
 
         case RENDERCMD_DRAW_INDEXED: {
-            ENSURE_OPS(EMBER_OPER_TYPE_GRAPHICS);
+            ENSURE_OPS(EMBER_OPER_TYPE_RASTER);
             vkCmdDrawIndexed(curr_submission->commandbuf,
                 payload->draw_indexed.index_count,
                 payload->draw_indexed.instance_count,
@@ -307,8 +307,8 @@ em_result vulkan_device_submit_frame(emgpu_device* device, const emgpu_frame* fr
                     new_submission->binary_signals = darray_create(VkSemaphore, &device->frame_allocator, MEMORY_TAG_FRAME);
 
                     switch (new_submission->ops_type) {
-                        case EMBER_OPER_TYPE_GRAPHICS:
-                            new_submission->commandbuf = context->graphics_commandbufs[device->current_frame];
+                        case EMBER_OPER_TYPE_RASTER:
+                            new_submission->commandbuf = context->raster_commandbufs[device->current_frame];
                             break;
                         case EMBER_OPER_TYPE_COMPUTE:
                             new_submission->commandbuf = context->compute_commandbufs[device->current_frame];

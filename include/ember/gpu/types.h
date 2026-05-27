@@ -39,15 +39,13 @@ const char* emgpu_device_type_string(emgpu_device_type device_type);
  * Modes may be combined as bit flags.
  */
 typedef enum emgpu_device_mode {
-    EMBER_DEVICE_MODE_GRAPHICS = 1 << 0,    /**< Graphics pipeline operations */
-    EMBER_DEVICE_MODE_COMPUTE  = 1 << 1,    /**< Compute shader operations */
-    EMBER_DEVICE_MODE_TRANSFER = 1 << 2,    /**< Data transfer operations */
-    EMBER_DEVICE_MODE_PRESENT  = 1 << 3,    /**< Presentation to a platform surface */
-    EMBER_DEVICE_MODE_VALIDATION = 1 << 4,  /**< Impl-agnostic validation layer */
-    EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY = 1 << 5, /** Use of sampler anisotropy in textures */
-    
-    // EMBER_DEVICE_MODE_RAYTRACING
-    // EMBER_DEVICE_MODE_POWER_SAVING
+    EMBER_DEVICE_MODE_RASTER       = 1 << 0, /**< Raster pipeline operations */
+    EMBER_DEVICE_MODE_COMPUTE      = 1 << 1, /**< Compute shader operations */
+    EMBER_DEVICE_MODE_TRANSFER     = 1 << 2, /**< Data transfer operations */
+    EMBER_DEVICE_MODE_PRESENT      = 1 << 3, /**< Presentation to a platform surface */
+    EMBER_DEVICE_MODE_VALIDATION   = 1 << 4, /**< Impl-agnostic validation layer */
+    EMBER_DEVICE_MODE_POWER_SAVING = 1 << 5, /**< Preserve power as much as possible */
+    EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY = 1 << 6, /** Use of sampler anisotropy in textures */
 } emgpu_device_mode;
 
 /**
@@ -57,8 +55,9 @@ typedef enum emgpu_device_mode {
  */
 typedef enum emgpu_ops_type {
     EMBER_OPER_TYPE_UNIVERSAL, /**< Ops-agnostic operations */
-    EMBER_OPER_TYPE_GRAPHICS,  /**< Graphics pipeline operations */
+    EMBER_OPER_TYPE_RASTER,    /**< Rasterization pipeline operations */
     EMBER_OPER_TYPE_COMPUTE,   /**< Compute shader operations */
+    EMBER_OPER_TYPE_RAYTRACE,  /**< Raytracing pipeline operations */
 } emgpu_ops_type;
 
 /**
@@ -190,26 +189,26 @@ typedef enum emgpu_descriptor_type {
 } emgpu_descriptor_type;
 
 /**
- * @brief Blend factors used in color blending operations.
+ * @brief Blend factors used in colour blending operations.
  *
- * These values define how source and destination colors are scaled
+ * These values define how source and destination colours are scaled
  * before applying the blend operation.
  */
 typedef enum emgpu_blend_factor {
-    EMBER_BLEND_FACTOR_ZERO,                       /**< (0, 0, 0, 0) */
-    EMBER_BLEND_FACTOR_ONE,                        /**< (1, 1, 1, 1) */
-    EMBER_BLEND_FACTOR_SRC_COLOR,                  /**< Source color */
-    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,        /**< 1 - source color */
-    EMBER_BLEND_FACTOR_DST_COLOR,                  /**< Destination color */
-    EMBER_BLEND_FACTOR_ONE_MINUS_DST_COLOR,        /**< 1 - destination color */
-    EMBER_BLEND_FACTOR_SRC_ALPHA,                  /**< Source alpha */
-    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,        /**< 1 - source alpha */
-    EMBER_BLEND_FACTOR_DST_ALPHA,                  /**< Destination alpha */
-    EMBER_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,        /**< 1 - destination alpha */
-    EMBER_BLEND_FACTOR_CONSTANT_COLOR,             /**< Constant blend color */
-    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,   /**< 1 - constant color */
-    EMBER_BLEND_FACTOR_CONSTANT_ALPHA,             /**< Constant alpha */
-    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,   /**< 1 - constant alpha */
+    EMBER_BLEND_FACTOR_ZERO,                      /**< (0, 0, 0, 0) */
+    EMBER_BLEND_FACTOR_ONE,                       /**< (1, 1, 1, 1) */
+    EMBER_BLEND_FACTOR_SRC_COLOUR,                /**< Source colour */
+    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_COLOUR,      /**< 1 - source colour */
+    EMBER_BLEND_FACTOR_DST_COLOUR,                /**< Destination colour */
+    EMBER_BLEND_FACTOR_ONE_MINUS_DST_COLOUR,      /**< 1 - destination colour */
+    EMBER_BLEND_FACTOR_SRC_ALPHA,                 /**< Source alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,       /**< 1 - source alpha */
+    EMBER_BLEND_FACTOR_DST_ALPHA,                 /**< Destination alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,       /**< 1 - destination alpha */
+    EMBER_BLEND_FACTOR_CONSTANT_COLOUR,            /**< Constant blend colour */
+    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOUR, /**< 1 - constant colour */
+    EMBER_BLEND_FACTOR_CONSTANT_ALPHA,            /**< Constant alpha */
+    EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,  /**< 1 - constant alpha */
 } emgpu_blend_factor;
 
 /**
@@ -273,7 +272,7 @@ typedef struct emgpu_descriptor_desc {
  */
 typedef struct emgpu_shader_src {
     /** @brief Pointer to compiled bytecode. */
-    const void* data;
+    const u32* data;
 
     /** @brief Size of the shader data in bytes. */
     u64 size;

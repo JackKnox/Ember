@@ -21,8 +21,10 @@ typedef struct emgpu_wayland_surface_config {
     /** @brief Whetever to exit if exact preferred format isn't found. */
     b8 force_format;
 
+    /** @brief Size of the Wayland surface. */
     uvec2 size;
 
+    /** @brief Title of the Wayland surface, used in validation. */
     const char* debug_name;
 
     /** @brief Wayland display connection handle. */
@@ -52,7 +54,7 @@ emgpu_wayland_surface_config emgpu_wayland_surface_default();
 typedef em_result (*PFN_create_wayland_surface)(
     emgpu_device* device,
     em_allocator* allocator,
-    emgpu_wayland_surface_config* surface_config,
+    emgpu_wayland_surface_config* config,
     emgpu_surface* out_surface);
 
 /**
@@ -61,10 +63,10 @@ typedef em_result (*PFN_create_wayland_surface)(
  * Contains function pointers and internal state required to create
  * and manage Wayland-presentable GPU surfaces.
  */
-typedef struct emgpu_wayland_surface_api {
+typedef struct emgpu_wayland_surface_ext {
     /** @brief If this value is FALSE, the rest of the structure is uninitalized. */
     b8 enabled;
 
     /** @brief Creates a Wayland surface backed by the GPU device. */
     PFN_create_wayland_surface create_surface;
-} emgpu_wayland_surface_api;
+} emgpu_wayland_surface_ext;

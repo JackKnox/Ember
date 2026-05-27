@@ -12,6 +12,9 @@
  * as input state, event callbacks, joysticks and monitor control.
  */
 typedef struct emwin_desktop {
+    /** @brief Indicates whether the desktop was successfully initialized. */
+    b8 initialized;
+
     /** @brief Platform-specific display state. */
     EMBER_PLATFORM_DESKTOP_STATE;
 } emwin_desktop;

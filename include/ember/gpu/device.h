@@ -10,7 +10,7 @@
  * @brief Describes the capabilities of the relevent device.
  */
 typedef struct emgpu_device_capabilities {
-    /** @brief Internal graphics API used by the device. */
+    /** @brief Internal GAPI used by the device. */
     emgpu_device_backend api_type;
 
     /** @brief Device classification. */
@@ -103,7 +103,7 @@ emgpu_device_config emgpu_device_default();
 /**
  * @brief Renderer device interface.
  *
- * Provides a backend-agnostic abstraction over graphics APIs.
+ * Provides a backend-agnostic abstraction over GAPIs.
  * Implementations translate commands into API-specific calls.
  */
 typedef struct emgpu_device {
@@ -151,6 +151,17 @@ typedef struct emgpu_device {
     em_result (*submit_frame)(struct emgpu_device* device, const emgpu_frame* frame);
 
     /**
+     * @brief Resizes a rendering size to given size.
+     * 
+     * @param device Pointer to the device instance.
+     * @param surface Surface to resize.
+     * @param new_size New size of surface. 0, 0 = minimized.
+     * @note Surface is not guarenteeed to be resized immediately; In
+     *       some backends surface is resized next frame it's rendered to.
+     */
+    em_result (*resize_surface)(struct emgpu_device* device, emgpu_surface* surface, uvec2 new_size);
+
+    /**
      * @brief Destroys a rendering surface.
      *
      * @param device Pointer to the device instance.
@@ -177,15 +188,15 @@ typedef struct emgpu_device {
     void (*destroy_renderpass)(struct emgpu_device* device, em_allocator* allocator, emgpu_renderpass* renderpass);
 
     /**
-     * @brief Creates a graphics pipeline.
+     * @brief Creates a raster pipeline.
      *
      * @param device Pointer to the device instance.
      * @param config Pipeline configuration.
      * @param bound_renderpass Render pass the pipeline is compatible with.
-     * @param out_graphics_pipeline Output pipeline.
+     * @param out_pipeline Output pipeline.
      * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
      */
-    em_result (*create_graphics_pipeline)(struct emgpu_device* device, em_allocator* allocator, const emgpu_graphics_pipeline_config* config, emgpu_renderpass* bound_renderpass, emgpu_pipeline* out_graphics_pipeline);
+    em_result (*create_raster_pipeline)(struct emgpu_device* device, em_allocator* allocator, const emgpu_raster_pipeline_config* config, emgpu_renderpass* bound_renderpass, emgpu_pipeline* out_pipeline);
 
     /**
      * @brief Creates a compute pipeline.

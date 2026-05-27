@@ -57,10 +57,10 @@ typedef struct emwin_window_config {
     
     union {
         /** @brief Absolute position in screen coordinates (pixels). */
-        uvec2 window_absolute;
+        uvec2 absolute_pos;
 
         /** @brief If TRUE, window will be centered on the selected display. */
-        b8 window_centered;
+        b8 centered_pos;
     };
 
     /** @brief Minimum client area size in pixels (0,0 = no limit). */
@@ -72,7 +72,11 @@ typedef struct emwin_window_config {
     /** @brief Initial client area size in pixels. */
     uvec2 size;
 
-    /** @brief A connection to the global system's WM. If is set to NULL, will be created on window open. */
+    /** 
+     * @brief A connection to the global system's WM. 
+     * 
+     * If NULL, a new desktop object will be created on window open. 
+     */
     emwin_desktop* desktop;
 } emwin_window_config;
 
@@ -94,6 +98,7 @@ typedef struct emwin_window {
      */
     char* title;
 
+    /** @brief Owner desktop object, represents a connection to the WM. */
     emwin_desktop* desktop;
 
     /** @brief Platform-specific window state. */

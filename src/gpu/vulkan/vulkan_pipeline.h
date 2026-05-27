@@ -4,18 +4,18 @@
 
 #include "vulkan_types.h"
 
-em_result vulkan_pipeline_create_graphics(
+em_result vulkan_pipeline_create_raster(
     emgpu_device* device, 
     em_allocator* allocator,
-    const emgpu_graphics_pipeline_config* config, 
+    const emgpu_raster_pipeline_config* config, 
     emgpu_renderpass* bound_renderpass, 
-    emgpu_pipeline* out_graphics_pipeline);
+    emgpu_pipeline* out_pipeline);
 
 em_result vulkan_pipeline_create_compute(
     emgpu_device* device,
     em_allocator* allocator,
     const emgpu_compute_pipeline_config* config, 
-    emgpu_pipeline* out_compute_pipeline);
+    emgpu_pipeline* out_pipeline);
 
 em_result vulkan_pipeline_update_descriptors(
     emgpu_device* device, 

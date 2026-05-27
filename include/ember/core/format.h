@@ -18,7 +18,7 @@ typedef enum ember_data_type {
 /** @brief Format flag indicating BGRA channel ordering. */
 #define EMBER_FORMAT_FLAG_BGRA       (1 << 1)
 
-/** @brief Format flag indicating sRGB color space. */
+/** @brief Format flag indicating sRGB colour space. */
 #define EMBER_FORMAT_FLAG_SRGB       (1 << 2)
 
 /** @brief Format flag indicating depth component. */

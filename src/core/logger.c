@@ -6,7 +6,7 @@ static PFN_log_output logger = NULL;
 
 void default_logger(log_level level, const char* subsystem, const char* message) {
     const char* level_strings[] = { "FATAL", "ERROR",  "WARN",  "INFO",  "TRACE", "DEV" };
-    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m", "\033[0;30m" };
+    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m", "\033[0;37m" };
 
     emwrite_console("%s[%-5s] %-*s: %s\033[0m\n",
         colours[level],

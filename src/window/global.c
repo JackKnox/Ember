@@ -3,12 +3,14 @@
 
 emwin_window_config emwin_window_default() {
 	emwin_window_config config = {};
-	config.window_mode = EMBER_WINDOW_MODE_WINDOWED;
-	config.cursor_mode = EMBER_CURSOR_MODE_NORMAL;
-	config.flags       = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC;
-	config.title       = "EmberWIN test window";
-	config.window_centered = TRUE;
-	config.size.width  = 640;
-	config.size.height = 360;
+	config.window_mode  = EMBER_WINDOW_MODE_WINDOWED;
+	config.cursor_mode  = EMBER_CURSOR_MODE_NORMAL;
+	config.flags        = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC;
+	config.title        = "EmberWIN test window";
+	config.centered_pos = TRUE;
+	config.size.width   = 640;
+	config.size.height  = 360;
+	return config;
+}
 	return config;
 }

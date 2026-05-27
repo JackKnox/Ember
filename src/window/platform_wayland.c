@@ -1,5 +1,6 @@
 #include "ember/core.h"
 #include "ember/window/window.h"
+
 #include "ember/window/input.h"
 
 #ifdef EM_PLATFORM_LINUX
@@ -10,7 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
-struct wl_display * glfwGetWaylandDisplay (void);
+struct wl_display* glfwGetWaylandDisplay (void);
 struct wl_surface* glfwGetWaylandWindow (GLFWwindow* handle);
 
 void GLFWErrorCallback(int error, const char* description) {
@@ -38,8 +39,8 @@ em_result emwin_window_open(const emwin_window_config* config, em_allocator* all
 	int monitorX, monitorY;
 	glfwGetMonitorPos(monitor, &monitorX, &monitorY);
 
-	uvec2 window_pos = config->window_absolute;
-	if (config->window_centered) {
+	uvec2 window_pos = config->absolute_pos;
+	if (config->centered_pos) {
 		window_pos.x = monitorX + (mode->width - config->size.x) / 2;
 		window_pos.y = monitorY + (mode->height - config->size.y) / 2;
 	}

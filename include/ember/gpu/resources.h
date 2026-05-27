@@ -58,65 +58,98 @@ typedef struct emgpu_buffer {
 emgpu_buffer_config emgpu_buffer_default();
 
 /**
- * @brief Configuration for a graphics pipeline.
- *
- * Defines the shader layout, vertex input layout, and optional
- * vertex/index buffers used when creating a graphics pipeline.
+ * @brief Configuration for rasterization blending state.
+ * 
+ * Defines how polygons are blended together with existing ones.
  */
-typedef struct emgpu_graphics_pipeline_config {
-    /** @brief Describes how vertices are turned into primitives. */
-    emgpu_primitive_type topology;
+typedef struct emgpu_raster_blend_config {
+    /** @brief Source blend factors for colour components. */
+    emgpu_blend_factor src_colour;
 
-    /** @brief Enables or disables blending. */
-    b8 blend_enabled;
+    /** @brief Destination blend factors for colour components. */
+    emgpu_blend_factor dst_colour;
 
-    /**
-     * @brief Source and destination blend factors for color components.
-     */
-    emgpu_blend_factor src_color;
-    emgpu_blend_factor dst_color;
+    /** @brief Blend operation applied to colour components. */
+    emgpu_blend_op colour_op;
 
-    /** @brief Blend operation applied to color components. */
-    emgpu_blend_op color_op;
-
-    /** @brief Source and destination blend factors for alpha component. */
+    /** @brief Source blend factors for alpha component. */
     emgpu_blend_factor src_alpha;
+
+    /** @brief Destination blend factors for alpha component. */
     emgpu_blend_factor dst_alpha;
 
     /** @brief Blend operation applied to alpha component. */
     emgpu_blend_op alpha_op;
+} emgpu_raster_blend_config;
 
+/**
+ * @brief Creates a default raster blending configuration.
+ *
+ * @return A default-initialized emgpu_raster_blend_config.
+ */
+emgpu_raster_blend_config emgpu_raster_blend_default();
+
+/**
+ * @brief Configuration for rasterization vertex input.
+ * 
+ * Defines how raw vertices are transformed into renderable polygons.
+ */
+typedef struct emgpu_raster_vertex_config {
+    /** @brief Describes how vertices are turned into primitives. */
+    emgpu_primitive_type topology;
+    
     /** @brief Number of active vertex attributes. */
     u32 attribute_count;
     
     /** @brief Vertex attribute formats in binding order. */
     emgpu_format* attributes;
+} emgpu_raster_vertex_config;
 
-    /** @brief Number of active descriptor bindings. */
-	u32 descriptor_count;
+/**
+ * @brief Creates a default raster vertex configuration.
+ *
+ * @return A default-initialized emgpu_raster_vertex_config.
+ */
+emgpu_raster_vertex_config emgpu_raster_vertex_default();
 
-    /** @brief Descriptor binding descriptions used by the pipeline. */
-    emgpu_descriptor_desc* descriptors;
-
+/**
+ * @brief Configuration for a raster pipeline.
+ *
+ * Defines the shader layout, vertex input layout, and optional
+ * vertex/index buffers used when creating a raster pipeline.
+ */
+typedef struct emgpu_raster_pipeline_config {
     /** @brief Shader stage ran for per-vertex operations, must be valid. */
     emgpu_shader_src vertex_shader;
 
     /** @brief Optional shader stage ran for per-fragment (pixel) operations. */
     emgpu_shader_src fragment_shader;
-} emgpu_graphics_pipeline_config;
 
-/**
- * @brief Configuration for a compute pipeline.
- */
-typedef struct emgpu_compute_pipeline_config {
     /** @brief Number of active descriptor bindings. */
 	u32 descriptor_count;
 
     /** @brief Descriptor binding descriptions used by the pipeline. */
     emgpu_descriptor_desc* descriptors;
 
+    /** @brief Blending configuration, must not be NULL for blending to be enabled. */
+    emgpu_raster_blend_config* blend_state;
+
+    /** @brief Vertex input configuration, must not be NULL to enable rasterization. */
+    emgpu_raster_vertex_config* vertex_input;
+} emgpu_raster_pipeline_config;
+
+/**
+ * @brief Configuration for a compute pipeline.
+ */
+typedef struct emgpu_compute_pipeline_config {
     /** @brief Shader stage ran per-compute cell, must be valid. */
     emgpu_shader_src shader;
+
+    /** @brief Number of active descriptor bindings. */
+	u32 descriptor_count;
+
+    /** @brief Descriptor binding descriptions used by the pipeline. */
+    emgpu_descriptor_desc* descriptors;
 } emgpu_compute_pipeline_config;
 
 /**
@@ -134,11 +167,11 @@ typedef struct emgpu_pipeline {
 } emgpu_pipeline;
 
 /**
- * @brief Creates a default graphics stage configuration.
+ * @brief Creates a default raster stage configuration.
  *
- * @return A default-initialized emgpu_graphics_pipeline_config.
+ * @return A default-initialized emgpu_raster_pipeline_config.
  */
-emgpu_graphics_pipeline_config emgpu_pipeline_default_graphics();
+emgpu_raster_pipeline_config emgpu_pipeline_default_raster();
 
 /**
  * @brief Creates a default compute stage configuration.

@@ -64,8 +64,8 @@ VkFilter filter_to_vulkan_type(emgpu_filter_type filter_type) {
 
 vulkan_queue_type ops_type_to_queue_type(emgpu_ops_type type) {
     switch (type) {
-    case EMBER_OPER_TYPE_GRAPHICS: return VULKAN_QUEUE_TYPE_GRAPHICS;
-    case EMBER_OPER_TYPE_COMPUTE:  return VULKAN_QUEUE_TYPE_COMPUTE;
+    case EMBER_OPER_TYPE_RASTER:  return VULKAN_QUEUE_TYPE_RASTER;
+    case EMBER_OPER_TYPE_COMPUTE: return VULKAN_QUEUE_TYPE_COMPUTE;
     // TODO: EMBER_OPER_TYPE_UNIVERSAL, just find A queue
 
     default:
@@ -326,7 +326,7 @@ emgpu_format vulkan_format_to_engine(VkFormat format) {
 
 VkPipelineBindPoint ops_type_to_bind_point(emgpu_ops_type type) {
     switch (type) {
-        case EMBER_OPER_TYPE_GRAPHICS: return VK_PIPELINE_BIND_POINT_GRAPHICS;
+        case EMBER_OPER_TYPE_RASTER: return VK_PIPELINE_BIND_POINT_GRAPHICS;
         case EMBER_OPER_TYPE_COMPUTE:  return VK_PIPELINE_BIND_POINT_COMPUTE;
 
         default: 

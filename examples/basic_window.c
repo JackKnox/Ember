@@ -12,12 +12,12 @@ int main(int argc, char** argv) {
 
     // I need a config structure to open a window
     emwin_window_config window_config = emwin_window_default(); // This sets many helpful values, if we didn't set any values the code would still work.
-    window_config.window_mode = EMBER_WINDOW_MODE_WINDOWED;                             // Just is the standard mode for a window.
-    window_config.cursor_mode = EMBER_CURSOR_MODE_NORMAL;                               // Again normal mode but could use this to hide or lock the cursor (FPS games).
-    window_config.flags       = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC;  // Can actually see the window and VSync is enabled.
-    window_config.title       = "Ember's super cool window";                            // The name of the window, see this in the title bar. Uses UTF-8 strings
-    window_config.window_centered = TRUE;                                               // Center the window to the primary monitor.
-    window_config.size        = (uvec2) { 800, 600 };                                   // Initial size of the window when you open it.
+    window_config.window_mode  = EMBER_WINDOW_MODE_WINDOWED;                            // Just is the standard mode for a window.
+    window_config.cursor_mode  = EMBER_CURSOR_MODE_NORMAL;                              // Again normal mode but could use this to hide or lock the cursor (FPS games).
+    window_config.flags        = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC; // Can actually see the window and VSync is enabled.
+    window_config.title        = "Example - Basic Window";                              // The name of the window, see this in the title bar. Uses UTF-8 strings
+    window_config.centered_pos = TRUE;                                                  // Center the window to the primary monitor.
+    window_config.size         = (uvec2) { 800, 600 };                                  // Initial size of the window when you open it.
     //window_config.desktop = NULL; Have not already created a window.
     //window_config.min_size; These two are already set to zero.
     //window_config.max_size; Use these to set limits to the size of the window.

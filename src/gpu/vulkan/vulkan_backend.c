@@ -67,10 +67,10 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
             context->vkGetPhysicalDevicePresentationSupportKHR = vulkan_wayland_presentation_support;
             context->wsi_extension_data                        = extension->user_data;
 
-            emgpu_wayland_surface_api* out_api = (emgpu_wayland_surface_api*)((u8*)config->out_extensions + offset);
+            emgpu_wayland_surface_ext* out_api = (emgpu_wayland_surface_ext*)((u8*)config->out_extensions + offset);
             out_api->enabled = TRUE;
             out_api->create_surface = vulkan_wayland_create_surface;
-            offset += sizeof(emgpu_wayland_surface_api);
+            offset += sizeof(emgpu_wayland_surface_ext);
 
             darray_push(required_extensions, "VK_KHR_wayland_surface");
         }

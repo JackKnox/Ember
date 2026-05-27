@@ -15,7 +15,7 @@ em_result vulkan_surface_recreate(
         EM_TRACE("Vulkan", "Recreating Vulkan surface to size: (%i, %i)", new_size.width, new_size.height);
 
     u32 queueFamilyIndices[] = {
-        context->mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index,
+        context->mode_queues[VULKAN_QUEUE_TYPE_RASTER].family_index,
         context->mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index };
 
     u32 image_count = internal_surface->capabilities.minImageCount + 1;
@@ -42,7 +42,7 @@ em_result vulkan_surface_recreate(
     if (flags & EMBER_FORMAT_FLAG_DEPTH || flags & EMBER_FORMAT_FLAG_STENCIL)
         swapchain_create_info.imageUsage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-    if (context->mode_queues[VULKAN_QUEUE_TYPE_GRAPHICS].family_index != 
+    if (context->mode_queues[VULKAN_QUEUE_TYPE_RASTER].family_index != 
         context->mode_queues[VULKAN_QUEUE_TYPE_PRESENT].family_index) {
         swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchain_create_info.pQueueFamilyIndices = queueFamilyIndices;

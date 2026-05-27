@@ -29,8 +29,8 @@ int main(int argc, char** argv) {
 	// Before we can open a window we need to fill out a config.
 	// emwin_window_default() pre-fills sensible values so we only need to touch the fields we actually care about.
 	emwin_window_config window_config = emwin_window_default();
-	window_config.size  = (uvec2) { 640, 640 }; // Initial dimensions of the window in pixels.
-	window_config.title = "Test Window";         // Shows up in the title bar; uses UTF-8 strings.
+	window_config.size  = (uvec2) { 640, 640 };             // Initial dimensions of the window in pixels.
+	window_config.title = "Example - Clear Colour";         // Shows up in the title bar; uses UTF-8 strings.
 	//window_config.desktop = NULL;
 
 	// emwin_desktop represents our connection to the system's window manager.
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
 	// This is an 'out extension' — after device init, Ember writes the actual
 	// surface creation function pointers into this struct so we can call them.
-    emgpu_wayland_surface_api wsi_extension = {};
+    emgpu_wayland_surface_ext wsi_extension = {};
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	device_config.frame_allocator  = em_allocator_default();
 	device_config.backend_api      = EMBER_DEVICE_BACKEND_VULKAN;
 	device_config.app_version      = EMBER_VERSION;
-	device_config.required_modes   = EMBER_DEVICE_MODE_GRAPHICS | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
+	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
 	device_config.optional_modes   = EMBER_DEVICE_MODE_VALIDATION; // Nice to have for debugging but we won't bail if it's unavailable.
 	device_config.frames_in_flight = 3;                            // Triple buffering.
     device_config.extension_count  = EM_ARRAYSIZE(extensions);

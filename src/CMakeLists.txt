@@ -11,7 +11,7 @@ target_compile_definitions(ember PUBLIC
 
 # Ember platform abstraction module
 # --------------------------------
-file(GLOB_RECURSE EMPLAT_SOURCES "./platform/**.c")
+file(GLOB_RECURSE EMPLAT_SOURCES "./platform/platform_posix.c")
 add_library(ember_platform STATIC ${EMPLAT_SOURCES})
 
 target_link_libraries(ember_platform PUBLIC ember)
@@ -20,7 +20,8 @@ target_include_directories(ember_platform PRIVATE "./platform/")
 
 # Ember window abstraction module
 # --------------------------------
-file(GLOB_RECURSE EMWIN_SOURCES "./window/**.c")
+file(GLOB_RECURSE EMWIN_SOURCES "./window/global.c" 
+                                "./window/platform_wayland.c")
 add_library(ember_window STATIC ${EMWIN_SOURCES})
 
 target_link_libraries(ember_window PUBLIC ember ember_platform glfw)
@@ -29,7 +30,11 @@ target_include_directories(ember_window PRIVATE "./window/")
 
 # Ember gpu abstraction module
 # --------------------------------
-file(GLOB_RECURSE EMGPU_SOURCES "./gpu/**.c")
+file(GLOB_RECURSE EMGPU_SOURCES "./gpu/device.c" 
+                                "./gpu/extension.c" 
+                                "./gpu/frame.c" 
+                                "./gpu/resources.c"
+                                "./gpu/vulkan/**.c")
 add_library(ember_gpu STATIC ${EMGPU_SOURCES})
 
 find_package(Vulkan REQUIRED)

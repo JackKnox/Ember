@@ -9,7 +9,7 @@ emgpu_device_config emgpu_device_default() {
     config.frame_allocator  = em_allocator_default();
     config.backend_api      = EMBER_DEVICE_BACKEND_VULKAN;
     config.app_version      = EMBER_MAKE_VERSION(0, 0, 1);
-    config.required_modes   = EMBER_DEVICE_MODE_GRAPHICS;
+    config.required_modes   = EMBER_DEVICE_MODE_RASTER;
     config.frames_in_flight = 3; // Standard in low level GAPIs.
     return config;
 }
@@ -19,16 +19,27 @@ emgpu_buffer_config emgpu_buffer_default() {
 	return config;
 }
 
-emgpu_graphics_pipeline_config emgpu_pipeline_default_graphics() {
-	emgpu_graphics_pipeline_config config = {};
-    config.topology      = EMBER_PRIMITIVE_TYPE_TRIANGLE_LIST;
-    config.blend_enabled = FALSE;
-    config.src_color     = EMBER_BLEND_FACTOR_SRC_ALPHA;
-    config.dst_color     = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    config.color_op      = EMBER_BLEND_OP_ADD;
-    config.src_alpha     = EMBER_BLEND_FACTOR_SRC_ALPHA;
-    config.dst_alpha     = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    config.alpha_op      = EMBER_BLEND_OP_ADD;
+emgpu_raster_blend_config emgpu_raster_blend_default() {
+    emgpu_raster_blend_config config = {};
+    config.src_colour = EMBER_BLEND_FACTOR_SRC_ALPHA;
+    config.dst_colour = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    config.colour_op  = EMBER_BLEND_OP_ADD;
+    config.src_alpha = EMBER_BLEND_FACTOR_SRC_ALPHA;
+    config.dst_alpha = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    config.alpha_op  = EMBER_BLEND_OP_ADD;
+    return config;
+}
+
+emgpu_raster_vertex_config emgpu_raster_vertex_default() {
+    emgpu_raster_vertex_config config = {};
+    config.topology = EMBER_PRIMITIVE_TYPE_TRIANGLE_LIST;
+    return config;
+}
+
+emgpu_raster_pipeline_config emgpu_pipeline_default_raster() {
+	emgpu_raster_pipeline_config config = {};
+    config.vertex_shader.entry_point = "main";
+    config.fragment_shader.entry_point = "main";
     return config;
 }
 
