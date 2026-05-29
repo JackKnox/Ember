@@ -39,7 +39,7 @@ em_result vulkan_buffer_create(
 		mem_properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
     // Find index of memory compatible for provided buffer.
-    i32 memory_index = find_memory_index(context, memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    i32 memory_index = find_memory_index(context, memory_requirements.memoryTypeBits, mem_properties);
     if (memory_index == -1) {
         EM_ERROR("Vulkan", "Failed to find required memory type for buffer");
         return EMBER_RESULT_OUT_OF_MEMORY_GPU;
@@ -59,6 +59,15 @@ em_result vulkan_buffer_create(
     // --------------------------------------
 
     return EMBER_RESULT_OK;
+}
+
+em_result vulkan_buffer_copy(
+    emgpu_device* device, 
+    emgpu_buffer* src_buffer, emgpu_buffer* dst_buffer,
+    u64 src_offset, u64 dst_offset,
+    u64 region) {
+    EM_ERROR("Vulkan", "Not yet implemented to emgpu_device::copy_buffer");
+    return EMBER_RESULT_UNIMPLEMENTED;
 }
 
 em_result vulkan_buffer_upload(

@@ -76,12 +76,13 @@ void emgpu_frame_end_renderpass(emgpu_frame* frame) {
     add_command(frame, RENDERCMD_END_RENDERPASS, 0);
 }
 
-void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline, emgpu_buffer* vertex_buffers, emgpu_buffer* index_buffer) {
+void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline, u32 vertex_buffer_count, emgpu_buffer* vertex_buffers, emgpu_buffer* index_buffer) {
     rendercmd_payload* payload;
     payload = add_command(frame, RENDERCMD_BIND_PIPELINE, sizeof(payload->bind_pipeline));
-    payload->bind_pipeline.pipeline      = pipeline;
-    payload->bind_pipeline.vertex_buffer = vertex_buffers;
-    payload->bind_pipeline.index_buffer  = index_buffer;
+    payload->bind_pipeline.pipeline            = pipeline;
+    payload->bind_pipeline.vertex_buffer_count = vertex_buffer_count;
+    payload->bind_pipeline.vertex_buffers      = vertex_buffers;
+    payload->bind_pipeline.index_buffer        = index_buffer;
 }
 
 void emgpu_frame_draw(emgpu_frame* frame, u32 vertex_count, u32 instance_count) {

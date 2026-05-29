@@ -56,7 +56,8 @@ typedef struct rendercmd_payload {
 
         struct {
             emgpu_pipeline* pipeline;
-            emgpu_buffer* vertex_buffer, * index_buffer;
+            emgpu_buffer* vertex_buffers, * index_buffer;
+            u32 vertex_buffer_count;
         } bind_pipeline;
 
         struct {

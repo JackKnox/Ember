@@ -10,6 +10,12 @@ em_result vulkan_buffer_create(
     const emgpu_buffer_config* config, 
     emgpu_buffer* out_buffer);
 
+em_result vulkan_buffer_copy(
+    emgpu_device* device, 
+    emgpu_buffer* src_buffer, emgpu_buffer* dst_buffer,
+    u64 src_offset, u64 dst_offset,
+    u64 region);
+
 em_result vulkan_buffer_upload(
     emgpu_device* device, 
     emgpu_buffer* buffer, 

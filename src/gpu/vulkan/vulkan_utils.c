@@ -43,7 +43,7 @@ VkDescriptorType descriptor_type_to_vulkan_type(emgpu_descriptor_type descriptor
     switch (descriptor_type) {
     case EMBER_DESCRIPTOR_TYPE_STORAGE_BUFFER: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     case EMBER_DESCRIPTOR_TYPE_STORAGE_IMAGE:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    case EMBER_DESCRIPTOR_TYPE_IMAGE_SAMPLER:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    case EMBER_DESCRIPTOR_TYPE_SAMPLED_IMAGE:  return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     
     default:
         EM_ASSERT(FALSE && "Unsupported descriptor type!");

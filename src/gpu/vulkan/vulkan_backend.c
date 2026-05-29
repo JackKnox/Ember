@@ -31,7 +31,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
 
 b8 match_extension(const emgpu_extension_desc* extension, const char* name, em_version curr_version) {
     if (strcmp(extension->name, name) == 0) {
-        if (extension->version != curr_version) {
+        if (!EMBER_VERSIONS_COMPLIANT(extension->version, curr_version)) {
             EM_ERROR("Vulkan", "Required extension: %s doesn't match supported version: (%i.%i.%i -> %i.%i.%i).", extension->name, 
                 EMBER_VERSION_MAJOR(extension->version), EMBER_VERSION_MINOR(extension->version), EMBER_VERSION_PATCH(extension->version), 
                 EMBER_VERSION_MAJOR(curr_version),       EMBER_VERSION_MINOR(curr_version),       EMBER_VERSION_PATCH(curr_version));
@@ -160,6 +160,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 		"Failed to create Vulkan instance");
 
 	// Clean up temp arrays
+    darray_destroy(supported_extensions);
 	darray_destroy(supported_layers);
 	darray_destroy(required_extensions);
 	darray_destroy(required_validation_layers);

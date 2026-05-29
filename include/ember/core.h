@@ -85,10 +85,8 @@ typedef _Bool b8;
 // Platform detection
 #if defined(_WIN32)
 #   define EM_PLATFORM_WINDOWS 1
-#   if !defined(_WIN64)
-#       error "64-bit Windows is required!"
-#   endif
-#elif defined(__APPLE__) && defined(__MACH__)
+#endif
+#if defined(__APPLE__) && defined(__MACH__)
 #   define EM_PLATFORM_APPLE 1
 #   include <TargetConditionals.h>
 #   if TARGET_IPHONE_SIMULATOR
@@ -100,17 +98,20 @@ typedef _Bool b8;
 #       define EM_PLATFORM_MACOS 1
 #   else
 #       error "Unknown Apple platform"
+#   endif
 #endif
-#elif defined(__ANDROID__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__unix__)
+#   define EM_PLATFORM_POSIX 1
+#endif
+#if defined(__ANDROID__)
 #   define EM_PLATFORM_ANDROID 1
-#   define EM_PLATFORM_LINUX 1 
-#   define EM_PLATFORM_POSIX 1
-#elif defined(__linux__)
 #   define EM_PLATFORM_LINUX 1
-#   define EM_PLATFORM_POSIX 1
-#elif defined(__unix__) || defined(__unix)
+#endif
+#if defined(__linux__)
+#   define EM_PLATFORM_LINUX 1
+#endif
+#if defined(__unix__) || defined(__unix)
 #   define EM_PLATFORM_UNIX 1
-#   define EM_PLATFORM_POSIX 1
 #else
 #   error "Unknown platform!"
 #endif
@@ -126,6 +127,8 @@ typedef u32 em_version;
 #define EMBER_VERSION_MAJOR(version) ((u32)(version) >> 22U)
 #define EMBER_VERSION_MINOR(version) (((u32)(version) >> 12U) & 0x3FFU)
 #define EMBER_VERSION_PATCH(version) ((u32)(version) & 0xFFFU)
+
+#define EMBER_VERSIONS_COMPLIANT(version1, version2) (EMBER_VERSION_MAJOR(version1) == EMBER_VERSION_MAJOR(version2))
 
 #include "ember/core/logger.h"
 #include "ember/core/memory.h"

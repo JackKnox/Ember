@@ -27,11 +27,14 @@ typedef struct emgpu_surface {
  * uniform, or storage buffer.
  */
 typedef struct emgpu_buffer_config {
-    /** @brief Intended usage of the buffer (vertex, index, uniform, etc.). */
-    emgpu_buffer_usage usage;
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
 
     /** @brief Total size of the buffer in bytes. */
     u64 buffer_size;
+
+    /** @brief Intended usage of the buffer (vertex, index, uniform, etc.). */
+    emgpu_buffer_usage usage;
 } emgpu_buffer_config;
 
 /**
@@ -40,14 +43,14 @@ typedef struct emgpu_buffer_config {
  * Represents a GPU-resident buffer resource.
  */
 typedef struct emgpu_buffer {
-    /** @brief Total size of the buffer in bytes. */
-    u64 buffer_size;
+    /** @brief Backend-specific buffer state/handle. */
+    void* internal_data;
 
     /** @brief Current usage of the buffer. */
     emgpu_buffer_usage usage;
 
-    /** @brief Backend-specific buffer state/handle. */
-    void* internal_data;
+    /** @brief Total size of the buffer in bytes. */
+    u64 buffer_size;
 } emgpu_buffer;
 
 /**
@@ -119,6 +122,9 @@ emgpu_raster_vertex_config emgpu_raster_vertex_default();
  * vertex/index buffers used when creating a raster pipeline.
  */
 typedef struct emgpu_raster_pipeline_config {
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
     /** @brief Shader stage ran for per-vertex operations, must be valid. */
     emgpu_shader_src vertex_shader;
 
@@ -142,6 +148,9 @@ typedef struct emgpu_raster_pipeline_config {
  * @brief Configuration for a compute pipeline.
  */
 typedef struct emgpu_compute_pipeline_config {
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
     /** @brief Shader stage ran per-compute cell, must be valid. */
     emgpu_shader_src shader;
 
@@ -159,11 +168,11 @@ typedef struct emgpu_compute_pipeline_config {
  * descriptors or a vertex/index buffer.
  */
 typedef struct emgpu_pipeline {
-    /** @brief Type / supported mode of the pipeline. */
-    emgpu_ops_type type;
-
     /** @brief Backend-specific pipeline or program data. */
     void* internal_data;
+
+    /** @brief Type / supported mode of the pipeline. */
+    emgpu_ops_type type;
 } emgpu_pipeline;
 
 /**
@@ -186,6 +195,9 @@ emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
  * Defines a sampled image stored on the GPU.
  */
 typedef struct emgpu_texture_config {
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
     /** @brief Image format of the texture data. */
     emgpu_format image_format;
 
@@ -200,9 +212,6 @@ typedef struct emgpu_texture_config {
 
     /** @brief Dimensions of the texture in pixels. */
     uvec2 size;
-
-    /** @brief Refrence to extra configuration structure specific to API type. */
-    void* api_next;
 
     /** 
      * @brief Max anisotropy of attached sampler in backend.
@@ -219,14 +228,14 @@ typedef struct emgpu_texture_config {
  * Converted internally into API-specific image and sampler objects.
  */
 typedef struct emgpu_texture {
-    /** @brief Image format of the texture data. */
-    emgpu_format image_format;
-
     /** @brief Backend-specific image and sampler state. */
     void* internal_data;
 
     /** @brief Dimensions of the texture in pixels. */
     uvec2 size;
+
+    /** @brief Image format of the texture data. */
+    emgpu_format image_format;
 } emgpu_texture;
 
 /**
@@ -282,6 +291,9 @@ typedef struct emgpu_attachment_config {
  * and attachment images.
  */
 typedef struct emgpu_renderpass_config {
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
     /** @brief Number of attachments attached to the renderpass. */
     u32 attachment_count;
 
@@ -297,14 +309,14 @@ typedef struct emgpu_renderpass_config {
  * offscreen render pass.
  */
 typedef struct emgpu_renderpass {
+    /** @brief Backend-specific internal data. */
+    void* internal_data;
+
     /** @brief Clear colour value used when beginning a render pass. */
     u32 clear_colour;
 
     /** @brief Number of attachments attached to the renderpass. */
     u32 attachment_count;
-
-    /** @brief Backend-specific internal data. */
-    void* internal_data;
 } emgpu_renderpass;
 
 emgpu_renderpass_config emgpu_renderpass_default();
@@ -319,6 +331,9 @@ emgpu_renderpass_config emgpu_renderpass_default();
  * @note Only one union member must be set, according to the value of @ref type.
  */
 typedef struct emgpu_update_descriptors {
+    /** @brief Refrence to extra configuration structure specific to API type. */
+    void* api_next;
+
     /** @brief Binding index as declared in the shader. */
     u32 binding;
 

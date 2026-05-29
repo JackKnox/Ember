@@ -41,11 +41,12 @@ const char* emgpu_device_type_string(emgpu_device_type device_type);
 typedef enum emgpu_device_mode {
     EMBER_DEVICE_MODE_RASTER       = 1 << 0, /**< Raster pipeline operations */
     EMBER_DEVICE_MODE_COMPUTE      = 1 << 1, /**< Compute shader operations */
-    EMBER_DEVICE_MODE_TRANSFER     = 1 << 2, /**< Data transfer operations */
-    EMBER_DEVICE_MODE_PRESENT      = 1 << 3, /**< Presentation to a platform surface */
-    EMBER_DEVICE_MODE_VALIDATION   = 1 << 4, /**< Impl-agnostic validation layer */
-    EMBER_DEVICE_MODE_POWER_SAVING = 1 << 5, /**< Preserve power as much as possible */
-    EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY = 1 << 6, /** Use of sampler anisotropy in textures */
+    EMBER_DEVICE_MODE_RAYTRACE     = 1 << 2, /**< Raytracing pipeline operations */
+    EMBER_DEVICE_MODE_TRANSFER     = 1 << 3, /**< Data transfer operations */
+    EMBER_DEVICE_MODE_PRESENT      = 1 << 4, /**< Presentation to a platform surface */
+    EMBER_DEVICE_MODE_VALIDATION   = 1 << 5, /**< Impl-agnostic validation layer */
+    EMBER_DEVICE_MODE_POWER_SAVING = 1 << 6, /**< Preserve power as much as possible */
+    EMBER_DEVICE_MODE_SAMPLER_ANISOTROPY = 1 << 7, /** Use of sampler anisotropy in textures */
 } emgpu_device_mode;
 
 /**
@@ -185,7 +186,7 @@ typedef enum emgpu_descriptor_type {
     EMBER_DESCRIPTOR_TYPE_STORAGE_BUFFER,  /**< Storage buffer (SSBO) */
     EMBER_DESCRIPTOR_TYPE_STORAGE_IMAGE,   /**< Storage image, no sampler */
     EMBER_DESCRIPTOR_TYPE_UNIFORM_BUFFER,  /**< Uniform buffer */
-    EMBER_DESCRIPTOR_TYPE_IMAGE_SAMPLER,   /**< Combined image + sampler */
+    EMBER_DESCRIPTOR_TYPE_SAMPLED_IMAGE,   /**< Combined image + sampler */
 } emgpu_descriptor_type;
 
 /**

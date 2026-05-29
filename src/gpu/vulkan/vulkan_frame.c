@@ -215,8 +215,13 @@ b8 vulkan_frame_process_payload(emgpu_device* device, vulkan_frame_context* fram
             
             VkDeviceSize offset = 0;
 
-            if (payload->bind_pipeline.vertex_buffer) {
-                internal_vulkan_buffer* internal_buffer = (internal_vulkan_buffer*)payload->bind_pipeline.vertex_buffer->internal_data;
+            if (payload->bind_pipeline.vertex_buffer_count > 1) {
+                EM_ERROR("Vulkan", "Not yet implemented binding multiple vertex buffers.");
+                return EMBER_RESULT_UNIMPLEMENTED;
+            }
+
+            if (payload->bind_pipeline.vertex_buffers) {
+                internal_vulkan_buffer* internal_buffer = (internal_vulkan_buffer*)payload->bind_pipeline.vertex_buffers->internal_data;
                 vkCmdBindVertexBuffers(curr_submission->commandbuf, 0, 1, &internal_buffer->handle, &offset);
             }
 

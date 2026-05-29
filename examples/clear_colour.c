@@ -2,9 +2,9 @@
 // #include <ember/core.h>
 // #include <ember/window/desktop.h>
 #include <ember/window/window.h>
+#include <ember/window/ember_gpu_surface.h>
 
 #include <ember/gpu/device.h>
-#include <ember/gpu/ext/wayland_surface.h>
 
 // A small helper macro to cut down on the repetitive error-check boilerplate.
 // Calls a function, checks the result, logs a message and jumps to cleanup if it failed.
@@ -14,7 +14,7 @@
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
             log_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
-				em_result_string(result, EMBER_BUILD_DEBUG));        \
+				em_result_string(result, TRUE));           \
             goto failed_init;                              \
         }                                                  \
     }
@@ -46,13 +46,13 @@ int main(int argc, char** argv) {
 		"Failed to open window");
 
 	// The GPU device supports extensions for platform-specific surface creation.
-	// On Wayland we use the wayland_surface extension and pass it our desktop handle
-	// so the Vulkan backend knows which wl_display to talk to.
-	emgpu_extension_desc extensions[] = { emgpu_wayland_surface_extension(emwin_desktop_handle(desktop)) };
+	// Using ember_window we use the emwin_gpu_surface extension and pass it our desktop handle
+	// so the backend knows which desktop to talk to. This interally wraps Win32 / Wayland / Cocoa.
+	emgpu_extension_desc extensions[] = { emwin_gpu_surface_extension(desktop) };
 
 	// This is an 'out extension' — after device init, Ember writes the actual
 	// surface creation function pointers into this struct so we can call them.
-    emgpu_wayland_surface_ext wsi_extension = {};
+    emwin_gpu_surface_ext wsi_extension = {};
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
@@ -82,17 +82,18 @@ int main(int argc, char** argv) {
 
 	// Now we can create a Wayland surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
-	emgpu_wayland_surface_config surface_config = emgpu_wayland_surface_default();
+	emwin_gpu_surface_config surface_config = emwin_gpu_surface_default();
 	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
 	surface_config.force_format     = FALSE;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
-	surface_config.size             = window.size;
-    surface_config.debug_name       = window.title;
-    surface_config.display          = emwin_desktop_handle(desktop); // The wl_display.
-    surface_config.surface          = emwin_window_handle(&window);  // The wl_surface.
+    surface_config.window           = &window;
+	// set_callbacks = TRUE tells the surface to hook into the window's resize events
+	// automatically so the swapchain stays in sync when the user drags the border.
+    surface_config.set_callbacks    = TRUE;
 
+	// ember_gpu doesn't directly implement a ember_window backend so we need an actual function to translate to the WSI extensions it does implement.
 	emgpu_surface surface = {};
 	CHECK_FUNC(
-		wsi_extension.create_surface(&device, &system_alloc, &surface_config, &surface),
+		emwin_gpu_surface_create(&device, &system_alloc, &wsi_extension, &surface_config, &surface),
 		"Failed to create window surface");
 
 	// A renderpass describes what attachments we're going to draw into and how.

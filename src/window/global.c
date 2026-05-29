@@ -1,6 +1,8 @@
 #include "ember/core.h"
 #include "ember/window/window.h"
 
+#include "ember/window/ember_gpu_surface.h"
+
 emwin_window_config emwin_window_default() {
 	emwin_window_config config = {};
 	config.window_mode  = EMBER_WINDOW_MODE_WINDOWED;
@@ -12,5 +14,10 @@ emwin_window_config emwin_window_default() {
 	config.size.height  = 360;
 	return config;
 }
+
+emwin_gpu_surface_config emwin_gpu_surface_default() {
+	emwin_gpu_surface_config config = {};
+    config.preferred_format = EMGPU_FORMAT_BGR8_UNORM;
+    config.force_format = TRUE;
 	return config;
 }

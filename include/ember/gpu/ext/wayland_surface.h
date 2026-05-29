@@ -24,7 +24,7 @@ typedef struct emgpu_wayland_surface_config {
     /** @brief Size of the Wayland surface. */
     uvec2 size;
 
-    /** @brief Title of the Wayland surface, used in validation. */
+    /** @brief Title of the surface, used in validation. */
     const char* debug_name;
 
     /** @brief Wayland display connection handle. */
@@ -46,7 +46,7 @@ emgpu_wayland_surface_config emgpu_wayland_surface_default();
  *
  * @param device GPU device handle.
  * @param allocator Memory allocator used for internal allocations.
- * @param surface_config Wayland surface creation parameters.
+ * @param config Wayland surface creation parameters.
  * @param out_surface Output GPU surface object.
  *
  * @return em_result indicating success or failure.

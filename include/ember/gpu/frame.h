@@ -142,10 +142,11 @@ void emgpu_frame_end_renderpass(emgpu_frame* frame);
  *
  * @param frame Pointer to the frame.
  * @param pipeline Pipeline to bind.
- * @param vertex_buffer Optional vertex buffer (can be NULL for compute).
- * @param index_buffer Optional index buffer (can be NULL).
+ * @param vertex_buffer_count Optional number of vertex buffers.
+ * @param vertex_buffer Optional vertex buffer.
+ * @param index_buffer Optional index buffer.
  */
-void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline, emgpu_buffer* vertex_buffer, emgpu_buffer* index_buffer);
+void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline, u32 vertex_buffer_count, emgpu_buffer* vertex_buffer, emgpu_buffer* index_buffer);
 
 /**
  * @brief Issues a non-indexed draw call.
@@ -153,17 +154,9 @@ void emgpu_frame_bind_pipeline(emgpu_frame* frame, emgpu_pipeline* pipeline, emg
  * @param frame Pointer to the frame.
  * @param vertex_count Number of vertices to draw.
  * @param instance_count Number of instances to draw.
+ * @note Whetever a index buffer was bound indicates whetever its a indexed call.
  */
 void emgpu_frame_draw(emgpu_frame* frame, u32 vertex_count, u32 instance_count);
-
-/**
- * @brief Issues an indexed draw call.
- *
- * @param frame Pointer to the frame.
- * @param index_count Number of indices to draw.
- * @param instance_count Number of instances to draw.
- */
-void emgpu_frame_draw_indexed(emgpu_frame* frame, u32 index_count, u32 instance_count);
 
 /**
  * @brief Dispatches a compute workload.

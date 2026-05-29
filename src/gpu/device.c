@@ -30,6 +30,7 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
         out_device->shutdown                    = vulkan_device_shutdown;
         out_device->retrieve_capabilities       = vulkan_device_capabilities;
         out_device->submit_frame                = vulkan_device_submit_frame;
+        out_device->resize_surface              = vulkan_surface_recreate;
         out_device->destroy_surface             = vulkan_surface_destroy;
         out_device->create_renderpass           = vulkan_renderpass_create;
         out_device->destroy_renderpass          = vulkan_renderpass_destroy;
@@ -38,7 +39,8 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
         out_device->update_pipeline_descriptors = vulkan_pipeline_update_descriptors;
         out_device->destroy_pipeline            = vulkan_pipeline_destroy;
         out_device->create_buffer               = vulkan_buffer_create;
-        out_device->upload_to_buffer            = vulkan_buffer_upload;
+        out_device->copy_buffer                 = vulkan_buffer_copy;
+        out_device->upload_buffer               = vulkan_buffer_upload;
         out_device->destroy_buffer              = vulkan_buffer_destroy;
         out_device->create_texture              = vulkan_texture_create;
         out_device->upload_to_texture           = vulkan_texture_upload;
