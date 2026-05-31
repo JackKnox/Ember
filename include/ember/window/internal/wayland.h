@@ -2,16 +2,27 @@
 
 #include "ember/core.h"
 
-#define GLFW_INCLUDE_VULKAN
-#define GLFW_EXPOSE_NATIVE_WAYLAND
-#include <GLFW/glfw3.h>
+#include <wayland-client.h>
 
-typedef struct _emwin_window_wayland {
-    GLFWwindow* handle;
-} _emwin_window_wayland;
+#include "wayland-protocols/xdg-shell-client.h"
 
-#define EMBER_PLATFORM_WINDOW_STATE _emwin_window_wayland wayland;
+typedef struct emwin_wayland_window {
+    struct wl_surface* surface;
+    struct xdg_surface* xdg_surface;
+    struct xdg_toplevel* xdg_toplevel;
+} emwin_wayland_window;
 
-#define EMBER_PLATFORM_DESKTOP_STATE u8 _pad;
+typedef struct emwin_wayland_desktop {
+    struct wl_display*    display;
+    struct wl_registry*   registry;
+    struct wl_compositor* compositor;
+    struct wl_shm*        shm;
+    struct xdg_wm_base*   xdg_wm_base;
+    struct wl_registry_listener registry_listener;
+} emwin_wayland_desktop;
+
+#define EMBER_PLATFORM_WINDOW_STATE emwin_wayland_window wayland;
+
+#define EMBER_PLATFORM_DESKTOP_STATE emwin_wayland_desktop wayland;
 
 #define EMBER_PLATFORM_JOYSTICK_STATE u8 _pad;

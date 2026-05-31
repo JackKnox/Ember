@@ -15,10 +15,3 @@ option(EMBER_DEV  "Build ember with developer-only tooling" ${MAIN_PROJECT})
 
 add_subdirectory(src)
 add_subdirectory(examples)
-
-FetchContent_Declare(
-    GLFW
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.4
-)
-FetchContent_MakeAvailable(GLFW)

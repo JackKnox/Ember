@@ -2,7 +2,7 @@
 // #include <ember/core.h>
 // #include <ember/window/desktop.h>
 #include <ember/window/window.h>
-#include <ember/window/ember_gpu_surface.h>
+#include <ember/window/embergpu_surface.h>
 
 #include <ember/gpu/device.h>
 

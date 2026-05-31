@@ -22,7 +22,7 @@ typedef enum emwin_window_mode {
  */
 typedef enum emwin_window_flags {
     EMBER_WINDOW_FLAGS_VISIBLE       = 1 << 0, /**< Window is visible immediately after creation. */
-    EMBER_WINDOW_FLAGS_NOT_DECORATED = 1 << 1, /**< Window has OS-provided decorations (title bar, borders). */
+    EMBER_WINDOW_FLAGS_NOT_DECORATED = 1 << 1, /**< Window has no title bar / borders. User may want to render them manually. */
     EMBER_WINDOW_FLAGS_LOCKED_SIZE   = 1 << 2, /**< Window can be resized by the user. */
     EMBER_WINDOW_FLAGS_VSYNC         = 1 << 3, /**< Window has VSync enabled (metadata held for the GAPI). */
 } emwin_window_flags;
@@ -113,13 +113,6 @@ typedef struct emwin_window {
  * @return A default-initialized @ref emwin_window_config.
  */
 emwin_window_config emwin_window_default();
-
-/**
- * @brief Returns a platform-specific handle to the underlying window.
- * 
- * @param window Pointer to the window instance.
- */
-void* emwin_window_handle(emwin_window* window);
 
 /**
  * @brief Creates and opens a window.

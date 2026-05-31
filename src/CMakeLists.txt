@@ -21,10 +21,11 @@ target_include_directories(ember_platform PRIVATE "./platform/")
 # Ember window abstraction module
 # --------------------------------
 file(GLOB_RECURSE EMWIN_SOURCES "./window/global.c" 
-                                "./window/platform_wayland.c")
+                                "./window/wayland_win.c"
+                                "./window/wayland_embergpu.c")
 add_library(ember_window STATIC ${EMWIN_SOURCES})
 
-target_link_libraries(ember_window PUBLIC ember ember_platform glfw)
+target_link_libraries(ember_window PUBLIC ember ember_platform wayland-client)
 target_include_directories(ember_window PRIVATE "./window/")
 # --------------------------------
 

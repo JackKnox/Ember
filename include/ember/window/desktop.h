@@ -20,13 +20,6 @@ typedef struct emwin_desktop {
 } emwin_desktop;
 
 /**
- * @brief Returns a platform-specific handle to the underlying window manager.
- * 
- * @param desktop Pointer to the desktop.
- */
-void* emwin_desktop_handle(emwin_desktop* desktop);
-
-/**
  * @brief Processes pending all OS events.
  *
  * Polls and dispatches OS events such as input, window movement, resizing,
