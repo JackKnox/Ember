@@ -9,13 +9,13 @@
  * @brief Categorises allocations for debugging, profiling, and leak detection.
  */
 typedef enum memory_tag {
-	MEMORY_TAG_CORE,     /**< Allocated by ember_core */
-	MEMORY_TAG_TEMP,     /**< Used for temporary data */
-	MEMORY_TAG_FRAME,    /**< Per-frame data for any subsystem */
-	MEMORY_TAG_DEVICE,   /**< Internal memory used by internal systems */
-	MEMORY_TAG_PLATFORM, /**< Allocated by ember_plat */
-	MEMORY_TAG_RENDERER, /**< Allocated by ember_gpu */
-	MEMORY_TAG_MAX_TAGS,
+    MEMORY_TAG_CORE,     /**< Core engine allocations (fundamental systems, lifecycle, etc.) */
+    MEMORY_TAG_FRAME,    /**< Frame-temporary allocations (usually valid for only a single frame) */
+    MEMORY_TAG_PLATFORM, /**< Platform-specific allocations (windowing, OS interfaces, etc.) */
+    MEMORY_TAG_RENDERER, /**< Renderer/GPU-related allocations (buffers, textures, command data) */
+    MEMORY_TAG_AUDIO,    /**< Audio subsystem allocations (sound buffers, mixing, etc.) */
+    MEMORY_TAG_NETWORK,  /**< Networking allocations (sockets, packets, buffers) */
+    MEMORY_TAG_MAX_TAGS,
 } memory_tag;
 
 /**

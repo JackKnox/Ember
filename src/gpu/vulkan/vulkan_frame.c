@@ -42,7 +42,7 @@ VkResult vulkan_frame_framebuffer(emgpu_device* device, vulkan_frame_context* fr
     internal_vulkan_renderpass* internal_renderpass = (internal_vulkan_renderpass*)renderpass->internal_data;
 
     // Make a hash to connect to the hashmap while adding to the buffer.
-    VkImageView* views = mem_allocate(&device->frame_allocator, sizeof(VkImageView) * attachment_count, MEMORY_TAG_TEMP);
+    VkImageView* views = mem_allocate(&device->frame_allocator, sizeof(VkImageView) * attachment_count, MEMORY_TAG_RENDERER);
 
     u64 hash = FNV_OFFSET_BASIS;
     for (u64 i = 0; i < attachment_count; i++) {
@@ -71,7 +71,7 @@ VkResult vulkan_frame_framebuffer(emgpu_device* device, vulkan_frame_context* fr
 
     hashmap_set(internal_renderpass->framebuffers, hash, out_framebuffer);
 cleanup:
-    mem_free(&device->frame_allocator, views, sizeof(VkImageView) * attachment_count, MEMORY_TAG_TEMP);
+    mem_free(&device->frame_allocator, views, sizeof(VkImageView) * attachment_count, MEMORY_TAG_RENDERER);
     return result;
 }
 

@@ -13,7 +13,7 @@ em_result vulkan_pipeline_create_layout(
 
     internal_vulkan_pipeline* internal_pipeline = (internal_vulkan_pipeline*)out_pipeline->internal_data;
 
-    *out_shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
+    *out_shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_RENDERER);
 
     for (u32 i = 0; i < shader_source_count; ++i) {
         const emgpu_shader_src* src = &shader_sources[i];
@@ -35,8 +35,8 @@ em_result vulkan_pipeline_create_layout(
 
     if (descriptor_count > 0) {
         // Collect descriptor data into vulkan structs.
-		VkDescriptorSetLayoutBinding* descriptor_bindings = darray_reserve(VkDescriptorSetLayoutBinding, descriptor_count, NULL, MEMORY_TAG_TEMP);
-		VkDescriptorPoolSize* descriptor_pools = darray_reserve(VkDescriptorPoolSize, descriptor_count, NULL, MEMORY_TAG_TEMP);
+		VkDescriptorSetLayoutBinding* descriptor_bindings = darray_reserve(VkDescriptorSetLayoutBinding, descriptor_count, NULL, MEMORY_TAG_RENDERER);
+		VkDescriptorPoolSize* descriptor_pools = darray_reserve(VkDescriptorPoolSize, descriptor_count, NULL, MEMORY_TAG_RENDERER);
 
         for (u32 i = 0; i < descriptor_count; ++i) {
 			VkDescriptorSetLayoutBinding* binding = darray_push_empty(descriptor_bindings);
@@ -73,7 +73,7 @@ em_result vulkan_pipeline_create_layout(
         // Create descriptor sets per frame in flight.
 		internal_pipeline->descriptor_sets = darray_from_data(VkDescriptorSet, context->frames_in_flight, NULL, NULL, MEMORY_TAG_RENDERER);
 
-        VkDescriptorSetLayout* layouts = darray_reserve(VkDescriptorSetLayout, darray_capacity(internal_pipeline->descriptor_sets), NULL, MEMORY_TAG_TEMP);
+        VkDescriptorSetLayout* layouts = darray_reserve(VkDescriptorSetLayout, darray_capacity(internal_pipeline->descriptor_sets), NULL, MEMORY_TAG_RENDERER);
 		for (u32 i = 0; i < context->frames_in_flight; ++i)
 			darray_push(layouts, internal_pipeline->descriptor);
 
@@ -198,7 +198,7 @@ em_result vulkan_pipeline_create_raster(
 
     // Vertex input state
     VkVertexInputBindingDescription binding_desc = {};
-    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, vertex_input_config.attribute_count, NULL, MEMORY_TAG_TEMP);
+    VkVertexInputAttributeDescription* attributes = darray_reserve(VkVertexInputAttributeDescription, vertex_input_config.attribute_count, NULL, MEMORY_TAG_RENDERER);
 
     u64 attribute_stride = 0;
     for (u32 i = 0; i < vertex_input_config.attribute_count; ++i) {
@@ -272,7 +272,7 @@ em_result vulkan_pipeline_create_compute(
 
     out_pipeline->type = EMBER_OPER_TYPE_COMPUTE;
 
-    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_TEMP);
+    VkPipelineShaderStageCreateInfo* shader_stages = darray_create(VkPipelineShaderStageCreateInfo, NULL, MEMORY_TAG_RENDERER);
     emgpu_shader_stage_type stage_type = EMBER_SHADER_STAGE_TYPE_COMPUTE;
 
     em_result result = vulkan_pipeline_create_layout(

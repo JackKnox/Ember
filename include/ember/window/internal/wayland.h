@@ -2,8 +2,7 @@
 
 #include "ember/core.h"
 
-#include <wayland-client.h>
-
+#include "wayland-protocols/wayland-client.h"
 #include "wayland-protocols/xdg-shell-client.h"
 
 typedef struct emwin_wayland_window {
@@ -19,6 +18,8 @@ typedef struct emwin_wayland_desktop {
     struct wl_shm*        shm;
     struct xdg_wm_base*   xdg_wm_base;
     struct wl_registry_listener registry_listener;
+    struct xdg_surface_listener surface_listener;
+    struct xdg_wm_base_listener xdg_wm_base_listener;
 } emwin_wayland_desktop;
 
 #define EMBER_PLATFORM_WINDOW_STATE emwin_wayland_window wayland;

@@ -84,4 +84,4 @@ void emplat_sleep_us(u64 us);
  *
  * @return Timer information structure.
  */
-emplat_timer_info emplat_timer_get_info();
+emplat_timer_info emplat_system_timer_info();

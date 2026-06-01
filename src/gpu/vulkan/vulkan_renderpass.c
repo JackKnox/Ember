@@ -17,7 +17,7 @@ em_result vulkan_renderpass_create(
     out_renderpass->attachment_count = config->attachment_count;
 
     VkAttachmentReference* colour_attachments  = NULL;
-    VkAttachmentDescription* attachment_descs = darray_reserve(VkAttachmentDescription, out_renderpass->attachment_count, NULL, MEMORY_TAG_TEMP);
+    VkAttachmentDescription* attachment_descs = darray_reserve(VkAttachmentDescription, out_renderpass->attachment_count, NULL, MEMORY_TAG_RENDERER);
 
     for (u32 i = 0; i < out_renderpass->attachment_count; ++i) {
         const emgpu_attachment_config* attachment = &config->attachments[i];
@@ -26,7 +26,7 @@ em_result vulkan_renderpass_create(
         switch (attachment->type) {
             case EMBER_ATTACHMENT_TYPE_COLOUR:
                 // Lazily create the color attachment array only if needed.
-                if (!colour_attachments) colour_attachments = darray_create(VkAttachmentReference, NULL, MEMORY_TAG_TEMP);
+                if (!colour_attachments) colour_attachments = darray_create(VkAttachmentReference, NULL, MEMORY_TAG_RENDERER);
                 reference = darray_push_empty(colour_attachments); // Add new color attachment reference.
                 break;
             

@@ -4,6 +4,7 @@
 #include "ember/platform/system.h"
 #include "ember/platform/time.h"
 #include "ember/platform/threading.h"
+#include "ember/platform/ipc.h"
 
 #include <unistd.h>
 #include <time.h>

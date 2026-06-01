@@ -92,14 +92,14 @@ u32 emplat_get_cpu_cores();
  *
  * @return The L1 cache line size of the CPU, in bytes.
  */
-u32 emplat_get_cache_line_size();
+u32 emplat_system_cache_line_size();
 
 /**
  * Get the amount of RAM configured in the system.
  *
  * @return The amount of RAM configured in the system in MiB.
  */
-u32 emplat_get_system_ram();
+u32 emplat_system_ram();
 
 /**
  * The basic state for the system's power supply.
@@ -133,4 +133,4 @@ typedef enum emplat_powerstate {
  * @note It's possible a platform can only report battery percentage or time left
  * but not both.
  */
-emplat_powerstate emplat_get_powerinfo(i32* seconds, i32* percent);
+emplat_powerstate emplat_system_powerinfo(i32* seconds, i32* percent);

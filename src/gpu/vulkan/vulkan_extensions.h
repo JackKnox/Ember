@@ -50,7 +50,7 @@ em_result vulkan_wayland_create_surface(
 
     // Swapchain format count.
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, NULL);
-    VkSurfaceFormatKHR* formats = mem_allocate(NULL, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
+    VkSurfaceFormatKHR* formats = mem_allocate(NULL, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_RENDERER);
     vkGetPhysicalDeviceSurfaceFormatsKHR(context->physical_device, internal_surface->surface, &format_count, formats);
     // --------------------------------------
 
@@ -83,7 +83,7 @@ em_result vulkan_wayland_create_surface(
     out_surface->pixel_format = vulkan_format_to_engine(found_format.format);
     internal_surface->colour_space = found_format.colorSpace;
 
-    mem_free(NULL, formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_TEMP);
+    mem_free(NULL, formats, sizeof(VkSurfaceFormatKHR) * format_count, MEMORY_TAG_RENDERER);
 
     return vulkan_surface_recreate(device, out_surface, config->size);
 }

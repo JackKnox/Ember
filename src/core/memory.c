@@ -10,11 +10,11 @@ typedef struct memory_stats {
 
 static const char* tag_strings[] = {
 	"CORE    ",
-	"TEMP    ",
-	"FRAME   ",
-	"DEVICE  ",
+	"FRAME  "
 	"PLATFORM",
-	"RENDERER",};
+	"RENDERER",
+	"AUDIO   ",
+	"NETWORK "};
 
 static memory_stats stats = { 0 };
 #endif

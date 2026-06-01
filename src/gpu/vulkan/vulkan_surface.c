@@ -65,7 +65,7 @@ em_result vulkan_surface_recreate(
             NULL), 
         "Failed to retrieve Vulkan swapchain images");
     
-    VkImage* images = (VkImage*)mem_allocate(NULL, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
+    VkImage* images = (VkImage*)mem_allocate(NULL, sizeof(VkImage) * surface->image_count, MEMORY_TAG_RENDERER);
     vkGetSwapchainImagesKHR(context->logical_device, internal_surface->swapchain, &surface->image_count, images);
 
     if (!internal_surface->swapchain_images)
@@ -112,7 +112,7 @@ em_result vulkan_surface_recreate(
             "Failed to image available semaphore in Vulkan surface");
     }
 
-    mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_TEMP);
+    mem_free(NULL, images, sizeof(VkImage) * surface->image_count, MEMORY_TAG_RENDERER);
     return EMBER_RESULT_OK;
 }
 

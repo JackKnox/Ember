@@ -54,8 +54,8 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
     // Global Vulkan init code
     // --------------------------------------
 	// Obtain a list of required extensions
-	const char** required_extensions = darray_create(const char*, NULL, MEMORY_TAG_TEMP);
-	const char** required_validation_layers = darray_create(const char*, NULL, MEMORY_TAG_TEMP);
+	const char** required_extensions = darray_create(const char*, NULL, MEMORY_TAG_RENDERER);
+	const char** required_validation_layers = darray_create(const char*, NULL, MEMORY_TAG_RENDERER);
 
     if (context->enabled_modes & EMBER_DEVICE_MODE_PRESENT) darray_push(required_extensions, VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -87,7 +87,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
     u32 supported_extension_count = 0;
     vkEnumerateInstanceExtensionProperties(NULL, &supported_extension_count, NULL);
 
-    VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_TEMP);
+    VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_RENDERER);
     vkEnumerateInstanceExtensionProperties(NULL, &supported_extension_count, supported_extensions);
 
     for (u32 i = 0; i < darray_length(required_extensions); ++i) {
@@ -109,7 +109,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 	u32 supported_layer_count = 0;
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, NULL);
 
-	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, NULL, MEMORY_TAG_TEMP);
+	VkLayerProperties* supported_layers = darray_from_data(VkLayerProperties, supported_layer_count, NULL, NULL, MEMORY_TAG_RENDERER);
 	vkEnumerateInstanceLayerProperties(&supported_layer_count, supported_layers);
 
 	for (u32 i = 0; i < darray_length(required_validation_layers); ++i) {
@@ -206,11 +206,11 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
     EM_TRACE("Vulkan", "Enumerated %i physical device(s).", physical_device_count);
 
-    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, NULL,  MEMORY_TAG_TEMP);
+    VkPhysicalDevice* physical_devices = darray_from_data(VkPhysicalDevice, physical_device_count, NULL, NULL,  MEMORY_TAG_RENDERER);
     vkEnumeratePhysicalDevices(context->instance, &physical_device_count, physical_devices);
 
     // Build a list of required device extensions based on configuration
-    const char** required_device_extensions = darray_create(const char*, NULL, MEMORY_TAG_TEMP);
+    const char** required_device_extensions = darray_create(const char*, NULL, MEMORY_TAG_RENDERER);
     if (context->enabled_modes & EMBER_DEVICE_MODE_PRESENT) darray_push(required_device_extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     
     vulkan_queue queue_support[VULKAN_QUEUE_TYPE_MAX] = {};
@@ -233,7 +233,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
         u32 queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, 0);
-        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, NULL, MEMORY_TAG_TEMP);
+        VkQueueFamilyProperties* queue_families = darray_from_data(VkQueueFamilyProperties, queue_family_count, NULL, NULL, MEMORY_TAG_RENDERER);
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families);
 
         // Look at each queue and see what queues it supports
@@ -289,7 +289,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
         u32 supported_extension_count = 0;
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, NULL);
 
-        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_TEMP);
+        VkExtensionProperties* supported_extensions = darray_from_data(VkExtensionProperties, supported_extension_count, NULL, NULL, MEMORY_TAG_RENDERER);
         vkEnumerateDeviceExtensionProperties(physical_device, NULL, &supported_extension_count, supported_extensions);
 
         for (u32 i = 0; i < darray_length(required_device_extensions); ++i) {
@@ -336,7 +336,7 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
     EM_INFO("Vulkan", "Creating logical device.");
 
     f32 queue_priority = 1.0f;
-    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, NULL, MEMORY_TAG_TEMP);
+    VkDeviceQueueCreateInfo* queue_create_info = darray_create(VkDeviceQueueCreateInfo, NULL, MEMORY_TAG_RENDERER);
 
     // Remove duplicates in mode queue arrays for create infos.
     for (u32 i = 0; i < VULKAN_QUEUE_TYPE_MAX; ++i) {
