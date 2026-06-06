@@ -74,6 +74,10 @@ em_result vulkan_device_initialize(emgpu_device* device, em_allocator* allocator
 
             darray_push(required_extensions, "VK_KHR_wayland_surface");
         }
+        else {
+            EM_ERROR("Vulkan", "Required extension not supported: %s", extension->name);
+            return EMBER_RESULT_UNAVAILABLE_API;
+        }
     }
 
 

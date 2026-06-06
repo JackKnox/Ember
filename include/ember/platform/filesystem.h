@@ -18,10 +18,19 @@ typedef enum emplat_file_flags {
 typedef EMBER_PLATFORM_FILE_STATE emplat_file;
 
 typedef struct emplat_file_info {
+    /** @brief Whetever the file on disk exists. If false the rest of the structure is uninitalized. */
     b8 exists;
+
+    /** @brief Size of the file on disk (in bytes)/ */
     u64 size;
-    u64 created_time;
-    u64 modified_time;
+
+    /** @brief The time the file was created. */
+    //u64 created_time;
+
+    /** @brief The last time the file was accessed or changed. */
+    //u64 modified_time;
+
+    /** @brief Indicaties whetever there is a directory at the given filepath. */
     b8 is_directory;
 } emplat_file_info;
 
@@ -129,9 +138,9 @@ typedef enum emplat_system_folder {
 typedef enum emplat_filewatch_event_type {
     EMBER_FILEWATCH_CREATED,     /**< When a file is newly created */
     EMBER_FILEWATCH_MODIFIED,    /**< When a existing files contents is modified */ 
-    EMBER_FILEWATCH_DELETED,     /**< */
-    EMBER_FILEWATCH_RENAMED_OLD, /**< */
-    EMBER_FILEWATCH_RENAMED_NEW, /**< */
+    EMBER_FILEWATCH_DELETED,     /**< When a file is deleted from the filesystem, also possibly moved to trash folder. */
+    EMBER_FILEWATCH_RENAMED_OLD, /**< Old name of a file that has been renamed */
+    EMBER_FILEWATCH_RENAMED_NEW, /**< New name of a file that has been renamed*/
 } emplat_filewatch_event_type;
 
 /**

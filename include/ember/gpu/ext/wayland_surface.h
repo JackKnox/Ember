@@ -49,7 +49,7 @@ emgpu_wayland_surface_config emgpu_wayland_surface_default();
  * @param config Wayland surface creation parameters.
  * @param out_surface Output GPU surface object.
  *
- * @return em_result indicating success or failure.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 typedef em_result (*PFN_create_wayland_surface)(
     emgpu_device* device,

@@ -2,8 +2,6 @@
 
 #include "ember/core.h"
 
-#include "ember/window/internal.h"
-
 /**
  * @brief Platform desktop handle.
  * 
@@ -16,7 +14,7 @@ typedef struct emwin_desktop {
     b8 initialized;
 
     /** @brief Platform-specific display state. */
-    EMBER_PLATFORM_DESKTOP_STATE;
+    void* internal_context;
 } emwin_desktop;
 
 /**

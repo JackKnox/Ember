@@ -22,6 +22,7 @@ target_include_directories(ember_platform PRIVATE "./platform/")
 # --------------------------------
 file(GLOB_RECURSE EMWIN_SOURCES "./window/global.c" 
                                 "./window/wayland_win.c"
+                                "./window/wayland_desktop.c"
                                 "./window/wayland_embergpu.c")
 add_library(ember_window STATIC ${EMWIN_SOURCES})
 

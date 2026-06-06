@@ -2,9 +2,9 @@
 // #include <ember/core.h>
 // #include <ember/window/desktop.h>
 #include <ember/window/window.h>
-#include <ember/window/embergpu_surface.h>
 
 #include <ember/gpu/device.h>
+#include <ember/gpu/ext/emwin_surface.h>
 
 // A small helper macro to cut down on the repetitive error-check boilerplate.
 // Calls a function, checks the result, logs a message and jumps to cleanup if it failed.
@@ -15,7 +15,7 @@
         if (result != EMBER_RESULT_OK) {                   \
             log_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
 				em_result_string(result, TRUE));           \
-            goto failed_init;                              \
+            goto cleanup;                              \
         }                                                  \
     }
 
@@ -48,11 +48,11 @@ int main(int argc, char** argv) {
 	// The GPU device supports extensions for platform-specific surface creation.
 	// Using ember_window we use the emwin_gpu_surface extension and pass it our desktop handle
 	// so the backend knows which desktop to talk to. This interally wraps Win32 / Wayland / Cocoa.
-	emgpu_extension_desc extensions[] = { emwin_gpu_surface_extension(desktop) };
+	emgpu_extension_desc extensions[] = { emgpu_emwin_surface_extension(desktop) };
 
 	// This is an 'out extension' — after device init, Ember writes the actual
 	// surface creation function pointers into this struct so we can call them.
-    emwin_gpu_surface_ext wsi_extension = {};
+    emgpu_emwin_surface_ext wsi_extension = {};
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
@@ -82,18 +82,18 @@ int main(int argc, char** argv) {
 
 	// Now we can create a Wayland surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
-	emwin_gpu_surface_config surface_config = emwin_gpu_surface_default();
+	emgpu_emwin_surface_config surface_config = emgpu_emwin_surface_default();
 	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
 	surface_config.force_format     = FALSE;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
     surface_config.window           = &window;
 	// set_callbacks = TRUE tells the surface to hook into the window's resize events
-	// automatically so the swapchain stays in sync when the user drags the border.
+	// automatically so the GPU surface stays in sync when the user resizes the window.
     surface_config.set_callbacks    = TRUE;
 
 	// ember_gpu doesn't directly implement a ember_window backend so we need an actual function to translate to the WSI extensions it does implement.
 	emgpu_surface surface = {};
 	CHECK_FUNC(
-		emwin_gpu_surface_create(&device, &system_alloc, &wsi_extension, &surface_config, &surface),
+		wsi_extension.create_surface(&device, &system_alloc, &surface_config, &surface),
 		"Failed to create window surface");
 
 	// A renderpass describes what attachments we're going to draw into and how.
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		device.create_renderpass(&device, &system_alloc, &renderpass_config, &mainpass), 
 		"Failed to create main renderpass (present)");
-
+	
 	// Main loop. emwin_window_should_close becomes true when the user hits the X
 	// button or we signal the window to close ourselves.
 	while (!emwin_window_should_close(&window)) {
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 			emgpu_frame_flush(&frame);
 
 			// Submit the frame to the GPU. This also handles presentation — CHECK_FUNC
-			// will jump to failed_init if something goes wrong here.
+			// will jump to cleanup if something goes wrong here.
 			CHECK_FUNC(
 				device.submit_frame(&device, &frame), 
 				"Failed to submit device frame");
@@ -158,10 +158,35 @@ int main(int argc, char** argv) {
 	// the device, and shut down the device before closing the window.
 	// The allocator passed to each destroy call MUST match the one used to create it
 	// or you'll corrupt the allocator's internal state.
-failed_init:
+cleanup:
 	device.destroy_renderpass(&device, &system_alloc, &mainpass);
 	device.destroy_surface(&device, &system_alloc, &surface);
 	emgpu_device_shutdown(&system_alloc, &device);
 	emwin_window_close(&system_alloc, &window); // Also tears down the desktop connection.
 	return 0;
 }
+
+
+/*
+typedef struct data_packet {
+	// Size already stored by implemtation...
+	u32 super_important_data[16];
+} data_packet;
+ 
+int datastream_api(int argc, char** argv) {
+	em_allocator system = em_allocator_default();
+
+	data_packet packed = {};
+
+	datastream main_datastream = datastream_create(&system, MEMORY_TAG_CORE);
+
+	// By default it works like a standard lock-aware FIFO queue.
+	// Additionally you can 'map' the datastream to different destination e.g. IPC.
+
+	// This function allows creates the OS-specific message queue, the datastream is the only
+	// entry point to the IPC api, this is ok becuase its litterly just a buffer.
+	emplat_map_mesg_queue("/my_mesg", sizeof(packed), &main_datastream);
+
+	datastream_send(&main_datastream, sizeof(packed), &packed);
+}
+*/

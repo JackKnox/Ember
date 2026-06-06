@@ -4,8 +4,6 @@
 
 #include "ember/window/desktop.h"
 
-#include "ember/window/internal.h"
-
 /**
  * @brief Describes the display mode of a window.
  */
@@ -36,6 +34,34 @@ typedef enum emwin_cursor_mode {
     EMBER_CURSOR_MODE_DISABLED  /**< Cursor is hidden and locked (relative input mode). */
 } emwin_cursor_mode;
 
+struct emwin_window;
+
+/**
+ * @brief Callback invoked when window is resized.
+ * 
+ * @param window Relevent window reference.
+ * @param user_data Unmanaged user data set in event state.
+ * @param new_size New size of window.
+ * @param maximised Indicaties whetever window was resized by maximising. 
+ */
+typedef void (*PFN_on_window_resize)(struct emwin_window* window, void* user_data, uvec2 new_size, b8 maximised);
+
+typedef void (*PFN_on_window_close)(struct emwin_window* window);
+
+/**
+ * @brief Structure for events per-window.
+ */
+typedef struct emwin_window_events {
+    /** @brief Unmanaged user data passed to all window events. */
+    void* user_data;
+
+    /** @brief Called when window is resized. */
+    PFN_on_window_resize on_window_resize;
+
+    /** @brief Called when window close is requested. */
+    PFN_on_window_close on_window_close;
+} emwin_window_events;
+
 /**
  * @brief Configuration used when creating a window.
  *
@@ -51,6 +77,9 @@ typedef struct emwin_window_config {
     
     /** @brief Window creation flags. */
     emwin_window_flags flags;
+
+    /** @brief Event callbacks called by implementation when corrosponding event happens. */
+    emwin_window_events events;
 
     /** @brief Window title as a UTF-8 encoded string. */
     const char* title;
@@ -102,7 +131,7 @@ typedef struct emwin_window {
     emwin_desktop* desktop;
 
     /** @brief Platform-specific window state. */
-    EMBER_PLATFORM_WINDOW_STATE
+    void* internal_context;
 } emwin_window;
 
 /**
@@ -132,13 +161,24 @@ emwin_window_config emwin_window_default();
 em_result emwin_window_open(const emwin_window_config* config, em_allocator* allocator, emwin_window* out_window, emwin_desktop** out_desktop);
 
 /**
- * @brief Closes and destroys a window.
+ * @brief Forces closing a window and destroys all OS resources.
  *
- * Releases all platform and renderer resources associated with the window.
+ * Releases all platform and renderer resources associated with the window and immediatly closes window.
  *
- * @param window Pointer to the window to destroy.
+ * @param window Pointer to the window to close.
  */
 void emwin_window_close(em_allocator* allocator, emwin_window* window);
+
+/**
+ * @brief Request the closure of window.
+ * 
+ * This sets the value in @ref emwin_window_should_close to TRUE.
+ * 
+ * @param window Pointer to the window to close.
+ * @note This is different to @ref emwin_window_close as it only notifies your application
+ *       next time you call @ref emwin_window_should_close, you may or may not choose to ignore it.
+ */
+void emwin_window_request_close(emwin_window* window);
 
 /**
  * @brief Checks whether the window has been requested to close.
