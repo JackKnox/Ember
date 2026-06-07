@@ -172,4 +172,4 @@ u64 emplat_timer_elapsed_ns(const emplat_timer* timer);
  *
  * @return A populated @ref emplat_timer_info structure describing the timer.
  */
-emplat_timer_info emplat_timer_info(emplat_timer* timer);
+emplat_timer_info emplat_timer_get_info(emplat_timer* timer);
