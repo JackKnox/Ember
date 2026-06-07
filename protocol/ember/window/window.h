@@ -46,6 +46,11 @@ struct emwin_window;
  */
 typedef void (*PFN_on_window_resize)(struct emwin_window* window, void* user_data, uvec2 new_size, b8 maximised);
 
+/**
+ * @brief Callback invoked when window is closed.
+ * 
+ * @param window Relevent window reference. 
+ */
 typedef void (*PFN_on_window_close)(struct emwin_window* window);
 
 /**

@@ -54,16 +54,34 @@ typedef void (*PFN_on_scroll)(emwin_desktop* desktop, void* user_data, uvec2 sco
  */
 typedef void (*PFN_on_joystick_connect)(emwin_desktop* desktop, void* user_data, emwin_joystick_id id, b8 connected);
 
+/**
+ * @brief Structure for events for the input subsystem.
+ */
 typedef struct emwin_input_events {
+    /** @brief Unmanaged user data passed to all input events. */
     void* user_data;
+
+    /** @brief Called when key is pressed or released. */
     PFN_on_key_action on_key_action;
+
+    /** @brief Called when mouse button is pressed or released. */
     PFN_on_mouse_action on_mouse_action;
+
+    /** @brief Called when main cursor is moved. */
     PFN_on_cursor_move on_cursor_move;
+
+    /** @brief Called when mouse wheel is scrolled. */
     PFN_on_scroll on_scroll;
+
+    /** @brief Called when new joystick is connected. */
     PFN_on_joystick_connect on_joystick_connect;
 } emwin_input_events;
 
+/**
+ * @brief Configuration used when initializing input subsystem.
+ */
 typedef struct emwin_input_config {
+    /** @brief Event callbacks called by implementation when corrosponding event happens. */
     emwin_input_events events;
 } emwin_input_config;
 

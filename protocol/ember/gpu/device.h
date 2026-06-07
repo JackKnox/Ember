@@ -164,17 +164,6 @@ typedef struct emgpu_device {
 } emgpu_device;
 
 /**
- * @brief Retreives capabilties of the rendering device.
- * 
- * @param device Pointer to the device instance.
- * @param out_capabilities Output capabilties structure.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
- */
-em_result emgpu_device_get_capabilities(
-    emgpu_device* device, 
-    emgpu_device_capabilities* out_capabilities);
-
-/**
  * @brief Initializes a GPU device instance.
  *
  * This function sets up the device and assigns the appropriate backend
@@ -195,6 +184,17 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
  * @param device Pointer to the device instance.
  */
 void emgpu_device_shutdown(em_allocator* allocator, emgpu_device* device);
+
+/**
+ * @brief Retreives capabilties of the rendering device.
+ * 
+ * @param device Pointer to the device instance.
+ * @param out_capabilities Output capabilties structure.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emgpu_device_get_capabilities(
+    emgpu_device* device, 
+    emgpu_device_capabilities* out_capabilities);
 
 /**
  * @brief Print rendering device info to Ember standard log.
