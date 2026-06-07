@@ -3,6 +3,24 @@
 
 #include "ember/gpu/frame_internal.h"
 
+#if defined(__cplusplus) && __cplusplus >= 201103L 
+// C++11 and later
+#   define EM_ALIGNOF(type) alignof(type)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L 
+// C11 and later
+#   define EM_ALIGNOF(type) _Alignof(type)
+#elif defined(_MSC_VER) 
+// MSVC (works in both C and C++)
+#   define EM_ALIGNOF(type) __alignof(type)
+#elif defined(__GNUC__) || defined(__clang__) 
+// GCC / Clang (works in both C and C++)
+#   define EM_ALIGNOF(type) __alignof__(type)
+#else 
+// Pure fallback (standard C89, no extensions)
+#   include <stddef.h>
+#   define EM_ALIGNOF(type) offsetof(struct { char c; type member; }, member)
+#endif
+
 rendercmd_payload* add_command(emgpu_frame* frame, rendercmd_payload_type type, u64 payload_size) {
     rendercmd_payload* payload;
     payload = (rendercmd_payload*)datastream_push(&frame->commands, sizeof(payload->hdr) + payload_size, EM_ALIGNOF(rendercmd_payload));
@@ -18,7 +36,7 @@ em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator) {
     }
 
     frame->commands = datastream_create(allocator, MEMORY_TAG_FRAME);
-    frame->initialized = TRUE;
+    frame->initialized = EMTRUE;
     return EMBER_RESULT_OK;
 }
 

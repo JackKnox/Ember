@@ -3,6 +3,8 @@
 // #include <ember/window/desktop.h>
 #include <ember/window/window.h>
 
+#include <stdbool.h>
+
 // A small helper macro to cut down on the repetitive error-check boilerplate.
 // Calls a function, checks the result, logs a message and jumps to cleanup if it failed.
 // em_result_string() converts the result code into something human readable.
@@ -11,8 +13,8 @@
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
             log_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
-				em_result_string(result, TRUE));           \
-            goto cleanup;                              \
+				em_result_string(result, true));           \
+            goto cleanup;                                  \
         }                                                  \
     }
 
@@ -27,7 +29,7 @@ int main(int argc, char** argv) {
     window_config.cursor_mode  = EMBER_CURSOR_MODE_NORMAL;                              // Again normal mode but could use this to hide or lock the cursor (FPS games).
     window_config.flags        = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC; // Can actually see the window and VSync is enabled.
     window_config.title        = "Example - Basic Window";                              // The name of the window, see this in the title bar. Uses UTF-8 strings
-    window_config.centered_pos = TRUE;                                                  // Center the window to the primary monitor.
+    window_config.centered_pos = true;                                                  // Center the window to the primary monitor.
     window_config.size         = (uvec2) { 800, 600 };                                  // Initial size of the window when you open it.
     //window_config.desktop = NULL; Have not already created a window.
     //window_config.min_size; These two are already set to zero.

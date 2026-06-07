@@ -7,7 +7,7 @@ emwin_window_config emwin_window_default() {
 	config.cursor_mode  = EMBER_CURSOR_MODE_NORMAL;
 	config.flags        = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC;
 	config.title        = "Basic Window";
-	config.centered_pos = TRUE;
+	config.centered_pos = EMTRUE;
 	config.size.width   = 640;
 	config.size.height  = 360;
 	return config;

@@ -8,6 +8,8 @@
 #include <ember/gpu/frame.h>
 #include <ember/gpu/ext/emwin_surface.h>
 
+#include <stdbool.h>
+
 // A small helper macro to cut down on the repetitive error-check boilerplate.
 // Calls a function, checks the result, logs a message and jumps to cleanup if it failed.
 // em_result_string() converts the result code into something human readable.
@@ -16,8 +18,8 @@
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
             emlog_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
-				em_result_string(result, TRUE));           \
-            goto cleanup;                              \
+				em_result_string(result, true));           \
+            goto cleanup;                                  \
         }                                                  \
     }
 
@@ -86,11 +88,11 @@ int main(int argc, char** argv) {
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
 	emgpu_emwin_surface_config surface_config = emgpu_emwin_surface_default();
 	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
-	surface_config.force_format     = FALSE;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
+	surface_config.force_format     = false;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
     surface_config.window           = &window;
 	// set_callbacks = TRUE tells the surface to hook into the window's resize events
 	// automatically so the GPU surface stays in sync when the user resizes the window.
-    surface_config.set_callbacks    = TRUE;
+    surface_config.set_callbacks    = true;
 
 	// ember_gpu doesn't directly implement a ember_window backend so we need an actual function to translate to the WSI extensions it does implement.
 	emgpu_surface surface = {};

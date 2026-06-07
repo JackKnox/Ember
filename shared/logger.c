@@ -3,6 +3,29 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+// Always define emdebug_break in case it is ever needed outside assertions (i.e fatal log errors)
+// Try via __has_builtin first.
+#if defined(__has_builtin) && !defined(__ibmxl__)
+#    if __has_builtin(__builtin_debugtrap)
+#        define emdebug_break() __builtin_debugtrap()
+#    elif __has_builtin(__debugbreak)
+#        define emdebug_break() __debugbreak()
+#    endif
+#endif
+
+// If not setup, try the old way.
+#if !defined(emdebug_break)
+#    if defined(__clang__) || defined(__GNUC__)
+#        define emdebug_break() __builtin_trap()
+#    elif defined(_MSC_VER)
+#        include <intrin.h>
+#        define emdebug_break() __debugbreak()
+#    else
+// Fall back to x86/x86_64
+#        define emdebug_break() asm { int 3 }
+#    endif
+#endif
+
 static PFN_log_output logger = NULL;
 
 void default_logger(log_level level, const char* subsystem, const char* message) {

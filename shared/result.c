@@ -30,10 +30,8 @@ const char* em_result_string(em_result result,  b8 get_extended) {
         return !get_extended ? "EMBER_RESULT_PERMISSION_DENIED" : "EMBER_RESULT_PERMISSION_DENIED The caller does not have the required permissions.";
 
     default:
-#if !EMBER_DIST
-        EM_ASSERT(FALSE && "Unknown em_result value!");
+        EM_ASSERT(EMFALSE && "Unknown em_result value!");
         return NULL;
-#endif
     case EMBER_RESULT_UNKNOWN:
         return !get_extended ? "EMBER_RESULT_UNKNOWN" : "EMBER_RESULT_UNKNOWN An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred.";
     }

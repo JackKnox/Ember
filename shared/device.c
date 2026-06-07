@@ -98,7 +98,7 @@ emgpu_attachment_config emgpu_attachment_from_surface(emgpu_surface* surface) {
     attachment.store_op = EMBER_STORE_OP_STORE;
     attachment.stencil_load_op = EMBER_LOAD_OP_DONT_CARE;
     attachment.stencil_store_op = EMBER_STORE_OP_DONT_CARE;
-    attachment.presentable = TRUE;
+    attachment.presentable = EMTRUE;
     
     if (EMBER_FORMAT_FLAGS(surface->pixel_format) & EMBER_FORMAT_FLAG_DEPTH)
         attachment.type = EMBER_ATTACHMENT_TYPE_DEPTH;
