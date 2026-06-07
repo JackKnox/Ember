@@ -13,5 +13,5 @@ endif()
 option(EMBER_DIST "Strip ember of all safety features for distribution, not recommended for development")
 option(EMBER_DEV  "Build ember with developer-only tooling" ${MAIN_PROJECT})
 
-add_subdirectory(src)
+add_subdirectory(shared)
 add_subdirectory(examples)
