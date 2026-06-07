@@ -14,6 +14,7 @@ Ember solves this with a clean separation of concerns:
 
 - **The Protocol** defines the contract: API shapes, data formats, object lifetimes, synchronization rules, and extension mechanisms.
 - **Drivers** implement that contract for a specific platform.
+- **Extensions** allow for innovation without changing the contract.
 - **Your application** targets the Protocol — never a Driver directly.
 
 This means your application stays portable while Drivers evolve independently to support new platforms, APIs, and hardware capabilities.
@@ -31,22 +32,11 @@ Application
 │     Driver       │
 └──────────────────┘
      │
-     ├─ Win32 / Wayland / X11
-     ├─ Vulkan / Direct3D 12 / Metal
-     ├─ PipeWire / WASAPI
-     └─ BSD Sockets
+     ├─ Win32 / Wayland / Cocoa
+     ├─ DirectX 12 / Vulkan / Metal
+     ├─ WASAPI / ALSA / Pipewire
+     └─ Winsock / BSD Sockets
 ```
-
----
-
-## Getting Started
-
-```sh
-# Download the reference driver
-ember install ember-native
-```
-
-See the [ember-native repository](#) for full installation and linking instructions.
 
 ---
 
@@ -65,7 +55,7 @@ As long as a Driver conforms to the protocol, your application is compatible wit
 
 ### Official Driver
 
-The primary reference implementation is **`ember-native`**, targeting desktop, mobile, and web. See the [official repository](#) to get started.
+The primary reference implementation is **`ember-native`**, targeting desktop, mobile, and web. See the [official repository](https://github.com/JackKnox/ember-native) to get started.
 
 ---
 
@@ -89,12 +79,12 @@ Core
 Core is the foundation shared by every compliant Driver. All implementations must conform to the Core specification.
 
 | Feature | Description |
-|---|---|
-| **Memory** | Allocation APIs, tracking, statistics, custom allocators |
-| **Logging** | Structured logging, sinks, hooks, runtime filtering |
-| **Error Handling** | Standardized result codes, propagation, diagnostics |
-| **Datastreams** | Unified stream abstraction — memory, file, and custom |
-| **Format API** | Serialization helpers, encoding utilities, runtime discovery |
+|---------|-------------|
+| **Memory**            | Allocation APIs, tracking, statistics, custom allocators.     |
+| **Logging**           | Structured logging, sinks, hooks, runtime filtering.          |
+| **Error Handling**    | Standardized result codes, propagation, diagnostics.          |
+| **Datastreams**       | Unified stream abstraction — memory, file, and custom.        |
+| **Format API**        | Serialization helpers, encoding utilities, runtime discovery. |
 
 ### Domains
 
@@ -143,7 +133,6 @@ Ember will never implement the following:
 * Support for any platform no matter how specific.
 * Any metaprogramming concepts.
 * Any external dependencies except the OS itself.
-* Extensive use of macros.
 
 Many frameworks attempt to hide the operating system. Ember takes a different approach.
 
