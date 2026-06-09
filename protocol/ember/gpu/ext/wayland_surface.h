@@ -3,8 +3,11 @@
 #include "ember/core.h"
 
 #include "ember/gpu/types.h"
+
 #include "ember/gpu/device.h"
 #include "ember/gpu/resources.h"
+
+#include "ember/gpu/surface.h"
 
 #include <wayland-client.h>
 

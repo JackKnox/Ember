@@ -7,6 +7,8 @@
 #include "ember/gpu/device.h"
 #include "ember/gpu/resources.h"
 
+#include "ember/gpu/surface.h"
+
 /**
  * @brief Describes a single render pass attachment.
  */
