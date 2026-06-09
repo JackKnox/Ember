@@ -2,12 +2,10 @@
 
 #include "ember/core.h"
 
-#include "ember/platform/internal.h"
-
 /**
  * @brief Platform-specific shared memory state.
  */
-typedef EMBER_PLATFORM_SHM_STATE emplat_shm_state;
+typedef void* emplat_shm_state;
 
 /**
  * Creates or opens a named shared memory region and maps it into the process.

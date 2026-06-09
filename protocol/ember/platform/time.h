@@ -2,8 +2,6 @@
 
 #include "ember/core.h"
 
-#include <ember/platform/internal.h>
-
 /**
  * @brief High resolution timestamp in seconds.
  *
@@ -70,9 +68,9 @@ u64 emplat_time_now_ns();
 emplat_timer_info emplat_timer_now_info();
 
 /**
- * @brief Opaque timer handle.
+ * @brief Platform-specific timer handle.
  */
-typedef EMBER_PLATFORM_TIMER_STATE emplat_timer;
+typedef void* emplat_timer;
 
 /**
  * @brief Creates a timer.

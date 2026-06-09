@@ -2,12 +2,10 @@
 
 #include "ember/core.h"
 
-#include "ember/platform/internal.h"
-
 /**
  * @brief Platform-specific thread handle.
  */
-typedef EMBER_PLATFORM_THREAD_STATE emplat_thread;
+typedef void* emplat_thread;
 
 /**
  * @typedef PFN_thread_start
@@ -67,7 +65,7 @@ typedef enum emplat_mutex_type {
 /**
  * @brief Platform-specific mutex object.
  */
-typedef EMBER_PLATFORM_MUTEX_STATE emplat_mutex;
+typedef void* emplat_mutex;
 
 /**
  * @brief Initializes a mutex.
@@ -123,10 +121,9 @@ em_result emplat_mutex_trylock(emplat_mutex* mtx);
 em_result emplat_mutex_unlock(emplat_mutex* mtx);
 
 /**
- * @typedef emplat_cond
  * @brief Platform-specific condition variable.
  */
-typedef EMBER_PLATFORM_COND_STATE emplat_cond;
+typedef void* emplat_cond;
 
 /**
  * @brief Initializes a condition variable.

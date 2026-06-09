@@ -2,8 +2,6 @@
 
 #include "ember/core.h"
 
-#include "ember/platform/internal.h"
-
 /**
  * @brief File access flags.
  */
@@ -15,7 +13,7 @@ typedef enum emplat_file_flags {
 /**
  * @brief Platform-specific file handle.
  */
-typedef EMBER_PLATFORM_FILE_STATE emplat_file;
+typedef void* emplat_file;
 
 typedef struct emplat_file_info {
     /** @brief Whetever the file on disk exists. If false the rest of the structure is uninitalized. */
@@ -169,7 +167,7 @@ typedef struct emplat_filewatch_event {
 /**
  * @brief Platform-specific file watcher handle.
  */
-typedef EMBER_PLATFORM_FILEWATCHER_STATE emplat_filewatcher;
+typedef void* emplat_filewatcher;
 
 /**
  * @brief Callback invoked when a file system event occurs.
