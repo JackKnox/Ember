@@ -12,7 +12,7 @@
     {                                                      \
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
-            log_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
+            emlog_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
 				em_result_string(result, true));           \
             goto cleanup;                                  \
         }                                                  \
