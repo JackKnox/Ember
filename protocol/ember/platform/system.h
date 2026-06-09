@@ -112,7 +112,7 @@ u32 emplat_get_cpu_cores();
 u32 emplat_system_cache_line_size();
 
 /**
- * Get the amount of RAM configured in the system.
+ * @brief Get the amount of RAM configured in the system.
  *
  * @return The amount of RAM configured in the system in MiB.
  */

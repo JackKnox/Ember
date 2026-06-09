@@ -6,6 +6,57 @@
 #include "ember/window/input_codes.h"
 
 /**
+ * @brief Opaque input system handling all input devices.
+ *
+ * Manages keyboard, mouse, and joystick input for a Ember-compliant platform.
+ */
+typedef struct emwin_input emwin_input;
+
+/**
+ * @brief Identifier for active joysticks.
+ */
+typedef u64 emwin_joystick_id;
+
+/**
+ * @brief Static description of a joystick device.
+ */
+typedef struct emwin_joystick_device {
+    /** @brief Number of analog axes. */
+    u32 axis_count;
+
+    /** @brief Number of buttons. */
+    u32 button_count;
+
+    /** @brief Number of hat switches. */
+    u32 hat_count;
+
+    /** @brief Unique identifier for the joystick. */
+    emwin_joystick_id id;
+
+    /** @brief Human-readable device name. */
+    const char* name;
+
+    /** @brief Platform-specific GUID identifying the device. */
+    u8 guid[16];
+} emwin_joystick_device;
+
+/**
+ * @brief Runtime state of a joystick device.
+ *
+ * Arrays are owned by the platform layer and remain valid until the next query.
+ */
+typedef struct emwin_joystick_state {
+    /** @brief Axis values in range [-1.0, 1.0]. */
+    f32* axis;
+
+    /** @brief Button states (pressed or not). */
+    b8* buttons;
+    
+    /** @brief Hat states. */
+    emwin_hat_state* hats;
+} emwin_joystick_state;
+
+/**
  * @brief Callback invoked when a key is pressed or released.
  *
  * @param desktop Pointer to owner desktop object.
@@ -84,57 +135,6 @@ typedef struct emwin_input_config {
     /** @brief Event callbacks called by implementation when corrosponding event happens. */
     emwin_input_events events;
 } emwin_input_config;
-
-/**
- * @brief Opaque input system handling all input devices.
- *
- * Manages keyboard, mouse, and joystick input for a Ember-compliant platform.
- */
-typedef struct emwin_input emwin_input;
-
-/**
- * @brief Identifier for active joysticks.
- */
-typedef u64 emwin_joystick_id;
-
-/**
- * @brief Static description of a joystick device.
- */
-typedef struct emwin_joystick_device {
-    /** @brief Number of analog axes. */
-    u32 axis_count;
-
-    /** @brief Number of buttons. */
-    u32 button_count;
-
-    /** @brief Number of hat switches. */
-    u32 hat_count;
-
-    /** @brief Unique identifier for the joystick. */
-    emwin_joystick_id id;
-
-    /** @brief Human-readable device name. */
-    const char* name;
-
-    /** @brief Platform-specific GUID identifying the device. */
-    u8 guid[16];
-} emwin_joystick_device;
-
-/**
- * @brief Runtime state of a joystick device.
- *
- * Arrays are owned by the platform layer and remain valid until the next query.
- */
-typedef struct emwin_joystick_state {
-    /** @brief Axis values in range [-1.0, 1.0]. */
-    f32* axis;
-
-    /** @brief Button states (pressed or not). */
-    b8* buttons;
-    
-    /** @brief Hat states. */
-    emwin_hat_state* hats;
-} emwin_joystick_state;
 
 /**
  * @brief Initializes the input system.

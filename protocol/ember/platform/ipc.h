@@ -8,7 +8,7 @@
 typedef void* emplat_shm_state;
 
 /**
- * Creates or opens a named shared memory region and maps it into the process.
+ * @brief Creates or opens a named shared memory region and maps it into the process.
  *
  * @param name Name of the shared memory region.
  * @param size Size of the region in bytes.
@@ -27,7 +27,7 @@ void* emplat_shm_pointer(emplat_shm_state* state);
 
 
 /**
- * Unmaps a shared memory region from the process.
+ * @brief Unmaps a shared memory region from the process.
  *
  * @param name Name of the shared memory region.
  * @param size Size of the region in bytes.

@@ -15,6 +15,9 @@ typedef enum emplat_file_flags {
  */
 typedef void* emplat_file;
 
+/**
+ * @brief Info on file, whetever it exists or not.
+ */
 typedef struct emplat_file_info {
     /** @brief Whetever the file on disk exists. If false the rest of the structure is uninitalized. */
     b8 exists;
