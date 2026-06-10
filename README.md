@@ -2,7 +2,7 @@
 
 > One Protocol. Multiple Drivers. Unlimited Possibilities.
 
-Ember is a modern, cross-platform systems protocol for applications, engines, tools, and runtimes. Write your application once and deploy it everywhere — desktop, mobile, embedded, console, server.
+Ember is a modern, cross-platform systems protocol for applications, engines, tools, and runtimes. Write your application once and deploy it everywhere — desktop, mobile, embedded, web, console, server.
 
 ---
 
@@ -24,12 +24,13 @@ Application
      │
      ▼
 ┌──────────────────┐
-│  Ember Protocol  │
-└──────────────────┘
-     │
-     ▼
-┌──────────────────┐
-│     Driver       │
+│  Ember Protocol  │────────┐
+└──────────────────┘        ▼
+     │                 ┌──────────────────┐
+     │                 │    Extensions    │
+     ▼                 └──────────────────┘
+┌──────────────────┐        |
+│     Driver       │◀──────┘
 └──────────────────┘
      │
      ├─ Win32 / Wayland / Cocoa
@@ -47,6 +48,7 @@ A Driver is any implementation of the Ember Protocol. Drivers may target:
 - Desktop platforms
 - Mobile platforms
 - Embedded systems
+- Websites (WASM)
 - Consoles
 - Headless servers
 - Custom environments
@@ -136,6 +138,6 @@ Ember will never implement the following:
 
 Many frameworks attempt to hide the operating system. Ember takes a different approach.
 
-Ember exposes modern platform capabilities through a consistent protocol while preserving access to advanced functionality through Extensions. The goal is not the lowest common denominator — it's a stable foundation that grows with hardware, operating systems, and software ecosystems. Use Ember, Rely on Ember the definitive platform abstaction layer.
+Ember exposes modern platform capabilities through a consistent protocol while preserving access to advanced functionality through Extensions. The goal is not the lowest common denominator — it's a stable foundation that grows with hardware, operating systems, and software ecosystems.
 
 **Ember is a Protocol. Build on the contract, not the implementation.**
