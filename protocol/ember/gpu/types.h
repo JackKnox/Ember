@@ -5,22 +5,6 @@
 #include "ember/gpu/format.h"
 
 /**
- * @brief Supported rendering APIs.
- */
-typedef enum emgpu_device_backend {
-    EMBER_DEVICE_BACKEND_VULKAN,   /**< Vulkan device backend */ 
-    EMBER_DEVICE_BACKEND_OPENGL,   /**< OpenGL device backend */
-    EMBER_DEVICE_BACKEND_DIRECTX,  /**< DirectX device backend */
-} emgpu_device_backend;
-
-/**
- * @brief Util function for converting `emgpu_device_backend` to a string representation.
- * 
- * @param device_backend Enum type to convert.
- */
-const char* emgpu_backend_type_string(emgpu_device_backend device_backend);
-
-/**
  * @brief Type of logical rendering device.
  */
 typedef enum emgpu_device_type {
@@ -32,7 +16,7 @@ typedef enum emgpu_device_type {
 } emgpu_device_type;
 
 /**
- * @brief Util function for converting `emgpu_device_type` to a string representation.
+ * @brief Converts a device type to human-readable text.
  * 
  * @param device_type Enum type to convert.
  */

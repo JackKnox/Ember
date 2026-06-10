@@ -8,17 +8,11 @@
  * @brief Describes the capabilities of the relevent device.
  */
 typedef struct emgpu_device_capabilities {
-    /** @brief Internal GAPI used by the device. */
-    emgpu_device_backend api_type;
-
     /** @brief Device classification. */
     emgpu_device_type device_type;
 
     /** @brief Enabled modes in device. */
     emgpu_device_mode enabled_modes;
-
-    /** @brief Version of the internal API used by the device. */
-    em_version internal_api_version;
 
     /** @brief Version of the OS driver used by the device. */
     em_version driver_version;
@@ -90,9 +84,6 @@ typedef struct emgpu_device_config {
 
     /** @brief Allocator used for per-frame allocations. */
     em_allocator frame_allocator;
-
-    /** @brief Selected backend API (e.g. Vulkan, Metal, etc.). */
-    emgpu_device_backend backend_api;
 
     /** @brief Application version encoded as em_version. */
     em_version app_version;

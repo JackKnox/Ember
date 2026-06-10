@@ -4,14 +4,6 @@
 #include "ember/gpu/raster.h"
 #include "ember/gpu/compute.h"
 
-const char* emgpu_backend_type_string(emgpu_device_backend device_backend) {
-    switch (device_backend) {
-        case EMBER_DEVICE_BACKEND_VULKAN: return "Vulkan";
-        case EMBER_DEVICE_BACKEND_OPENGL: return "OpenGL";
-        case EMBER_DEVICE_BACKEND_DIRECTX: return "DirectX";
-    }
-}
-
 const char* emgpu_device_type_string(emgpu_device_type device_type) {
     switch (device_type) {
         case EMBER_DEVICE_TYPE_OTHER:          return "Unknown";
@@ -24,9 +16,7 @@ const char* emgpu_device_type_string(emgpu_device_type device_type) {
 
 void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level) {
     EM_LOG(level, "Gpu", "Device capabilities:");
-    EM_LOG(level, "Gpu", "  Backend: %s %i.%i.%i - %s [%i.%i.%i]", 
-        emgpu_backend_type_string(capabilities->api_type),
-        EMBER_VERSION_MAJOR(capabilities->internal_api_version), EMBER_VERSION_MINOR(capabilities->internal_api_version), EMBER_VERSION_PATCH(capabilities->internal_api_version),
+    EM_LOG(level, "Gpu", "  Backend: %s [%i.%i.%i]",
         capabilities->vendor_name,
         EMBER_VERSION_MAJOR(capabilities->driver_version), EMBER_VERSION_MINOR(capabilities->driver_version),  EMBER_VERSION_PATCH(capabilities->driver_version));
     EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
@@ -36,7 +26,6 @@ emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
     config.debug_name       = "EMBER_GPU";
     config.frame_allocator  = em_allocator_default();
-    config.backend_api      = EMBER_DEVICE_BACKEND_VULKAN;
     config.app_version      = EMBER_MAKE_VERSION(0, 0, 1);
     config.required_modes   = EMBER_DEVICE_MODE_RASTER;
     config.frames_in_flight = 3; // Standard in low level GAPIs.
