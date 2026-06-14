@@ -3,6 +3,72 @@
 #include "ember/core.h"
 
 /**
+ * @brief High resolution timestamp in seconds.
+ *
+ * This value is monotonic and suitable for measuring elapsed time.
+ * The starting point is unspecified and should not be interpreted
+ * as wall-clock time.
+ */
+typedef f64 emplat_time;
+
+/**
+ * @brief Calculates elapsed time in milliseconds.
+ *
+ * @param start Start timestamp.
+ * @param end End timestamp.
+ *
+ * @return Elapsed time in milliseconds.
+ */
+f64 emplat_time_elapsed_ms(emplat_time start, emplat_time end);
+
+/**
+ * @brief Platform timer frequency information.
+ *
+ * Useful for debugging or exposing timer precision information.
+ */
+typedef struct emplat_timer_info {
+    /**
+     * @brief Estimated timer resolution in nanoseconds.
+     */
+    u64 resolution_ns;
+
+    /**
+     * @brief Whether the timer is monotonic.
+     */
+    b8 monotonic;
+
+    /**
+     * @brief Whether the timer is high precision.
+     */
+    b8 high_precision;
+} emplat_timer_info;
+
+/**
+ * @brief Gets the current system time.
+ *
+ * @return The current time represented as an @ref emplat_time value.
+ */
+emplat_time emplat_system_now();
+
+/**
+ * @brief Gets the current system time in nanoseconds.
+ *
+ * Uses the highest-resolution clock available on the platform.
+ *
+ * @return Current time in nanoseconds.
+ */
+u64 emplat_system_now_ns();
+
+
+/**
+ * @brief Retrieves information about the current platform timer state.
+ *
+ * @return A populated @ref emplat_timer_info structure containing
+ *         platform timing information.
+ */
+emplat_timer_info emplat_system_now_info();
+
+/**
  * @brief Suspends execution for a specified duration in milliseconds.
  *
  * @param ms Duration to sleep in milliseconds.
@@ -66,13 +132,13 @@ typedef void* emplat_library;
 /**
  * @brief Loads a dynamic/shared library.
  *
- * @param path Path to the library file (e.g., .so, .dll, .dylib).
+ * @param filepath Path to the library file (e.g., .so, .dll, .dylib).
  * @return A handle to the loaded library, or NULL on failure.
  *
  * @note The returned handle must be released using
  *       emplat_system_library_unload().
  */
-emplat_library emplat_system_library_load(const char* path);
+emplat_library emplat_system_library_load(const char* filepath);
 
 /**
  * @brief Retrieves a symbol from a loaded library.
@@ -117,6 +183,29 @@ u32 emplat_system_cache_line_size();
  * @return The amount of RAM configured in the system in MiB.
  */
 u32 emplat_system_ram();
+
+/**
+ * @brief The type of the OS-provided default folder for a specific purpose.
+ */
+typedef enum emplat_system_folder {
+    EMBER_SYSTEM_FOLDER_HOME,    /**< The folder which contains all of the current user's data or documents */
+    EMBER_SYSTEM_FOLDER_ROOT,    /**< The base folder for the rest of the system. May not commonly have permissions for this folder */
+    EMBER_SYSTEM_FOLDER_APPDATA, /**< Safe space to store long-standing app data, not likely to be deleted. */
+    EMBER_SYSTEM_FOLDER_TEMP,    /**< Temporary data for use by the application. Do not use for important app data */
+} emplat_system_folder;
+
+/**
+ * @brief Finds the most suitable user folder for a specific purpose.
+ * 
+ * Many OSes provide certain standard folders for certain purposes, such as
+ * storing pictures, music or videos for a certain user. This function gives
+ * the path for many of those special locations.
+ * 
+ * @param folder the type of folder to find.
+ * @returns either a null-terminated C string containing the full path to the
+ *          folder, or NULL if an error happened.
+ */
+const char* emplat_get_systemfolder(emplat_system_folder folder);
 
 /**
  * The basic state for the system's power supply.

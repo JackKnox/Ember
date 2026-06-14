@@ -22,14 +22,17 @@ typedef struct emplat_file_info {
     /** @brief Whetever the file on disk exists. If false the rest of the structure is uninitalized. */
     b8 exists;
 
-    /** @brief Size of the file on disk (in bytes)/ */
+    /** @brief Size of the file on disk (in bytes). */
     u64 size;
 
-    /** @brief The time the file was created. */
-    //u64 created_time;
+    /** @brief The time the file was created, zero if unsupported by driver. */
+    u64 created_time;
 
     /** @brief The last time the file was accessed or changed. */
-    //u64 modified_time;
+    u64 modified_time;
+
+    /** @brief The last time the file was accessed. */
+    u64 accessed_time;
 
     /** @brief Indicaties whetever there is a directory at the given filepath. */
     b8 is_directory;
@@ -40,7 +43,6 @@ typedef struct emplat_file_info {
  *
  * @param filepath Filepath on disk.
  * @param out_info Pointer to recieving info structure.
- * @return True if the path exists, otherwise false.
  */
 void emplat_file_get_info(const char* filepath, emplat_file_info* out_info);
 
@@ -77,6 +79,9 @@ u64 emplat_file_size(emplat_file* file);
  * @param out_data Output buffer to store read data.
  * @param out_data_size Actual number of bytes read.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ * 
+ * @note If @ref out_data_size does not equal requested size but succeded, 
+ *       assume you reached the end of the file.
  */
 em_result emplat_file_read(emplat_file* file, u64 size, void* out_data, u64* out_data_size);
 
@@ -92,17 +97,15 @@ em_result emplat_file_read(emplat_file* file, u64 size, void* out_data, u64* out
 em_result emplat_file_write(emplat_file* file, u64 size, const void* data, u64* out_data_size);
 
 /**
- * @brief Locks a file from use by other processes.
+ * @brief Locks a file from use by other threads.
  * 
  * @param file File handle.
- * @param block Indicaties whetever to wait if other process has locked this file. 
- *              If this file the functions errors and returns `EMBER_RESULT_IN_USE`.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_file_lock(emplat_file* file, b8 block);
+em_result emplat_file_lock(emplat_file* file);
 
 /**
- * @brief Unlocks a file for use by other processes.
+ * @brief Unlocks a file for use by other threads.
  * 
  * @param file File handle.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
@@ -110,7 +113,7 @@ em_result emplat_file_lock(emplat_file* file, b8 block);
 em_result emplat_file_unlock(emplat_file* file);
 
 /**
- * @brief Immediatly writes all data to a filepath synchronously.
+ * @brief Immediatly writes all data to a filepath through atomic operations.
  * 
  * This is very useful for crash reports or hot-reloading as it
  * ensures no other process is writing to the file and prevents corrupted file writes.
@@ -121,29 +124,6 @@ em_result emplat_file_unlock(emplat_file* file);
  * @note Use the function sparingly as it may impact performance.
  */
 em_result emplat_file_write_safe(const char* filepath, const void* data, u64 size);
-
-/**
- * @brief The type of the OS-provided default folder for a specific purpose.
- */
-typedef enum emplat_system_folder {
-    EMBER_SYSTEM_FOLDER_HOME,    /**< The folder which contains all of the current user's data or documents */
-    EMBER_SYSTEM_FOLDER_ROOT,    /**< The base folder for the rest of the system. May not commonly have permissions for this folder */
-    EMBER_SYSTEM_FOLDER_APPDATA, /**< Safe space to store long-standing app data, not likely to be deleted. */
-    EMBER_SYSTEM_FOLDER_TEMP,    /**< Temporary data for use by the application. Do not use for important app data */
-} emplat_system_folder;
-
-/**
- * @brief Finds the most suitable user folder for a specific purpose.
- * 
- * Many OSes provide certain standard folders for certain purposes, such as
- * storing pictures, music or videos for a certain user. This function gives
- * the path for many of those special locations.
- * 
- * @param folder the type of folder to find.
- * @returns either a null-terminated C string containing the full path to the
- *          folder, or NULL if an error happened.
- */
-const char* emplat_get_systemfolder(emplat_system_folder folder);
 
 /**
  * @brief File system event types.
@@ -207,7 +187,7 @@ void emplat_filewatcher_destroy(emplat_filewatcher* filewatcher);
 em_result emplat_filewatcher_add(emplat_filewatcher* filewatcher, const char* filepath);
 
 /**
- * @brief Adds a wildcard pattern to watch (implementation-defined).
+ * @brief Adds a wildcard pattern to watch.
  *
  * @param filewatcher Watcher instance.
  * @param pattern Pattern string (e.g. "*.png").
