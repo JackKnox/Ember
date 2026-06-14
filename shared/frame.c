@@ -73,7 +73,7 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size) {
     payload->set_renderarea.size = size;
 }
 
-void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
+void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, u32 clear_colour, emgpu_frame_texture* texture_attachments, u32 attachment_count) {
     rendercmd_payload* payload;
     u64 attachments_offset = EM_OFFSETOF(rendercmd_payload, begin_renderpass.attachments);
     u64 payload_size       = attachments_offset 
@@ -83,6 +83,7 @@ void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpa
     payload = add_command(frame, RENDERCMD_BEGIN_RENDERPASS, payload_size);
     payload->begin_renderpass.renderpass       = renderpass;
     payload->begin_renderpass.attachment_count = attachment_count;
+    payload->begin_renderpass.clear_colour     = clear_colour;
     memcpy(payload->begin_renderpass.attachments,
               texture_attachments,
               sizeof(emgpu_frame_texture) * attachment_count);

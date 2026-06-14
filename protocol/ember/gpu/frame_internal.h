@@ -49,6 +49,7 @@ typedef struct rendercmd_payload {
         struct {
             emgpu_renderpass* renderpass;
             u32 attachment_count;
+            u32 clear_colour;
             emgpu_frame_texture attachments[];
         } begin_renderpass;
 

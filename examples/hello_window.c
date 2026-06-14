@@ -1,6 +1,5 @@
-// Additionally includes these as well...
-// #include <ember/core.h>
-// #include <ember/window/desktop.h>
+// Example when we open a window with defaults.
+//
 #include <ember/window/window.h>
 
 #include <stdbool.h>

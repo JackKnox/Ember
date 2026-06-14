@@ -1,12 +1,10 @@
-// Additionally includes these as well...
-// #include <ember/core.h>
-// #include <ember/window/desktop.h>
+// Example when we open a window then clear a colour to it.
+//
 #include <ember/window/window.h>
+#include <ember/gpu/ext/emwin_surface.h>
 
-#include <ember/gpu/device.h>
 #include <ember/gpu/raster.h>
 #include <ember/gpu/frame.h>
-#include <ember/gpu/ext/emwin_surface.h>
 
 #include <stdbool.h>
 
@@ -39,7 +37,6 @@ int main(int argc, char** argv) {
 
 	// emwin_desktop represents our connection to the system's window manager.
 	// emwin_window_open will create one for us and write the pointer here.
-	// NULL tells it we don't have one yet.
     emwin_desktop* desktop = NULL;
 
 	// Open the window. The desktop pointer is also populated here as a side effect —
@@ -51,7 +48,7 @@ int main(int argc, char** argv) {
 
 	// The GPU device supports extensions for platform-specific surface creation.
 	// Using ember_window we use the emwin_gpu_surface extension and pass it our desktop handle
-	// so the backend knows which desktop to talk to. This interally wraps Win32 / Wayland / Cocoa.
+	// so the backend knows which desktop to talk to. This interally wraps to actual platform APIs.
 	emgpu_extension_desc extensions[] = { emgpu_emwin_surface_extension(desktop) };
 
 	// This is an 'out extension' — after device init, Ember writes the actual
@@ -61,9 +58,8 @@ int main(int argc, char** argv) {
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
 	emgpu_device_config device_config = emgpu_device_default();
-	device_config.debug_name       = window_config.title;   // Shows up in GPU debug tooling.
-	device_config.frame_allocator  = em_allocator_default();
-	device_config.backend_api      = EMBER_DEVICE_BACKEND_VULKAN;
+	device_config.debug_name       = window_config.title;    // Shows up in GPU debug tooling.
+	device_config.frame_allocator  = em_allocator_default(); // Allocator used to allocate frame-local resources.
 	device_config.app_version      = EMBER_VERSION;
 	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
 	device_config.optional_modes   = EMBER_DEVICE_MODE_VALIDATION; // Nice to have for debugging but we won't bail if it's unavailable.
@@ -84,17 +80,14 @@ int main(int argc, char** argv) {
 		"Failed to retrieve device capabilities");
 	emgpu_device_print_capabilities(&device, &capabilities, LOG_LEVEL_TRACE);
 
-	// Now we can create a Wayland surface using the function pointer the device
+	// Now we can create a ember_window-backed surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
 	emgpu_emwin_surface_config surface_config = emgpu_emwin_surface_default();
 	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
 	surface_config.force_format     = false;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
     surface_config.window           = &window;
-	// set_callbacks = TRUE tells the surface to hook into the window's resize events
-	// automatically so the GPU surface stays in sync when the user resizes the window.
-    surface_config.set_callbacks    = true;
 
-	// ember_gpu doesn't directly implement a ember_window backend so we need an actual function to translate to the WSI extensions it does implement.
+	// Call the function from the 'out extension' which creates the window.
 	emgpu_surface surface = {};
 	CHECK_FUNC(
 		wsi_extension.create_surface(&device, &system_alloc, &surface_config, &surface),
@@ -143,7 +136,7 @@ int main(int argc, char** argv) {
 			// Set the render area to cover the full window, begin our single pass,
 			// then immediately end it. No actual draw calls yet — this just clears the surface.
 			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size);
-			emgpu_frame_begin_renderpass(&frame, &mainpass, &window_tex, 1);
+			emgpu_frame_begin_renderpass(&frame, &mainpass, 0xAAFFFFFF, &window_tex, 1);
 			emgpu_frame_end_renderpass(&frame);
 
 			// Flush finalises the command buffer and prepares it for submission.

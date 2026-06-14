@@ -59,7 +59,6 @@ emplat_time emplat_system_now();
  */
 u64 emplat_system_now_ns();
 
-
 /**
  * @brief Retrieves information about the current platform timer state.
  *
@@ -190,7 +189,7 @@ u32 emplat_system_ram();
 typedef enum emplat_system_folder {
     EMBER_SYSTEM_FOLDER_HOME,    /**< The folder which contains all of the current user's data or documents */
     EMBER_SYSTEM_FOLDER_ROOT,    /**< The base folder for the rest of the system. May not commonly have permissions for this folder */
-    EMBER_SYSTEM_FOLDER_APPDATA, /**< Safe space to store long-standing app data, not likely to be deleted. */
+    EMBER_SYSTEM_FOLDER_APPDATA, /**< Safe space to store long-standing app data, not likely to be deleted */
     EMBER_SYSTEM_FOLDER_TEMP,    /**< Temporary data for use by the application. Do not use for important app data */
 } emplat_system_folder;
 

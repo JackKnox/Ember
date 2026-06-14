@@ -137,10 +137,11 @@ void emgpu_frame_set_renderarea(emgpu_frame* frame, uvec2 origin, uvec2 size);
  *
  * @param frame Pointer to the frame.
  * @param renderpass Render pass to begin.
+ * @param clear_colour Clear colour to current renderarea.
  * @param texture_attachments Array of frame-local texture references.
  * @param attachment_count Number of attachments in the array.
  */
-void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, emgpu_frame_texture* texture_attachments, u32 attachment_count);
+void emgpu_frame_begin_renderpass(emgpu_frame* frame, emgpu_renderpass* renderpass, u32 clear_colour, emgpu_frame_texture* texture_attachments, u32 attachment_count);
 
 /**
  * @brief Ends the currently active render pass.

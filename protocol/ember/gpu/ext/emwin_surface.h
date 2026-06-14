@@ -25,13 +25,6 @@ typedef struct emgpu_emwin_surface_config {
 
     /** @brief ember_window window to attach GPU surface to. */
     emwin_window* window;
-
-    /** 
-     * @brief Indicates whetever to hook into the window's resize events. 
-     * 
-     * @note Does not override the user's events. 
-     */
-    b8 set_callbacks;
 } emgpu_emwin_surface_config;
 
 /**

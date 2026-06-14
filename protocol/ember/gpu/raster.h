@@ -74,9 +74,6 @@ typedef struct emgpu_renderpass {
     /** @brief Backend-specific internal data. */
     void* internal_data;
 
-    /** @brief Clear colour value used when beginning a render pass. */
-    u32 clear_colour;
-
     /** @brief Number of attachments attached to the renderpass. */
     u32 attachment_count;
 } emgpu_renderpass;
