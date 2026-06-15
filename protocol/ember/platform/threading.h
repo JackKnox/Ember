@@ -19,12 +19,12 @@ typedef void* (*PFN_thread_start)(void* arg);
 /**
  * @brief Creates a new thread.
  *
- * @param thr Pointer to store the created thread handle.
  * @param func Entry function for the thread.
  * @param arg Argument passed to the thread function.
+ * @param out_thr Pointer to store the created thread handle.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_thread_create(emplat_thread* thr, PFN_thread_start func, void* arg);
+em_result emplat_thread_create(PFN_thread_start func, void* arg, emplat_thread* out_thr);
 
 /**
  * @brief Retrieves the calling thread identifier.
@@ -51,7 +51,7 @@ b8 emplat_thread_equal(emplat_thread thr0, emplat_thread thr1);
  * @param res Optional pointer to store the thread's return value.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_thread_join(emplat_thread thr, u32* res);
+em_result emplat_thread_join(emplat_thread thr, void** res);
 
 /**
  * @brief Defines the type of mutex to be created.
@@ -68,13 +68,13 @@ typedef enum emplat_mutex_type {
 typedef void* emplat_mutex;
 
 /**
- * @brief Initializes a mutex.
+ * @brief Creates a mutex object.
  *
  * @param type The type of mutex to create.
- * @param mtx Pointer to the mutex to initialize.
+ * @param out_mtx Pointer to the mutex to initialize.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_mutex_init(emplat_mutex_type type, emplat_mutex* mtx);
+em_result emplat_mutex_create(emplat_mutex_type type, emplat_mutex* out_mtx);
 
 /**
  * @brief Destroys a mutex and releases its resources.
@@ -126,12 +126,12 @@ em_result emplat_mutex_unlock(emplat_mutex* mtx);
 typedef void* emplat_cond;
 
 /**
- * @brief Initializes a condition variable.
+ * @brief Creates a condition variable.
  *
- * @param cond Pointer to the condition variable to initialize.
+ * @param out_cond Pointer to the condition variable to initialize.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emplat_cond_init(emplat_cond* cond);
+em_result emplat_cond_create(emplat_cond* out_cond);
 
 /**
  * @brief Destroys a condition variable.
