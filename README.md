@@ -124,6 +124,18 @@ The core protocol is intentionally small. Advanced functionality is exposed thro
 
 **Future-proof** — The protocol can evolve ahead of any implementation, giving the ecosystem room to grow.
 
+### What makes Ember different from other libraries
+
+Most cross-platform libraries are both the **API** and the **implementation**. Applications depend directly on that implementation, meaning the library itself becomes the long-term compatibility layer.
+
+Ember separates these concerns.
+
+Applications target a stable **Protocol**, while Drivers provide the implementation for specific platforms, APIs, and hardware. 
+This allows the protocol to remain stable even as implementations evolve.
+
+As new technologies emerge, Drivers can expose them through Extensions without requiring applications to rewrite their foundation.
+Over time, widely adopted Extensions can become part of newer protocol revisions while existing applications and older Drivers continue to exist.
+
 ---
 
 ## Philosophy
