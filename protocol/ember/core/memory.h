@@ -85,9 +85,13 @@ typedef struct em_allocator {
 /**
  * @brief Creates the default system allocator (malloc/free backed).
  *
+ * Implemented by current Driver.
+ * 
  * @return Initialized allocator instance.
  */
 em_allocator em_allocator_default();
+
+#ifdef EMBER_DEFINE_HELPERS
 
 /**
  * @brief Aligns a value to the specified alignment.
@@ -97,6 +101,8 @@ em_allocator em_allocator_default();
  * @return Aligned value.
  */
 u64 alignment_ptr(u64 v, u64 alignment);
+
+#endif
 
 /**
  * @brief Allocates memory from the library allocator system.

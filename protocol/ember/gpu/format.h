@@ -11,7 +11,7 @@
  */
 typedef u32 emgpu_format;
 
-#define EMGPU_FORMAT_UNDEFINED 0,
+#define EMGPU_FORMAT_UNDEFINED 0
 
 /**
  * @brief 8-bit integer formats

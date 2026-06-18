@@ -1,5 +1,7 @@
 // Example when we open a window then clear a colour to it.
 //
+#define EMBER_DEFINE_HELPERS
+
 #include <ember/window/window.h>
 #include <ember/gpu/ext/emwin_surface.h>
 
@@ -32,8 +34,9 @@ int main(int argc, char** argv) {
 	// Before we can open a window we need to fill out a config.
 	// emwin_window_default() pre-fills sensible values so we only need to touch the fields we actually care about.
 	emwin_window_config window_config = emwin_window_default();
-	window_config.size  = (uvec2) { 640, 640 };             // Initial dimensions of the window in pixels.
-	window_config.title = "Example - Clear Colour";         // Shows up in the title bar; uses UTF-8 strings.
+	window_config.title   = "Example - Clear Colour"; // Shows up in the title bar; uses UTF-8 strings.
+	window_config.size.x  = 640;                      // Initial dimensions of the window in pixels.
+	window_config.size.y  = 640;             
 	//window_config.desktop = NULL;
 
 	// emwin_desktop represents our connection to the system's window manager.

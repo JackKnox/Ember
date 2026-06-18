@@ -15,12 +15,16 @@ typedef enum emgpu_device_type {
     EMBER_DEVICE_TYPE_CPU,             /**< CPU-based rendering device */
 } emgpu_device_type;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Converts a device type to human-readable text.
  * 
  * @param device_type Enum type to convert.
  */
 const char* emgpu_device_type_string(emgpu_device_type device_type);
+
+#endif
 
 /**
  * @brief Operating modes supported by the renderer.

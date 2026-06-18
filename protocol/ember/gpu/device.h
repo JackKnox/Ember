@@ -130,12 +130,16 @@ typedef struct emgpu_device_config {
     void* out_extensions;
 } emgpu_device_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default rendering device configuration.
  *
  * @return A default-initialized emgpu_device_config.
  */
 emgpu_device_config emgpu_device_default();
+
+#endif
 
 /**
  * @brief Renderer device interface.
@@ -187,6 +191,8 @@ em_result emgpu_device_get_capabilities(
     emgpu_device* device, 
     emgpu_device_capabilities* out_capabilities);
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Print rendering device info to Ember standard log.
  * 
@@ -197,3 +203,5 @@ em_result emgpu_device_get_capabilities(
  * @param level Log level when printing info.
  */
 void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level);
+
+#endif

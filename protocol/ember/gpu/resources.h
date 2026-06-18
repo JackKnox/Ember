@@ -38,12 +38,16 @@ typedef struct emgpu_buffer {
     u64 buffer_size;
 } emgpu_buffer;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default render buffer configuration.
  *
  * @return A default-initialized emgpu_buffer_config.
  */
 emgpu_buffer_config emgpu_buffer_default();
+
+#endif
 
 /**
  * @brief Creates a GPU buffer.
@@ -157,6 +161,8 @@ typedef struct emgpu_texture {
     emgpu_format image_format;
 } emgpu_texture;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default-initialized texture configuration.
  *
@@ -170,6 +176,8 @@ emgpu_texture_config emgpu_texture_default();
  * @return The total size of the texture in bytes.
  */
 u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
+
+#endif
 
 /**
  * @brief Creates a texture.

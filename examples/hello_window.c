@@ -1,5 +1,7 @@
 // Example when we open a window with defaults.
 //
+#define EMBER_DEFINE_HELPERS
+
 #include <ember/window/window.h>
 
 #include <stddef.h>
@@ -30,7 +32,8 @@ int main(int argc, char** argv) {
     window_config.flags        = EMBER_WINDOW_FLAGS_VISIBLE | EMBER_WINDOW_FLAGS_VSYNC; // Can actually see the window and VSync is enabled.
     window_config.title        = "Example - Basic Window";                              // The name of the window, see this in the title bar. Uses UTF-8 strings
     window_config.centered_pos = true;                                                  // Center the window to the primary monitor.
-    window_config.size         = (uvec2) { 800, 600 };                                  // Initial size of the window when you open it.
+    window_config.size.x       = 800;                                                   // Initial size of the window when you open it.
+    window_config.size.y       = 600;
     //window_config.desktop = NULL; Have not already created a window.
     //window_config.min_size; These two are already set to zero.
     //window_config.max_size; Use these to set limits to the size of the window.

@@ -24,12 +24,16 @@ typedef struct emgpu_compute_pipeline_config {
     emgpu_descriptor_desc* descriptors;
 } emgpu_compute_pipeline_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default compute stage configuration.
  *
  * @return A default-initialized emgpu_compute_pipeline_config.
  */
 emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
+
+#endif
 
 /**
  * @brief Creates a compute pipeline.

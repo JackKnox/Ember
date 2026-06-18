@@ -78,12 +78,16 @@ typedef struct emgpu_renderpass {
     u32 attachment_count;
 } emgpu_renderpass;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default-initialized renderpass configuration.
  *
  * @return A default-initialized emgpu_renderpass_config.
  */
 emgpu_renderpass_config emgpu_renderpass_default();
+
+#endif
 
 /**
  * @brief Creates a render pass.
@@ -137,12 +141,16 @@ typedef struct emgpu_raster_blend_config {
     emgpu_blend_op alpha_op;
 } emgpu_raster_blend_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default raster blending configuration.
  *
  * @return A default-initialized emgpu_raster_blend_config.
  */
 emgpu_raster_blend_config emgpu_raster_blend_default();
+
+#endif
 
 /**
  * @brief Configuration for rasterization vertex input.
@@ -160,12 +168,16 @@ typedef struct emgpu_raster_vertex_config {
     emgpu_format* attributes;
 } emgpu_raster_vertex_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default raster vertex configuration.
  *
  * @return A default-initialized emgpu_raster_vertex_config.
  */
 emgpu_raster_vertex_config emgpu_raster_vertex_default();
+
+#endif
 
 /**
  * @brief Configuration for a raster pipeline.
@@ -196,12 +208,16 @@ typedef struct emgpu_raster_pipeline_config {
     emgpu_raster_vertex_config* vertex_input;
 } emgpu_raster_pipeline_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Creates a default raster stage configuration.
  *
  * @return A default-initialized emgpu_raster_pipeline_config.
  */
 emgpu_raster_pipeline_config emgpu_pipeline_default_raster();
+
+#endif
 
 /**
  * @brief Creates a raster pipeline.

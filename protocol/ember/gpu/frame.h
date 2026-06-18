@@ -71,18 +71,6 @@ em_result emgpu_device_submit_frame(
 em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator);
 
 /**
- * @brief Validates recorded commands within a frame.
- *
- * Performs sanity checks on recorded GPU commands and may emit warnings
- * for common misuse patterns (e.g., missing render pass, invalid state transitions).
- *
- * @param frame Pointer to the frame to validate.
- *
- * @return EMBER_RESULT_OK if validation succeeds, otherwise an error code.
- */
-em_result emgpu_frame_validate(const emgpu_frame* frame);
-
-/**
  * @brief Inserts a no-op command into the frame.
  *
  * Useful for ensuring a frame contains at least one command when required

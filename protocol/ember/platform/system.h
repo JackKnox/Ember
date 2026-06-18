@@ -11,6 +11,8 @@
  */
 typedef f64 emplat_time;
 
+#ifdef EMBER_DEFINE_HELPERS
+
 /**
  * @brief Calculates elapsed time in milliseconds.
  *
@@ -20,6 +22,8 @@ typedef f64 emplat_time;
  * @return Elapsed time in milliseconds.
  */
 f64 emplat_time_elapsed_ms(emplat_time start, emplat_time end);
+
+#endif
 
 /**
  * @brief Platform timer frequency information.
