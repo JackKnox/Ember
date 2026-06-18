@@ -2,9 +2,6 @@
 
 #include "ember/core.h"
 
-#include <string.h>
-#include <stdlib.h>
-
 /**
  * @brief Categorises allocations for debugging, profiling, and leak detection.
  */

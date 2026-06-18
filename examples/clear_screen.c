@@ -6,6 +6,7 @@
 #include <ember/gpu/raster.h>
 #include <ember/gpu/frame.h>
 
+#include <stddef.h>
 #include <stdbool.h>
 
 // A small helper macro to cut down on the repetitive error-check boilerplate.

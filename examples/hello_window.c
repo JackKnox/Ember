@@ -2,6 +2,7 @@
 //
 #include <ember/window/window.h>
 
+#include <stddef.h>
 #include <stdbool.h>
 
 // A small helper macro to cut down on the repetitive error-check boilerplate.

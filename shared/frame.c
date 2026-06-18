@@ -3,6 +3,11 @@
 
 #include "ember/gpu/frame_internal.h"
 
+#include <string.h>
+
+// A C implementation of the emgpu_frame format, not required by every Ember usage to use this
+// way of managing a datastream. e.g bindings to other languages could write an implementation in that language.
+
 #if defined(__cplusplus) && __cplusplus >= 201103L 
 // C++11 and later
 #   define EM_ALIGNOF(type) alignof(type)
