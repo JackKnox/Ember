@@ -2,19 +2,9 @@
 
 #include "ember/core.h"
 
-#include "ember/gpu/types.h"
-
-#include "ember/gpu/device.h"
-#include "ember/gpu/resources.h"
-
 #include "ember/gpu/surface.h"
 
 #include <wayland-client.h>
-
-/**
- * @brief Returns the Wayland surface extension descriptor.
- */
-emgpu_extension_desc emgpu_wayland_surface_extension(struct wl_display* display);
 
 /**
  * @brief Configuration for creating a Wayland-backed GPU surface.
@@ -40,13 +30,6 @@ typedef struct emgpu_wayland_surface_config {
 } emgpu_wayland_surface_config;
 
 /**
- * @brief Returns a default Wayland surface configuration.
- *
- * @return A default-initialized emgpu_wayland_surface_config.
- */
-emgpu_wayland_surface_config emgpu_wayland_surface_default();
-
-/**
  * @brief Function pointer type for creating a Wayland surface.
  *
  * @param device GPU device handle.
@@ -69,9 +52,24 @@ typedef em_result (*PFN_create_wayland_surface)(
  * and manage Wayland-presentable GPU surfaces.
  */
 typedef struct emgpu_wayland_surface_ext {
-    /** @brief If this value is FALSE, the rest of the structure is uninitalized. */
-    b8 enabled;
+    emgpu_extension_desc desc;
 
     /** @brief Creates a Wayland surface backed by the GPU device. */
     PFN_create_wayland_surface create_surface;
 } emgpu_wayland_surface_ext;
+
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Returns the Wayland surface extension descriptor.
+ */
+emgpu_wayland_surface_ext emgpu_wayland_surface_extension(struct wl_display* display);
+
+/**
+ * @brief Returns a default Wayland surface configuration.
+ *
+ * @return A default-initialized emgpu_wayland_surface_config.
+ */
+emgpu_wayland_surface_config emgpu_wayland_surface_default();
+
+#endif

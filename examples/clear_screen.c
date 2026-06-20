@@ -49,15 +49,15 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		emwin_window_open(&window_config, &system_alloc, &window, &desktop), 
 		"Failed to open window");
-
+	
 	// The GPU device supports extensions for platform-specific surface creation.
-	// Using ember_window we use the emwin_gpu_surface extension and pass it our desktop handle
+	// Using ember_window we use the emwin_surface extension and pass it our desktop handle
 	// so the backend knows which desktop to talk to. This interally wraps to actual platform APIs.
-	emgpu_extension_desc extensions[] = { emgpu_emwin_surface_extension(desktop) };
-
-	// This is an 'out extension' — after device init, Ember writes the actual
-	// surface creation function pointers into this struct so we can call them.
-    emgpu_emwin_surface_ext wsi_extension = {};
+    emgpu_emwin_surface_ext wsi_extension = emgpu_emwin_surface_extension(desktop);
+	
+	// This is a list of 'out extension' — after device init, Ember writes the actual
+	// surface creation function pointers into these structs so we can call them.
+	emgpu_extension_desc* extensions[] = { &wsi_extension.desc };
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
@@ -70,7 +70,6 @@ int main(int argc, char** argv) {
 	device_config.frames_in_flight = 3;                            // Triple buffering.
     device_config.extension_count  = EM_ARRAYSIZE(extensions);
     device_config.extensions       = extensions;    // Pass in the extensions we want...
-    device_config.out_extensions   = &wsi_extension; // ...and where to write the function pointers back to.
 	
 	emgpu_device device = {};
 	CHECK_FUNC(

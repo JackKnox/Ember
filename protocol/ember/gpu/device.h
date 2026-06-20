@@ -116,7 +116,7 @@ typedef struct emgpu_device_config {
      *
      * Extensions may enable additional features or platform support.
      */
-    emgpu_extension_desc* extensions;
+    emgpu_extension_desc** extensions;
 
     /** @brief Number of requested extensions. */
     u32 extension_count;

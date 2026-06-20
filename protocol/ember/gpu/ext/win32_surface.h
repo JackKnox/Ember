@@ -2,17 +2,13 @@
 
 #include "ember/core.h"
 
-#include "ember/gpu/types.h"
-#include "ember/gpu/device.h"
-#include "ember/gpu/resources.h"
+#include "ember/gpu/surface.h"
 
 #include <Windows.h>
 
 /**
- * @brief Returns the Win32 surface extension descriptor.
+ * @brief Configuration for creating a Win32-backed GPU surface.
  */
-emgpu_extension_desc emgpu_win32_surface_extension();
-
 typedef struct emgpu_win32_surface_config {
     /** @brief Requested format of the surface texture. */
     emgpu_format preferred_format;
@@ -32,13 +28,6 @@ typedef struct emgpu_win32_surface_config {
     /** @brief HWND to create window surface with. */
     HWND hwnd;
 } emgpu_win32_surface_config;
-
-/**
- * @brief Creates a default Win32 surface configuration.
- *
- * @return A default-initialized emgpu_win32_surface_config.
- */
-emgpu_win32_surface_config emgpu_win32_surface_default();
 
 /**
  * @brief Function pointer type for creating a Win32 surface.
@@ -63,9 +52,24 @@ typedef em_result (*PFN_create_win32_surface)(
  * and manage Win32-presentable GPU surfaces.
  */
 typedef struct emgpu_win32_surface_ext {
-    /** @brief If this value is FALSE, the rest of the structure is uninitalized. */
-    b8 enabled;
+    emgpu_extension_desc desc;
 
     /** @brief Creates a Win32 surface backed by the GPU device. */
     PFN_create_win32_surface create_surface;
 } emgpu_win32_surface_ext;
+
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Returns the Win32 surface extension descriptor.
+ */
+emgpu_win32_surface_ext emgpu_win32_surface_extension();
+
+/**
+ * @brief Creates a default Win32 surface configuration.
+ *
+ * @return A default-initialized emgpu_win32_surface_config.
+ */
+emgpu_win32_surface_config emgpu_win32_surface_default();
+
+#endif

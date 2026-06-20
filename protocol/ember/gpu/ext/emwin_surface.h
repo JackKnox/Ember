@@ -7,11 +7,6 @@
 #include <ember/window/window.h>
 
 /**
- * @brief Returns the ember_window surface extension descriptor.
- */
-emgpu_extension_desc emgpu_emwin_surface_extension(emwin_desktop* desktop);
-
-/**
  * @brief Configuration for creating a ember_window-backed GPU surface.
  */
 typedef struct emgpu_emwin_surface_config {
@@ -24,13 +19,6 @@ typedef struct emgpu_emwin_surface_config {
     /** @brief ember_window window to attach GPU surface to. */
     emwin_window* window;
 } emgpu_emwin_surface_config;
-
-/**
- * @brief Creates a default ember_window surface configuration.
- *
- * @return A default-initialized emgpu_emwin_surface_config.
- */
-emgpu_emwin_surface_config emgpu_emwin_surface_default();
 
 /**
  * @brief Function pointer type for creating a ember_window surface.
@@ -55,9 +43,24 @@ typedef em_result (*PFN_create_emwin_surface)(
  * and manage ember-presentable GPU surfaces.
  */
 typedef struct emgpu_emwin_surface_ext {
-    /** @brief If this value is FALSE, the rest of the structure is uninitalized. */
-    b8 enabled;
+    emgpu_extension_desc desc;
 
     /** @brief Creates a ember_window surface backed by the GPU device. */
     PFN_create_emwin_surface create_surface;
 } emgpu_emwin_surface_ext;
+
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Returns the ember_window surface extension descriptor.
+ */
+emgpu_emwin_surface_ext emgpu_emwin_surface_extension(emwin_desktop* desktop);
+
+/**
+ * @brief Creates a default ember_window surface configuration.
+ *
+ * @return A default-initialized emgpu_emwin_surface_config.
+ */
+emgpu_emwin_surface_config emgpu_emwin_surface_default();
+
+#endif
