@@ -194,7 +194,7 @@ void emwin_window_request_close(emwin_window* window);
  * @param window Pointer to the window.
  * @return TRUE if the window should close; otherwise FALSE.
  */
-b8 emwin_window_should_close(emwin_window* window);
+b8 emwin_window_should_close(const emwin_window* window);
 
 /**
  * @brief Set visbility of the window.
@@ -212,4 +212,4 @@ void emwin_window_set_visible(emwin_window* window, b8 visible);
  * @param window Pointer to the window.
  * @return TRUE if the window is visible; otherwise FALSE.
  */
-b8 emwin_window_visible(emwin_window* window);
+b8 emwin_window_visible(const emwin_window* window);
