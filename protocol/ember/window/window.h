@@ -189,9 +189,27 @@ void emwin_window_request_close(emwin_window* window);
  * @brief Checks whether the window has been requested to close.
  *
  * This typically becomes TRUE when the user attempts to close the window
- * (e.g., clicking the close button).
+ * (e.g., clicking the close button) or after calling @ref emwin_window_request_close.
  *
  * @param window Pointer to the window.
  * @return TRUE if the window should close; otherwise FALSE.
  */
 b8 emwin_window_should_close(emwin_window* window);
+
+/**
+ * @brief Set visbility of the window.
+ * 
+ * This immediately shows / hides the window when called.
+ * 
+ * @param window Pointer to the window.
+ * @param visible Whetever to show or hide.
+ */
+void emwin_window_set_visible(emwin_window* window, b8 visible);
+
+/**
+ * @brief Checks whether the window is visible or hidden.
+ * 
+ * @param window Pointer to the window.
+ * @return TRUE if the window is visible; otherwise FALSE.
+ */
+b8 emwin_window_visible(emwin_window* window);
