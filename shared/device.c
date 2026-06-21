@@ -1,6 +1,8 @@
 #include "ember/core.h"
 #include "ember/gpu/device.h"
 
+#include <ember/platform/system.h>
+
 #include "ember/gpu/raster.h"
 #include "ember/gpu/compute.h"
 
@@ -14,7 +16,7 @@ const char* emgpu_device_type_string(emgpu_device_type device_type) {
     }
 }
 
-void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level) {
+void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabilities, log_level level) {
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s [%i.%i.%i]",
         capabilities->vendor_name,
@@ -25,7 +27,7 @@ void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabili
 emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
     config.debug_name       = "EMBER_GPU";
-    config.frame_allocator  = em_allocator_default();
+    config.frame_allocator  = emplat_allocator_default();
     config.app_version      = EMBER_MAKE_VERSION(0, 0, 1);
     config.required_modes   = EMBER_DEVICE_MODE_RASTER;
     config.frames_in_flight = 3; // Standard in low level GAPIs.
