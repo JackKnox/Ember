@@ -170,32 +170,6 @@ void emgpu_frame_draw(emgpu_frame* frame, u32 vertex_count, u32 instance_count);
 void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size);
 
 /**
- * @brief Exports a frame-local resource for use in subsequent commands.
- *
- * Creates a transient GPU resource reference with a defined access mode.
- *
- * @param frame Pointer to the frame.
- * @param descriptor_index Binding or descriptor slot index.
- * @param resource_access Access flags defining usage (read/write/compute/etc).
- *
- * @return Frame-local resource reference.
- */
-emgpu_frame_resource emgpu_frame_export_resource(emgpu_frame* frame, u32 descriptor_index, emgpu_access_flags resource_access);
-
-/**
- * @brief Binds a previously exported or imported frame resource.
- *
- * Makes a frame-local resource available at a descriptor binding point
- * with specified access permissions.
- *
- * @param frame Pointer to the frame.
- * @param resource Frame-local resource handle.
- * @param descriptor_index Binding slot index.
- * @param resource_access Required access mode for this binding.
- */
-void emgpu_frame_use_resource(emgpu_frame* frame, emgpu_frame_resource resource, u32 descriptor_index, emgpu_access_flags resource_access);
-
-/**
  * @brief Finalizes command recording and submits the frame to the GPU.
  *
  * Flushes recorded commands and schedules execution on the device queue.

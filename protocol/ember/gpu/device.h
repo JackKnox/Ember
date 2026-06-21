@@ -196,12 +196,9 @@ em_result emgpu_device_get_capabilities(
 /**
  * @brief Print rendering device info to Ember standard log.
  * 
- * Retreives and caches capabilities from the rendering device, 
- * fairly slow function.
- * 
- * @param device Pointer to the device instance.
+ * @param capabilities Pointer to the capabilities struct.
  * @param level Log level when printing info.
  */
-void emgpu_device_print_capabilities(emgpu_device* device, emgpu_device_capabilities* capabilities, log_level level);
+void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabilities, log_level level);
 
 #endif

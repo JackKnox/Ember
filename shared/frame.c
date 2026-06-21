@@ -127,23 +127,6 @@ void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size) {
     payload->dispatch.group_size = group_size;
 }
 
-emgpu_frame_resource emgpu_frame_export_resource(emgpu_frame* frame, u32 descriptor_index, emgpu_access_flags resource_access) {
-    rendercmd_payload* payload;
-    payload = add_command(frame, RENDERCMD_EXPORT_RESOURCE, sizeof(payload->export_resource));
-    payload->export_resource.descriptor_index = descriptor_index;
-    payload->export_resource.resource_access  = resource_access;
-    payload->export_resource.dst_resource     = frame->current_resource_idx++; 
-    return payload->export_resource.dst_resource;
-}
-
-void emgpu_frame_use_resource(emgpu_frame* frame, emgpu_frame_resource resource, u32 descriptor_index, emgpu_access_flags resource_access) {
-    rendercmd_payload* payload;
-    payload = add_command(frame, RENDERCMD_USE_RESOURCE, sizeof(payload->use_resource));
-    payload->use_resource.src_resource     = resource;
-    payload->use_resource.descriptor_index = descriptor_index;
-    payload->use_resource.resource_access  = resource_access;
-}
-
 void emgpu_frame_flush(emgpu_frame* frame) {
     rendercmd_payload* payload;
     payload = add_command(frame, RENDERCMD_FLUSH, 0);
