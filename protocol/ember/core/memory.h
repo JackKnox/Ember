@@ -82,15 +82,6 @@ typedef struct em_allocator {
     u8 magic;
 } em_allocator;
 
-/**
- * @brief Creates the default system allocator (malloc/free backed).
- *
- * Implemented by current Driver.
- * 
- * @return Initialized allocator instance.
- */
-em_allocator em_allocator_default();
-
 #ifdef EMBER_DEFINE_HELPERS
 
 /**

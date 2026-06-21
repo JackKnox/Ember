@@ -2,6 +2,8 @@
 //
 #define EMBER_DEFINE_HELPERS
 
+#include <ember/platform/system.h>
+
 #include <ember/window/window.h>
 
 #include <stddef.h>
@@ -23,7 +25,7 @@
 int main(int argc, char** argv) {
     // Ah yes the Allocator API. This is a structure used by all ember subsystems
     // simply holds malloc / free / realloc along with some metadata.
-    em_allocator system_malloc = em_allocator_default(); // em_allocator_default() referes to the OS allocator (malloc / free)
+    em_allocator system_malloc = emplat_allocator_default(); // em_allocator_default() referes to the OS allocator (malloc / free)
 
     // I need a config structure to open a window
     emwin_window_config window_config = emwin_window_default(); // This sets many helpful values, if we didn't set any values the code would still work.

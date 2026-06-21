@@ -2,6 +2,8 @@
 //
 #define EMBER_DEFINE_HELPERS
 
+#include <ember/platform/system.h>
+
 #include <ember/window/window.h>
 #include <ember/gpu/ext/emwin_surface.h>
 
@@ -29,7 +31,7 @@ int main(int argc, char** argv) {
 	// some metadata. Every Ember subsystem takes one of these so you can plug in
 	// a custom allocator (arena, pool, tracking, etc.) wherever you need to.
 	// em_allocator_default() just hands back the OS allocator — malloc and free.
-	em_allocator system_alloc = em_allocator_default();
+	em_allocator system_alloc = emplat_allocator_default();
 
 	// Before we can open a window we need to fill out a config.
 	// emwin_window_default() pre-fills sensible values so we only need to touch the fields we actually care about.
@@ -63,7 +65,7 @@ int main(int argc, char** argv) {
 	// that pre-fills everything sensible so we only need to set what matters.
 	emgpu_device_config device_config = emgpu_device_default();
 	device_config.debug_name       = window_config.title;    // Shows up in GPU debug tooling.
-	device_config.frame_allocator  = em_allocator_default(); // Allocator used to allocate frame-local resources.
+	device_config.frame_allocator  = emplat_allocator_default(); // Allocator used to allocate frame-local resources.
 	device_config.app_version      = EMBER_VERSION;
 	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
 	device_config.optional_modes   = EMBER_DEVICE_MODE_VALIDATION; // Nice to have for debugging but we won't bail if it's unavailable.
@@ -81,7 +83,7 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		emgpu_device_get_capabilities(&device, &capabilities),
 		"Failed to retrieve device capabilities");
-	emgpu_device_print_capabilities(&device, &capabilities, LOG_LEVEL_TRACE);
+	emgpu_device_print_capabilities(&capabilities, LOG_LEVEL_TRACE);
 
 	// Now we can create a ember_window-backed surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.

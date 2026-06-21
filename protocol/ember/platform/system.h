@@ -3,73 +3,13 @@
 #include "ember/core.h"
 
 /**
- * @brief High resolution timestamp in seconds.
- *
- * This value is monotonic and suitable for measuring elapsed time.
- * The starting point is unspecified and should not be interpreted
- * as wall-clock time.
+ * @brief Creates the default system allocator (malloc/free-backed).
+ * 
+ * Implemented by current Driver.
+ * 
+ * @return Initialized allocator instance.
  */
-typedef f64 emplat_time;
-
-#ifdef EMBER_DEFINE_HELPERS
-
-/**
- * @brief Calculates elapsed time in milliseconds.
- *
- * @param start Start timestamp.
- * @param end End timestamp.
- *
- * @return Elapsed time in milliseconds.
- */
-f64 emplat_time_elapsed_ms(emplat_time start, emplat_time end);
-
-#endif
-
-/**
- * @brief Platform timer frequency information.
- *
- * Useful for debugging or exposing timer precision information.
- */
-typedef struct emplat_timer_info {
-    /**
-     * @brief Estimated timer resolution in nanoseconds.
-     */
-    u64 resolution_ns;
-
-    /**
-     * @brief Whether the timer is monotonic.
-     */
-    b8 monotonic;
-
-    /**
-     * @brief Whether the timer is high precision.
-     */
-    b8 high_precision;
-} emplat_timer_info;
-
-/**
- * @brief Gets the current system time.
- *
- * @return The current time represented as an @ref emplat_time value.
- */
-emplat_time emplat_system_now();
-
-/**
- * @brief Gets the current system time in nanoseconds.
- *
- * Uses the highest-resolution clock available on the platform.
- *
- * @return Current time in nanoseconds.
- */
-u64 emplat_system_now_ns();
-
-/**
- * @brief Retrieves information about the current platform timer state.
- *
- * @return A populated @ref emplat_timer_info structure containing
- *         platform timing information.
- */
-emplat_timer_info emplat_system_now_info();
+em_allocator emplat_allocator_default();
 
 /**
  * @brief Suspends execution for a specified duration in milliseconds.
@@ -209,6 +149,75 @@ typedef enum emplat_system_folder {
  *          folder, or NULL if an error happened.
  */
 const char* emplat_get_systemfolder(emplat_system_folder folder);
+
+/**
+ * @brief High resolution timestamp in seconds.
+ *
+ * This value is monotonic and suitable for measuring elapsed time.
+ * The starting point is unspecified and should not be interpreted
+ * as wall-clock time.
+ */
+typedef f64 emplat_time;
+
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Calculates elapsed time in milliseconds.
+ *
+ * @param start Start timestamp.
+ * @param end End timestamp.
+ *
+ * @return Elapsed time in milliseconds.
+ */
+f64 emplat_time_elapsed_ms(emplat_time start, emplat_time end);
+
+#endif
+
+/**
+ * @brief Platform timer frequency information.
+ *
+ * Useful for debugging or exposing timer precision information.
+ */
+typedef struct emplat_timer_info {
+    /**
+     * @brief Estimated timer resolution in nanoseconds.
+     */
+    u64 resolution_ns;
+
+    /**
+     * @brief Whether the timer is monotonic.
+     */
+    b8 monotonic;
+
+    /**
+     * @brief Whether the timer is high precision.
+     */
+    b8 high_precision;
+} emplat_timer_info;
+
+/**
+ * @brief Gets the current system time.
+ *
+ * @return The current time represented as an @ref emplat_time value.
+ */
+emplat_time emplat_system_now();
+
+/**
+ * @brief Gets the current system time in nanoseconds.
+ *
+ * Uses the highest-resolution clock available on the platform.
+ *
+ * @return Current time in nanoseconds.
+ */
+u64 emplat_system_now_ns();
+
+/**
+ * @brief Retrieves information about the current platform timer state.
+ *
+ * @return A populated @ref emplat_timer_info structure containing
+ *         platform timing information.
+ */
+emplat_timer_info emplat_system_now_info();
 
 /**
  * The basic state for the system's power supply.
