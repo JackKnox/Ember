@@ -16,10 +16,50 @@ const char* emgpu_device_type_string(emgpu_device_type device_type) {
     }
 }
 
+const char* emgpu_vendor_signiture_string(u32 vendor_id) {
+    switch (vendor_id) {
+        case 0x1002: // PCI-SIG AMD
+            return "AMD";
+
+        case 0x10DE: // PCI-SIG NVIDIA
+            return "NVIDIA";
+
+        case 0x8086: // PCI-SIG Intel
+            return "Intel";
+
+        case 0x1010: // PCI-SIG Imagination Technologies
+            return "Imagination Technologies";
+
+        case 0x5143: // PCI-SIG Qualcomm
+            return "Qualcomm";
+
+        case 0x13B5: // PCI-SIG ARM
+            return "ARM";
+
+        case 0x14E4: // PCI-SIG Broadcom
+            return "Broadcom";
+
+        case 0x1AE0: // PCI-SIG Google
+            return "Google";
+
+        case 0x144D: // PCI-SIG Samsung
+            return "Samsung";
+
+        case 0x1D17: // PCI-SIG VeriSilicon
+            return "VeriSilicon";
+
+        case 0x106B: // PCI-SIG Apple
+            return "Apple";
+
+        default:
+            return "Unknown";
+    }
+}
+
 void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabilities, log_level level) {
     EM_LOG(level, "Gpu", "Device capabilities:");
     EM_LOG(level, "Gpu", "  Backend: %s [%i.%i.%i]",
-        capabilities->vendor_name,
+        emgpu_vendor_signiture_string(capabilities->vendor_signiture),
         EMBER_VERSION_MAJOR(capabilities->driver_version), EMBER_VERSION_MINOR(capabilities->driver_version),  EMBER_VERSION_PATCH(capabilities->driver_version));
     EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
 }

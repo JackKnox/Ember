@@ -7,7 +7,10 @@
 /**
  * @brief Describes the capabilities of the relevent device.
  */
-typedef struct emgpu_device_capabilities {
+typedef struct emgpu_device_capabilities {    
+    /** @brief Human-readable device name. */
+    char device_name[32];
+
     /** @brief Device classification. */
     emgpu_device_type device_type;
 
@@ -20,11 +23,8 @@ typedef struct emgpu_device_capabilities {
     /** @brief Maximum supported anisotropic filtering level. */
     f32 max_anisotropy;
 
-    /** @brief Human-readable name for driver vendor. */
-    const char* vendor_name;
-
-    /** @brief Human-readable device name. */
-    char device_name[32];
+    /** @brief PCI-SIG identifier for device vendor. */
+    u32 vendor_signiture;
 } emgpu_device_capabilities;
 
 /**
@@ -192,6 +192,15 @@ em_result emgpu_device_get_capabilities(
     emgpu_device_capabilities* out_capabilities);
 
 #ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Converts PCI-SIG values to a human-readable string
+ *        representing the vendor (e.g. "NVIDIA" or "Samsung").
+ *
+ * @param vendor_id PCI-SIG value to convert.
+ * @return Human-readable string.
+ */
+const char* emgpu_vendor_signiture_string(u32 vendor_id);
 
 /**
  * @brief Print rendering device info to Ember standard log.
