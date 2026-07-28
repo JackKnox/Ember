@@ -16,7 +16,7 @@ target_include_directories(ember-headers INTERFACE "./protocol/")
 
 add_library(ember-shared STATIC ${EMBER_SHARED_SOURCES})
 target_link_libraries(ember-shared PUBLIC ember-headers)
-target_compile_definitions(ember-shared PRIVATE EMBER_DEFINE_HELPERS)
+target_compile_definitions(ember-shared PUBLIC EMBER_DEFINE_HELPERS)
 
 option(EMBER_BUILD_EXAMPLES "Enable building examples and linking nessacery dependices" ${MAIN_PROJECT})
 
