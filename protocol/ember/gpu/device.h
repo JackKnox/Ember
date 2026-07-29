@@ -60,9 +60,6 @@ typedef struct emgpu_extension_desc {
      */
     em_version version;
 
-    /** @brief Type-erased create info for the extension. */
-    void* user_data;
-
     /**
      * @brief Indicates whether the extension is optional.
      *
@@ -70,6 +67,9 @@ typedef struct emgpu_extension_desc {
      * is not supported by the selected backend.
      */
     b8 optional;
+
+    /** @brief Type-erased create info for the extension. */
+    u8 user_data[16];
 } emgpu_extension_desc;
 
 /**
@@ -116,18 +116,10 @@ typedef struct emgpu_device_config {
      *
      * Extensions may enable additional features or platform support.
      */
-    emgpu_extension_desc** extensions;
+    emgpu_extension_desc* extensions;
 
     /** @brief Number of requested extensions. */
     u32 extension_count;
-
-    /**
-     * @brief Optional output array for resolved extension instances.
-     *
-     * If non-null, will be populated with pointers to active extension
-     * instances matching the requested extensions.
-     */
-    void* out_extensions;
 } emgpu_device_config;
 
 #ifdef EMBER_DEFINE_HELPERS

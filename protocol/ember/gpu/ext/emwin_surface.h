@@ -43,18 +43,21 @@ typedef em_result (*PFN_create_emwin_surface)(
  * and manage ember-presentable GPU surfaces.
  */
 typedef struct emgpu_emwin_surface_ext {
-    emgpu_extension_desc desc;
-
     /** @brief Creates a ember_window surface backed by the GPU device. */
     PFN_create_emwin_surface create_surface;
 } emgpu_emwin_surface_ext;
+
+typedef struct emgpu_emwin_surface_params {
+    emwin_desktop* desktop;
+    emgpu_emwin_surface_ext* out_extension;
+} emgpu_emwin_surface_params;
 
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
  * @brief Returns the ember_window surface extension descriptor.
  */
-emgpu_emwin_surface_ext emgpu_emwin_surface_extension(emwin_desktop* desktop);
+emgpu_extension_desc emgpu_emwin_surface_extension(emwin_desktop* desktop, emgpu_emwin_surface_ext* out_extension);
 
 /**
  * @brief Creates a default ember_window surface configuration.

@@ -67,7 +67,7 @@ void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabiliti
 emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
     config.debug_name       = "EMBER_GPU";
-    config.frame_allocator  = emplat_allocator_default();
+    config.frame_allocator  = emplat_system_allocator();
     config.app_version      = EMBER_MAKE_VERSION(0, 0, 1);
     config.required_modes   = EMBER_DEVICE_MODE_RASTER;
     config.frames_in_flight = 3; // Standard in low level GAPIs.

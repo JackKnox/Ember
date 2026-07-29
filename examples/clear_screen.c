@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	// some metadata. Every Ember subsystem takes one of these so you can plug in
 	// a custom allocator (arena, pool, tracking, etc.) wherever you need to.
 	// em_allocator_default() just hands back the OS allocator — malloc and free.
-	em_allocator system_alloc = emplat_allocator_default();
+	em_allocator system_alloc = emplat_system_allocator();
 
 	// Before we can open a window we need to fill out a config.
 	// emwin_window_default() pre-fills sensible values so we only need to touch the fields we actually care about.
@@ -54,18 +54,16 @@ int main(int argc, char** argv) {
 	
 	// The GPU device supports extensions for platform-specific surface creation.
 	// Using ember_window we use the emwin_surface extension and pass it our desktop handle
-	// so the backend knows which desktop to talk to. This interally wraps to actual platform APIs.
-    emgpu_emwin_surface_ext wsi_extension = emgpu_emwin_surface_extension(desktop);
-	
-	// This is a list of 'out extension' — after device init, Ember writes the actual
-	// surface creation function pointers into these structs so we can call them.
-	emgpu_extension_desc* extensions[] = { &wsi_extension.desc };
+	// so the backend knows which desktop to talk to.
+    emgpu_emwin_surface_ext wsi_extension = {};
+
+    emgpu_extension_desc extensions[] = { emgpu_emwin_surface_extension(desktop, &wsi_extension) };
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
 	emgpu_device_config device_config = emgpu_device_default();
 	device_config.debug_name       = window_config.title;    // Shows up in GPU debug tooling.
-	device_config.frame_allocator  = emplat_allocator_default(); // Allocator used to allocate frame-local resources.
+	device_config.frame_allocator  = emplat_system_allocator(); // Allocator used to allocate frame-local resources.
 	device_config.app_version      = EMBER_VERSION;
 	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
 	device_config.optional_modes   = EMBER_DEVICE_MODE_VALIDATION; // Nice to have for debugging but we won't bail if it's unavailable.

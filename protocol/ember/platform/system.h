@@ -9,7 +9,7 @@
  * 
  * @return Initialized allocator instance.
  */
-em_allocator emplat_allocator_default();
+em_allocator emplat_system_allocator();
 
 /**
  * @brief Suspends execution for a specified duration in milliseconds.
