@@ -56,14 +56,6 @@ const char* emgpu_vendor_signiture_string(u32 vendor_id) {
     }
 }
 
-void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabilities, log_level level) {
-    EM_LOG(level, "Gpu", "Device capabilities:");
-    EM_LOG(level, "Gpu", "  Backend: %s [%i.%i.%i]",
-        emgpu_vendor_signiture_string(capabilities->vendor_signiture),
-        EMBER_VERSION_MAJOR(capabilities->driver_version), EMBER_VERSION_MINOR(capabilities->driver_version),  EMBER_VERSION_PATCH(capabilities->driver_version));
-    EM_LOG(level, "Gpu", "  Selected device: '%s' (%s.)", capabilities->device_name, emgpu_device_type_string(capabilities->device_type));
-}
-
 emgpu_device_config emgpu_device_default() {
     emgpu_device_config config = {};
     config.debug_name       = "EMBER_GPU";

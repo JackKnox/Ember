@@ -127,6 +127,7 @@ void mem_free(em_allocator* allocator, void* block, u64 size, memory_tag tag);
  * @param old_size Original allocation size.
  * @param new_size New allocation size.
  * @param tag Memory category used at allocation time.
+ * @return Pointer to reallocated memory, or NULL on failure.
  */
 void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag);
 
@@ -146,14 +147,10 @@ void mem_report_free(u64 size, memory_tag tag);
 
 /**
  * @brief Dumps current memory usage statistics.
- *
- * @note Only enabled in dev builds (See EMBER_DEV)
  */
 void show_memory_stats();
 
 /**
  * @brief Reports any detected memory leaks.
- *
- * @note Only enabled in dev builds (See EMBER_DEV)
  */
 void memory_leaks();

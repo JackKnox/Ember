@@ -194,12 +194,4 @@ em_result emgpu_device_get_capabilities(
  */
 const char* emgpu_vendor_signiture_string(u32 vendor_id);
 
-/**
- * @brief Print rendering device info to Ember standard log.
- * 
- * @param capabilities Pointer to the capabilities struct.
- * @param level Log level when printing info.
- */
-void emgpu_device_print_capabilities(const emgpu_device_capabilities* capabilities, log_level level);
-
 #endif

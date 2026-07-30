@@ -2,6 +2,8 @@
 
 #include "ember/core.h"
 
+#include "ember/gpu/frame.h"
+
 /**
  * @brief Render command types.
  *
@@ -18,9 +20,6 @@ typedef enum rendercmd_payload_type {
     RENDERCMD_DRAW,
     RENDERCMD_DRAW_INDEXED,
     RENDERCMD_DISPATCH,
-
-    RENDERCMD_FLUSH,
-    RENDERCMD_DUMMY,
 } rendercmd_payload_type;
 
 typedef struct rendercmd_payload {

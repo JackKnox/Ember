@@ -1,13 +1,12 @@
 #pragma once 
 
 #include "ember/core.h"
-#include "ember/core/datastream.h"
 
-#include "ember/gpu/types.h"
-
+#include "ember/gpu/resources.h"
 #include "ember/gpu/device.h"
+
 #include "ember/gpu/raster.h"
-#include "ember/gpu/compute.h"
+#include "ember/gpu/surface.h"
 
 /**
  * @brief Opaque handle to a texture valid within a single GPU frame.
@@ -46,7 +45,7 @@ typedef struct emgpu_frame {
      * Commands are appended during frame recording and later consumed
      * during submission.
      */
-    datastream commands;
+    void* commands_buf;
 } emgpu_frame;
 
 /**
@@ -63,22 +62,12 @@ em_result emgpu_device_submit_frame(
 /**
  * @brief Initializes a GPU frame for command recording.
  *
- * @param frame Pointer to the frame to initialize.
- * @param allocator Allocator used for frame-local memory.
+ * @param device Pointer to the device instance.
+ * @param out_frame Pointer to the frame to initialize.
  *
  * @return EMBER_RESULT_OK on success, or an error code on failure.
  */
-em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator);
-
-/**
- * @brief Inserts a no-op command into the frame.
- *
- * Useful for ensuring a frame contains at least one command when required
- * by backend validation rules.
- *
- * @param frame Pointer to the frame.
- */
-void emgpu_frame_dummy(emgpu_frame* frame);
+em_result emgpu_frame_init(emgpu_device* device, emgpu_frame* out_frame);
 
 /**
  * @brief Acquires the next available surface texture for rendering.
@@ -168,12 +157,3 @@ void emgpu_frame_draw(emgpu_frame* frame, u32 vertex_count, u32 instance_count);
  * @param group_size Number of compute workgroups in XYZ dimensions.
  */
 void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size);
-
-/**
- * @brief Finalizes command recording and submits the frame to the GPU.
- *
- * Flushes recorded commands and schedules execution on the device queue.
- *
- * @param frame Pointer to the frame.
- */
-void emgpu_frame_flush(emgpu_frame* frame);
