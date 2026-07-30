@@ -57,7 +57,7 @@ typedef struct emgpu_emwin_surface_params {
 /**
  * @brief Returns the ember_window surface extension descriptor.
  */
-emgpu_extension_desc emgpu_emwin_surface_extension(emwin_desktop* desktop, emgpu_emwin_surface_ext* out_extension);
+emgpu_extension_desc emgpu_register_emwin_surface(emwin_desktop* desktop, emgpu_emwin_surface_ext* out_extension);
 
 /**
  * @brief Creates a default ember_window surface configuration.

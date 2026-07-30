@@ -5,6 +5,7 @@
 #include <ember/platform/system.h>
 
 #include <ember/window/window.h>
+#include <ember/window/events.h>
 #include <ember/gpu/ext/emwin_surface.h>
 
 #include <ember/gpu/raster.h>
@@ -57,7 +58,7 @@ int main(int argc, char** argv) {
 	// so the backend knows which desktop to talk to.
     emgpu_emwin_surface_ext wsi_extension = {};
 
-    emgpu_extension_desc extensions[] = { emgpu_emwin_surface_extension(desktop, &wsi_extension) };
+    emgpu_extension_desc extensions[] = { emgpu_register_emwin_surface(desktop, &wsi_extension) };
 
 	// Now configure the GPU device. Like the window, there's a _default() helper
 	// that pre-fills everything sensible so we only need to set what matters.
@@ -81,9 +82,8 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		emgpu_device_get_capabilities(&device, &capabilities),
 		"Failed to retrieve device capabilities");
-	emgpu_device_print_capabilities(&capabilities, LOG_LEVEL_TRACE);
 
-	// Now we can create a ember_window-backed surface using the function pointer the device
+    // Now we can create a ember_window-backed surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
 	emgpu_emwin_surface_config surface_config = emgpu_emwin_surface_default();
 	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
@@ -121,40 +121,55 @@ int main(int argc, char** argv) {
 
 	emgpu_renderpass mainpass = {};
 	CHECK_FUNC(
-		emgpu_device_create_renderpass(&device, &system_alloc, &renderpass_config, &mainpass), 
+		emgpu_renderpass_create(&device, &system_alloc, &renderpass_config, &mainpass), 
 		"Failed to create main renderpass (present)");
 	
+    em_endpoint desktop_events = emwin_desktop_open_events(desktop);
+    em_endpoint gpu_queue = emgpu_device_open_queue(&device);
+
 	// Main loop. emwin_window_should_close becomes true when the user hits the X
 	// button or we signal the window to close ourselves.
 	while (!emwin_window_should_close(&window)) {
+        emwin_desktop_event* desk_event = NULL;
+
+        u64 size = 0;
+        while (em_endpoint_recv(desktop_events, &size, (void**)&desk_event) == EMBER_RESULT_OK) {
+            switch (desk_event->type) {
+                case EMWIN_EVENT_RESIZE_WINDOW:
+                    emgpu_surface_resize(&device, &surface, desk_event->resize_window.size);
+                    break;
+                default: break;
+            }
+
+            em_endpoint_consume(desktop_events);
+        }
 
 		// Each frame is driven by emgpu_frame. It manages per-frame allocations
 		// using the device's frame_allocator — everything allocated here is
 		// automatically freed when the frame is submitted.
 		emgpu_frame frame = {};
-		if (emgpu_frame_init(&frame, &device.frame_allocator) == EMBER_RESULT_OK) {
-			// Grab the next texture from the swapchain to render into.
-			emgpu_frame_texture window_tex = emgpu_frame_next_surface_texture(&frame, &surface);
+        CHECK_FUNC(
+            emgpu_frame_init(&device, &frame),
+            "Failed to init frame object");
 
-			// Set the render area to cover the full window, begin our single pass,
-			// then immediately end it. No actual draw calls yet — this just clears the surface.
-			emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size);
-			emgpu_frame_begin_renderpass(&frame, &mainpass, 0xAAFFFFFF, &window_tex, 1);
-			emgpu_frame_end_renderpass(&frame);
+        // Grab the next texture from the swapchain to render into.
+        emgpu_frame_texture window_tex = emgpu_frame_accquire_surface(&frame, &surface);
 
-			// Flush finalises the command buffer and prepares it for submission.
-			emgpu_frame_flush(&frame);
+        // Set the render area to cover the full window, begin our single pass,
+        // then immediately end it. No actual draw calls yet — this just clears the surface.
+        emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size);
+        emgpu_frame_begin_renderpass(&frame, &mainpass, 0xAAFFFFFF, &window_tex, 1);
+        emgpu_frame_end_renderpass(&frame);
 
-			// Submit the frame to the GPU. This also handles presentation — CHECK_FUNC
-			// will jump to cleanup if something goes wrong here.
-			CHECK_FUNC(
-				emgpu_device_submit_frame(&device, &frame), 
-				"Failed to submit device frame");
-		}
+        // Submit the frame to the GPU. This also handles presentation — CHECK_FUNC
+        // will jump to cleanup if something goes wrong here.
+        emgpu_frame_submit_info* submit_info = NULL;
+        CHECK_FUNC(
+            em_endpoint_send(gpu_queue, sizeof(*submit_info), (void**)&submit_info),
+            "Failed to send frame object to GPU device");
 
-		// Process all pending window events — input, resize, close requests, etc.
-		// This single call covers every window managed by this desktop connection.
-		emwin_desktop_update(desktop);
+        submit_info->frame = &frame;
+        em_endpoint_release(gpu_queue);
 	}
 
 	// Cleanup. Order matters here — destroy GPU resources before shutting down
@@ -162,8 +177,8 @@ int main(int argc, char** argv) {
 	// The allocator passed to each destroy call MUST match the one used to create it
 	// or you'll corrupt the allocator's internal state.
 cleanup:
-	emgpu_device_destroy_renderpass(&device, &system_alloc, &mainpass);
-	emgpu_device_destroy_surface(&device, &system_alloc, &surface);
+	emgpu_renderpass_destroy(&device, &system_alloc, &mainpass);
+	emgpu_surface_destroy(&device, &system_alloc, &surface);
 	emgpu_device_shutdown(&system_alloc, &device);
 	emwin_window_close(&system_alloc, &window); // Also tears down the desktop connection.
 	return 0;

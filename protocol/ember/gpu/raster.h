@@ -98,7 +98,7 @@ emgpu_renderpass_config emgpu_renderpass_default();
  * @param out_renderpass Output render pass.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_create_renderpass(
+em_result emgpu_renderpass_create(
     emgpu_device* device, 
     em_allocator* allocator, 
     const emgpu_renderpass_config* config, 
@@ -111,7 +111,7 @@ em_result emgpu_device_create_renderpass(
  * @param allocator Allocator used to manage device memory.
  * @param renderpass Pass to destroy.
  */
-void emgpu_device_destroy_renderpass(
+void emgpu_renderpass_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_renderpass* renderpass);
@@ -229,7 +229,7 @@ emgpu_raster_pipeline_config emgpu_pipeline_default_raster();
  * @param out_pipeline Output pipeline.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_create_raster_pipeline(
+em_result emgpu_raster_pipeline_create(
     emgpu_device* device, 
     em_allocator* allocator, 
     const emgpu_raster_pipeline_config* config, 

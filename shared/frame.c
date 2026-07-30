@@ -8,10 +8,7 @@
 // A C implementation of the emgpu_frame format, not required by every Ember usage to use this
 // way of managing a datastream. e.g bindings to other languages could write an implementation in that language.
 
-#if defined(__cplusplus) && __cplusplus >= 201103L 
-// C++11 and later
-#   define EM_ALIGNOF(type) alignof(type)
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L 
 // C11 and later
 #   define EM_ALIGNOF(type) _Alignof(type)
 #elif defined(_MSC_VER) 
@@ -34,32 +31,22 @@ rendercmd_payload* add_command(emgpu_frame* frame, rendercmd_payload_type type, 
     return payload;
 }
 
-em_result emgpu_frame_init(emgpu_frame* frame, em_allocator* allocator) {
-    if (frame->initialized) {
-        EM_WARN("Gpu", "Already initied frame object but called emgpu_frame_init twice");
+em_result emgpu_frame_init(emgpu_device* device, emgpu_frame* out_frame) {
+    if (out_frame->initialized) {
         return EMBER_RESULT_OK;
     }
 
-    frame->commands = datastream_create(allocator, MEMORY_TAG_FRAME);
-    frame->initialized = EMTRUE;
+    out_frame->initialized = EMTRUE;
     return EMBER_RESULT_OK;
 }
 
-em_result emgpu_frame_validate(const emgpu_frame* frame) {
-    return EMBER_RESULT_OK;
-}
-
-void emgpu_frame_dummy(emgpu_frame* frame) {
-    add_command(frame, RENDERCMD_DUMMY, 0);
-}
-
-emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_surface* surface) {
+emgpu_frame_texture emgpu_frame_accquire_surface(emgpu_frame* frame, emgpu_surface* surface) {
     rendercmd_payload* payload;
-    payload = add_command(frame, RENDERCMD_NEXT_SURFACE_TEXTURE, sizeof(payload->next_surface_texture));
-    payload->next_surface_texture.surface = surface;
-    payload->next_surface_texture.dst_texture = frame->current_resource_idx++;
+    payload = add_command(frame, RENDERCMD_ACCQUIRE_SURFACE, sizeof(payload->accquire_surface));
+    payload->accquire_surface.surface = surface;
+    payload->accquire_surface.dst_texture = frame->current_resource_idx++;
 
-    return payload->next_surface_texture.dst_texture;
+    return payload->accquire_surface.dst_texture;
 }
 
 emgpu_frame_texture emgpu_frame_import_texture(emgpu_frame* frame, emgpu_texture* texture) {
@@ -125,9 +112,4 @@ void emgpu_frame_dispatch(emgpu_frame* frame, uvec3 group_size) {
     rendercmd_payload* payload;
     payload = add_command(frame, RENDERCMD_DISPATCH, sizeof(payload->dispatch));
     payload->dispatch.group_size = group_size;
-}
-
-void emgpu_frame_flush(emgpu_frame* frame) {
-    rendercmd_payload* payload;
-    payload = add_command(frame, RENDERCMD_FLUSH, 0);
 }

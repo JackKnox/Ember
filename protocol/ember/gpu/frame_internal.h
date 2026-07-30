@@ -11,7 +11,7 @@
  * into backend-specific API calls (OpenGL, Vulkan, etc.).
  */
 typedef enum rendercmd_payload_type {
-    RENDERCMD_NEXT_SURFACE_TEXTURE,
+    RENDERCMD_ACCQUIRE_SURFACE,
     RENDERCMD_IMPORT_TEXTURE,
     RENDERCMD_SET_RENDERAREA,
     RENDERCMD_BEGIN_RENDERPASS,
@@ -31,7 +31,7 @@ typedef struct rendercmd_payload {
         struct {
             emgpu_surface* surface;
             emgpu_frame_texture dst_texture;
-        } next_surface_texture;
+        } accquire_surface;
 
         struct {
             emgpu_texture* texture;

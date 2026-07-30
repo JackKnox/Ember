@@ -2,6 +2,8 @@
 
 #include "ember/core.h"
 
+#include "ember/core/datastream.h"
+
 #include "ember/gpu/types.h"
 
 /**
@@ -161,6 +163,8 @@ typedef struct emgpu_device {
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* allocator, emgpu_device* out_device);
+
+em_endpoint emgpu_device_open_queue(emgpu_device* device);
 
 /**
  * @brief Shuts down a GPU device.

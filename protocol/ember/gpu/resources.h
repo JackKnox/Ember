@@ -58,7 +58,7 @@ emgpu_buffer_config emgpu_buffer_default();
  * @param out_buffer Output buffer.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_create_buffer(
+em_result emgpu_buffer_create(
     emgpu_device* device, 
     em_allocator* allocator, 
     const emgpu_buffer_config* config, 
@@ -77,7 +77,7 @@ em_result emgpu_device_create_buffer(
  * 
  * @note Performance may vary if buffers must copy over CPU-GPU boundaries.
  */
-em_result emgpu_device_copy_buffer(
+em_result emgpu_buffer_copy(
     emgpu_device* device, 
     emgpu_buffer* src_buffer,
     emgpu_buffer* dst_buffer, 
@@ -94,7 +94,7 @@ em_result emgpu_device_copy_buffer(
  * @param region Number of bytes to upload from the source data.
  * @return Ember result code; returns `EMBER_RESULT_OK` on success.
  */
-em_result emgpu_device_upload_to_buffer(
+em_result emgpu_buffer_upload(
     emgpu_device* device, 
     emgpu_buffer* buffer, 
     const void* data, 
@@ -107,7 +107,7 @@ em_result emgpu_device_upload_to_buffer(
  * @param allocator Allocator used to manage device memory.
  * @param buffer Buffer to destroy.
  */
-void emgpu_device_destroy_buffer(
+void emgpu_buffer_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_buffer* buffer);
@@ -188,7 +188,7 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
  * @param out_texture Output texture.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_create_texture(
+em_result emgpu_texture_create(
     emgpu_device* device, 
     em_allocator* allocator, 
     const emgpu_texture_config* config, 
@@ -204,7 +204,7 @@ em_result emgpu_device_create_texture(
  * @param region Size of the region to update.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_upload_to_texture(
+em_result emgpu_texture_upload(
     emgpu_device* device, 
     emgpu_texture* texture, 
     const void* data, 
@@ -218,7 +218,7 @@ em_result emgpu_device_upload_to_texture(
  * @param allocator Allocator used to manage device memory.
  * @param texture Texture to destroy.
  */
-void emgpu_device_destroy_texture(
+void emgpu_texture_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_texture* texture);
@@ -275,7 +275,7 @@ typedef struct emgpu_pipeline {
  * @param descriptor_count Number of descriptors.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_update_pipeline_descriptors(
+em_result emgpu_pipeline_upload_descriptors(
     emgpu_device* device, 
     emgpu_pipeline* pipeline, 
     emgpu_update_descriptors* descriptors, 
@@ -288,7 +288,7 @@ em_result emgpu_device_update_pipeline_descriptors(
  * @param allocator Allocator used to manage device memory.
  * @param pipeline Pipeline to destroy.
  */
-void emgpu_device_destroy_pipeline(
+void emgpu_pipeline_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_pipeline* pipeline);

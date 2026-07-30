@@ -48,16 +48,9 @@ typedef struct emgpu_frame {
     void* commands_buf;
 } emgpu_frame;
 
-/**
- * @brief Submits a frame for execution on the GPU.
- *
- * @param device Pointer to the device instance.
- * @param frame Frame containing recorded commands.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
- */
-em_result emgpu_device_submit_frame(
-    emgpu_device* device, 
-    const emgpu_frame* frame);
+typedef struct emgpu_frame_submit_info {
+    emgpu_frame* frame;
+} emgpu_frame_submit_info;
 
 /**
  * @brief Initializes a GPU frame for command recording.
@@ -80,7 +73,7 @@ em_result emgpu_frame_init(emgpu_device* device, emgpu_frame* out_frame);
  *
  * @return A frame-local texture reference valid for the duration of the frame.
  */
-emgpu_frame_texture emgpu_frame_next_surface_texture(emgpu_frame* frame, emgpu_surface* surface);
+emgpu_frame_texture emgpu_frame_accquire_surface(emgpu_frame* frame, emgpu_surface* surface);
 
 /**
  * @brief Imports a persistent texture into the frame.

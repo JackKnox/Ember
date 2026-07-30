@@ -57,97 +57,16 @@ typedef struct emwin_joystick_state {
 } emwin_joystick_state;
 
 /**
- * @brief Callback invoked when a key is pressed or released.
- *
- * @param desktop Pointer to owner desktop object.
- * @param user_data Unmanaged user data set in event state.
- * @param key Relevent key code that has been pressed or released.
- * @param codepoint Unicode codepoint for key code, useful for typing logic.
- * @param pressed If true the key has been pressed, if false the key has been released.
- */
-typedef void (*PFN_on_key_action)(emwin_desktop* desktop, void* user_data, emwin_key_code key, u32 codepoint, b8 pressed);
-
-/**
- * @brief Callback invoked when a mouse button is pressed or released.
- * 
- * @param desktop Pointer to owner desktop object.
- * @param user_data Unmanaged user data set in event state.
- * @param mouse_code Relevent mouse button code that has been pressed or released.
- * @param pressed If true the mouse button has been pressed, if false the mouse button has been released.
- */
-typedef void (*PFN_on_mouse_action)(emwin_desktop* desktop, void* user_data, emwin_mouse_code mouse_code, b8 pressed);
-
-/**
- * @brief Callback invoked when main cursor is moved.
- * 
- * @param desktop Pointer to owner desktop object.
- * @param user_data Unmanaged user data set in event state.
- * @param new_position New position of cursor, centered to top-left corner of current monitor.
- */
-typedef void (*PFN_on_cursor_move)(emwin_desktop* desktop, void* user_data, uvec2 new_position);
-
-/**
- * @brief Callback invoked when a mouse scrolles.
- * 
- * @param desktop Pointer to owner desktop object.
- * @param user_data Unmanaged user data set in event state.
- * @param scoll_offset Either positive or negative offset [-1.0, 1.0].
- */
-typedef void (*PFN_on_scroll)(emwin_desktop* desktop, void* user_data, uvec2 scoll_offset);
-
-/**
- * @brief Callback invoked when a joystick is connected or disconnected.
- *
- * @param desktop Pointer to owner desktop object.
- * @param user_data Unmanaged user data set in event state.
- * @param id Identifier for joystick that has connected or disconnected.
- * @param connected True if connected, false if disconnected.
- */
-typedef void (*PFN_on_joystick_connect)(emwin_desktop* desktop, void* user_data, emwin_joystick_id id, b8 connected);
-
-/**
- * @brief Structure for events for the input subsystem.
- */
-typedef struct emwin_input_events {
-    /** @brief Unmanaged user data passed to all input events. */
-    void* user_data;
-
-    /** @brief Called when key is pressed or released. */
-    PFN_on_key_action on_key_action;
-
-    /** @brief Called when mouse button is pressed or released. */
-    PFN_on_mouse_action on_mouse_action;
-
-    /** @brief Called when main cursor is moved. */
-    PFN_on_cursor_move on_cursor_move;
-
-    /** @brief Called when mouse wheel is scrolled. */
-    PFN_on_scroll on_scroll;
-
-    /** @brief Called when new joystick is connected. */
-    PFN_on_joystick_connect on_joystick_connect;
-} emwin_input_events;
-
-/**
- * @brief Configuration used when initializing input subsystem.
- */
-typedef struct emwin_input_config {
-    /** @brief Event callbacks called by implementation when corrosponding event happens. */
-    emwin_input_events events;
-} emwin_input_config;
-
-/**
  * @brief Initializes the input system.
  *
  * @param desktop Pointer to the desktop platform instance.
- * @param config Configuration parameters for initialization.
  * @param out_input Pointer to receive the created input system.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  * 
  * @note Subsystem will be automatically destroyed when dependent
  *       desktop object is destroyed.
  */
-em_result emwin_input_init(emwin_desktop* desktop, emwin_input_config* config, emwin_input** out_input);
+em_result emwin_input_init(emwin_desktop* desktop, emwin_input** out_input);
 
 /**
  * @brief Returns whetever input system handle is valid

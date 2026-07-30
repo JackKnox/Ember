@@ -18,17 +18,6 @@ typedef struct emwin_desktop {
 } emwin_desktop;
 
 /**
- * @brief Processes pending all OS events.
- *
- * Polls and dispatches OS events such as input, window movement, resizing,
- * and close requests. This function should be called once per frame.
- *
- * @param desktop Pointer to the desktop.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
- */
-em_result emwin_desktop_update(emwin_desktop* desktop);
-
-/**
  * @brief Put UTF-8 text into the clipboard.
  *
  * @param text The text to store in the clipboard.

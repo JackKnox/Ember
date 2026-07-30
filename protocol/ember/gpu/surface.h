@@ -30,7 +30,7 @@ typedef struct emgpu_surface {
  * @note Surface is not guarenteeed to be resized immediately; In
  *       some backends surface is resized next frame it's rendered to.
  */
-em_result emgpu_device_resize_surface(
+em_result emgpu_surface_resize(
     emgpu_device* device, 
     emgpu_surface* surface, 
     uvec2 new_size);
@@ -42,7 +42,7 @@ em_result emgpu_device_resize_surface(
  * @param allocator Allocator used to manage device memory.
  * @param surface Surface to destroy.
  */
-void emgpu_device_destroy_surface(
+void emgpu_surface_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_surface* surface);
