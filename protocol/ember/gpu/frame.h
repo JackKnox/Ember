@@ -38,6 +38,8 @@ typedef struct emgpu_frame {
 
     /** @brief Index used for allocating frame-local resources. */
     u32 current_resource_idx;
+    
+    em_allocator* allocator;
 
     /**
      * @brief Linear command buffer storing recorded GPU commands.
@@ -46,6 +48,10 @@ typedef struct emgpu_frame {
      * during submission.
      */
     void* commands_buf;
+
+    u64 buffer_size;
+
+    u64 buffer_capacity;
 } emgpu_frame;
 
 typedef struct emgpu_frame_submit_info {

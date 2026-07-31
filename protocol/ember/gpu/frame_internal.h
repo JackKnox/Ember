@@ -25,6 +25,7 @@ typedef enum rendercmd_payload_type {
 typedef struct rendercmd_payload {
     struct {
         rendercmd_payload_type type;
+        u64 size;
     } hdr;
 
     union {

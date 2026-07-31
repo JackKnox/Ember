@@ -23,11 +23,30 @@
 #   define EM_ALIGNOF(type) offsetof(struct { char c; type member; }, member)
 #endif
 
+inline u64 align_up_command(u64 value, u64 alignment) {
+    // alignment must be a power of two
+    return (value + alignment - 1) & ~(alignment - 1);
+}
+
 rendercmd_payload* add_command(emgpu_frame* frame, rendercmd_payload_type type, u64 payload_size) {
     rendercmd_payload* payload;
-    payload = (rendercmd_payload*)datastream_push(&frame->commands, sizeof(payload->hdr) + payload_size, EM_ALIGNOF(rendercmd_payload));
-    payload->hdr.type = type;
 
+    u64 offset = align_up_command(frame->buffer_size, 16);
+    u64 total_size = sizeof(payload->hdr) + payload_size;
+
+    if (frame->buffer_capacity < offset + total_size) {
+        u64 new_capacity = (frame->buffer_capacity == 0 ? 4 : frame->buffer_capacity);
+        while (new_capacity < offset + total_size) new_capacity *= 2;
+        
+        frame->commands_buf = mem_reallocate(frame->allocator, frame->commands_buf, frame->buffer_capacity, new_capacity, MEMORY_TAG_RENDERER);
+        frame->buffer_capacity = new_capacity;
+    }
+
+    frame->buffer_size = offset + total_size;
+
+    payload = (rendercmd_payload*)((u8*)frame->commands_buf + offset);
+    payload->hdr.type = type;
+    payload->hdr.size = total_size;
     return payload;
 }
 
