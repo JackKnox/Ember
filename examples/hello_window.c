@@ -5,6 +5,7 @@
 #include <ember/platform/system.h>
 
 #include <ember/window/window.h>
+#include <ember/window/events.h>
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -53,15 +54,34 @@ int main(int argc, char** argv) {
     // Boom. A window is now open on your desktop. However we still need to update
     // the window every frame. If you don't do this you get those 'X not responding screens' 
     // and your window becomes unresponsive.
+    
+    em_endpoint desktop_events = emwin_desktop_open_events(desktop);
 
     // emwin_window_should_close will become true when the user presses the X in the
     // corner of the window or you send a signal to the window. You may choose to ignore this value.
     while (!emwin_window_should_close(&window)) {
+        emwin_desktop_event* desk_event = NULL;
 
-        // This is how we update our window. I told a lie, we do not need to update each
-        // window individually but our connection to desktop as a whole. As a result this one
-        // call updates all windows and sends window events to relevent callbacks.
-        emwin_desktop_update(desktop);
+        u64 size = 0;
+        while (em_endpoint_recv(desktop_events, &size, (void**)&desk_event) == EMBER_RESULT_OK) {
+            switch (desk_event->type) {
+                case EMWIN_EVENT_WINDOW_CLOSE:
+                    // data = window_id
+                    break;
+                case EMWIN_EVENT_WINDOW_RESIZE:
+                    // data = window_id
+                    break;
+                case EMWIN_EVENT_WINDOW_FOCUS_GAINED:
+                    // data = window_id
+                    break;
+                case EMWIN_EVENT_WINDOW_FOCUS_LOST:
+                    // data = window_id
+                    break;
+                default: break;
+            }
+
+            em_endpoint_consume(desktop_events);
+        }
     }
 
     // Ok the user or yourself have decided to close the window so now we will

@@ -38,7 +38,7 @@ rendercmd_payload* add_command(emgpu_frame* frame, rendercmd_payload_type type, 
         u64 new_capacity = (frame->buffer_capacity == 0 ? 4 : frame->buffer_capacity);
         while (new_capacity < offset + total_size) new_capacity *= 2;
         
-        frame->commands_buf = mem_reallocate(frame->allocator, frame->commands_buf, frame->buffer_capacity, new_capacity, MEMORY_TAG_RENDERER);
+        frame->commands_buf = mem_reallocate(frame->allocator, frame->commands_buf, frame->buffer_capacity, new_capacity);
         frame->buffer_capacity = new_capacity;
     }
 

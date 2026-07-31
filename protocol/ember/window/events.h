@@ -14,8 +14,8 @@
  * emwin_desktop_open_events().
  */
 typedef enum emwin_event_type {
-    EMWIN_EVENT_CLOSE_WINDOW,              /**< Window close was requested. */
-    EMWIN_EVENT_RESIZE_WINDOW,             /**< Window client area size changed. */
+    EMWIN_EVENT_WINDOW_CLOSE,              /**< Window close was requested. */
+    EMWIN_EVENT_WINDOW_RESIZE,             /**< Window client area size changed. */
     EMWIN_EVENT_WINDOW_FOCUS_GAINED,       /**< Window client area size changed. */
     EMWIN_EVENT_WINDOW_FOCUS_LOST,         /**< Window lost keyboard focus. */
     EMWIN_EVENT_INPUT_KEY_ACTION,          /**< Keyboard key was pressed or released. */
@@ -42,24 +42,24 @@ typedef struct emwin_desktop_event {
      */
     union {
         /**
-         * @brief Data for EMWIN_EVENT_CLOSE_WINDOW.
+         * @brief Data for EMWIN_EVENT_WINDOW_CLOSE.
          *
          * Contains the identifier of the window that requested closing.
          */
         struct {
             /** @brief Window identifier. */
             emwin_window_id id;
-        } close_window;
+        } window_close;
 
         /**
-         * @brief Data for EMWIN_EVENT_RESIZE_WINDOW.
+         * @brief Data for EMWIN_EVENT_WINDOW_RESIZE.
          *
          * Contains the new window dimensions.
          */
         struct {
             /** @brief New window size in pixels. */
             uvec2 size;
-        } resize_window;
+        } window_resize;
 
         /**
          * @brief Data for EMWIN_EVENT_WINDOW_FOCUS_GAINED.

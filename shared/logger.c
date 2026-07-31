@@ -1,5 +1,7 @@
 #include "ember/core.h"
 
+#include <ember/platform/system.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -26,6 +28,7 @@
 #    endif
 #endif
 
+static char message_buf[64] = {};
 static PFN_log_output logger = NULL;
 
 void default_logger(log_level level, const char* subsystem, const char* message) {
@@ -49,23 +52,15 @@ void emlog_console(log_level level, const char* subsystem, const char* message, 
     u64 length = (u64)vsnprintf(NULL, 0, message, args_copy);
     va_end(args_copy);
 
-    char* formatted = mem_allocate(NULL, length + 1, MEMORY_TAG_CORE);
-    if (!formatted) {
-        va_end(args);
-        return;
-    }
-
-    vsnprintf(formatted, length + 1, message, args);
-    formatted[length] = '\0';
+    vsnprintf(message_buf, length + 1, message, args);
+    message_buf[length] = '\0';
 
     va_end(args);
 
     if (!logger)
-        default_logger(level, subsystem, formatted);
+        default_logger(level, subsystem, message_buf);
     else
-        logger(level, subsystem, formatted);
-
-    mem_free(NULL, formatted, length + 1, MEMORY_TAG_CORE);
+        logger(level, subsystem, message_buf);
 
     if (level == LOG_LEVEL_FATAL)
         emdebug_break();

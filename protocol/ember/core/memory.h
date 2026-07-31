@@ -3,19 +3,6 @@
 #include "ember/core.h"
 
 /**
- * @brief Categorises allocations for debugging, profiling, and leak detection.
- */
-typedef enum memory_tag {
-    MEMORY_TAG_CORE,     /**< Core engine allocations (fundamental systems, lifecycle, etc.) */
-    MEMORY_TAG_FRAME,    /**< Frame-temporary allocations (usually valid for only a single frame) */
-    MEMORY_TAG_PLATFORM, /**< Platform-specific allocations (windowing, OS interfaces, etc.) */
-    MEMORY_TAG_RENDERER, /**< Renderer/GPU-related allocations (buffers, textures, command data) */
-    MEMORY_TAG_AUDIO,    /**< Audio subsystem allocations (sound buffers, mixing, etc.) */
-    MEMORY_TAG_NETWORK,  /**< Networking allocations (sockets, packets, buffers) */
-    MEMORY_TAG_MAX_TAGS,
-} memory_tag;
-
-/**
  * @brief Value used to poison memory in debug builds.
  *
  * Typically written into freed or uninitialized memory to help detect
@@ -34,7 +21,7 @@ struct em_allocator;
  *
  * @return Pointer to allocated memory, or NULL on failure.
  */
-typedef void* (*PFN_allocate_mem)(struct em_allocator* allocator, u64 size, u64 alignment, memory_tag tag);
+typedef void* (*PFN_allocate_mem)(struct em_allocator* allocator, u64 size, u64 alignment);
 
 /**
  * @brief Function pointer type for custom memory deallocation.
@@ -44,7 +31,7 @@ typedef void* (*PFN_allocate_mem)(struct em_allocator* allocator, u64 size, u64 
  * @param size Original allocation size.
  * @param alignment Alignment used during allocation.
  */
-typedef void (*PFN_free_mem)(struct em_allocator* allocator, void* block, u64 size, u64 alignment, memory_tag tag);
+typedef void (*PFN_free_mem)(struct em_allocator* allocator, void* block, u64 size, u64 alignment);
 
 /**
  * @brief Function pointer type for custom memory reallocation.
@@ -55,7 +42,7 @@ typedef void (*PFN_free_mem)(struct em_allocator* allocator, void* block, u64 si
  * @param new_size New allocation size.
  * @param alignment Alignment used during allocation.
  */
-typedef void* (*PFN_reallocate_mem)(struct em_allocator* allocator, void* block, u64 old_size, u64 new_size, u64 alignment, memory_tag tag);
+typedef void* (*PFN_reallocate_mem)(struct em_allocator* allocator, void* block, u64 old_size, u64 new_size, u64 alignment);
 
 /**
  * @brief Generic allocator interface used across the library.
@@ -100,12 +87,11 @@ u64 alignment_ptr(u64 v, u64 alignment);
  *
  * @param allocator Allocator instance.
  * @param size Number of bytes to allocate.
- * @param tag Memory category for tracking and debugging.
  * @return Pointer to allocated memory, or NULL on failure.
  * 
  * @note If @p allocator is NULL, allocates using the default system allocator.
  */
-void* mem_allocate(em_allocator* allocator, u64 size, memory_tag tag);
+void* mem_allocate(em_allocator* allocator, u64 size);
 
 /**
  * @brief Frees memory allocated with mem_allocate.
@@ -113,11 +99,10 @@ void* mem_allocate(em_allocator* allocator, u64 size, memory_tag tag);
  * @param allocator Allocator instance.
  * @param block Pointer to memory block.
  * @param size Original allocation size.
- * @param tag Memory category used at allocation time.
  * 
  * @note If @p allocator is NULL, frees using the default system allocator.
  */
-void mem_free(em_allocator* allocator, void* block, u64 size, memory_tag tag);
+void mem_free(em_allocator* allocator, void* block, u64 size);
 
 /**
  * @brief Reallocates memory in place allocated with mem_allocate.
@@ -126,31 +111,6 @@ void mem_free(em_allocator* allocator, void* block, u64 size, memory_tag tag);
  * @param block Pointer to memory block.
  * @param old_size Original allocation size.
  * @param new_size New allocation size.
- * @param tag Memory category used at allocation time.
  * @return Pointer to reallocated memory, or NULL on failure.
  */
-void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size, memory_tag tag);
-
-/**
- * @brief Internal bookkeeping: records allocation event.
- *
- * Used for tracking allocations per tag for profiling/debugging.
- */
-void mem_report(u64 size, memory_tag tag);
-
-/**
- * @brief Internal bookkeeping: records deallocation event.
- *
- * Used for tracking memory usage and detecting leaks.
- */
-void mem_report_free(u64 size, memory_tag tag);
-
-/**
- * @brief Dumps current memory usage statistics.
- */
-void show_memory_stats();
-
-/**
- * @brief Reports any detected memory leaks.
- */
-void memory_leaks();
+void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size);
