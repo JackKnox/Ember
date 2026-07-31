@@ -135,8 +135,8 @@ int main(int argc, char** argv) {
         u64 size = 0;
         while (em_endpoint_recv(desktop_events, &size, (void**)&desk_event) == EMBER_RESULT_OK) {
             switch (desk_event->type) {
-                case EMWIN_EVENT_RESIZE_WINDOW:
-                    emgpu_surface_resize(&device, &surface, desk_event->resize_window.size);
+                case EMWIN_EVENT_WINDOW_RESIZE:
+                    emgpu_surface_resize(&device, &surface, desk_event->window_resize.size);
                     break;
                 default: break;
             }

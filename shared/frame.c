@@ -23,7 +23,7 @@
 #   define EM_ALIGNOF(type) offsetof(struct { char c; type member; }, member)
 #endif
 
-inline u64 align_up_command(u64 value, u64 alignment) {
+u64 align_up_command(u64 value, u64 alignment) {
     // alignment must be a power of two
     return (value + alignment - 1) & ~(alignment - 1);
 }
