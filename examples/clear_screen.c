@@ -123,25 +123,19 @@ int main(int argc, char** argv) {
 	CHECK_FUNC(
 		emgpu_renderpass_create(&device, &system_alloc, &renderpass_config, &mainpass), 
 		"Failed to create main renderpass (present)");
-	
-    em_endpoint desktop_events = emwin_desktop_open_events(desktop);
-    em_endpoint gpu_queue = emgpu_device_open_queue(&device);
 
 	// Main loop. emwin_window_should_close becomes true when the user hits the X
 	// button or we signal the window to close ourselves.
 	while (!emwin_window_should_close(&window)) {
-        emwin_desktop_event* desk_event = NULL;
+        emwin_desktop_event desk_event = {};
 
-        u64 size = 0;
-        while (em_endpoint_recv(desktop_events, &size, (void**)&desk_event) == EMBER_RESULT_OK) {
-            switch (desk_event->type) {
+        while (emwin_poll_events(desktop, &desk_event) == EMBER_RESULT_OK) {
+            switch (desk_event.type) {
                 case EMWIN_EVENT_WINDOW_RESIZE:
-                    emgpu_surface_resize(&device, &surface, desk_event->window_resize.size);
+                    emgpu_surface_resize(&device, &surface, desk_event.window_resize.size);
                     break;
                 default: break;
             }
-
-            em_endpoint_consume(desktop_events);
         }
 
 		// Each frame is driven by emgpu_frame. It manages per-frame allocations
@@ -163,13 +157,9 @@ int main(int argc, char** argv) {
 
         // Submit the frame to the GPU. This also handles presentation — CHECK_FUNC
         // will jump to cleanup if something goes wrong here.
-        emgpu_frame_submit_info* submit_info = NULL;
         CHECK_FUNC(
-            em_endpoint_send(gpu_queue, sizeof(*submit_info), (void**)&submit_info),
-            "Failed to send frame object to GPU device");
-
-        submit_info->frame = &frame;
-        em_endpoint_release(gpu_queue);
+            emgpu_device_submit(&device, &frame),
+            "Failed to submit frame to GPU");
 	}
 
 	// Cleanup. Order matters here — destroy GPU resources before shutting down

@@ -17,6 +17,35 @@ typedef struct emwin_desktop {
     void* internal_context;
 } emwin_desktop;
 
+struct emwin_desktop_event;
+
+/**
+ * Polls for the next pending desktop event without blocking.
+ *
+ * If an event is available, it is written to @p out_event and a success
+ * result is returned. If no events are pending, the function returns
+ * immediately with a result indicating that no event was available.
+ *
+ * @param desktop The desktop instance to poll.
+ * @param out_event Receives the next event if one is available.
+ *
+ * @return A Ember result code indicating success, no pending events, or an error.
+ */
+em_result emwin_poll_events(emwin_desktop* desktop, struct emwin_desktop_event* out_event);
+
+/**
+ * Waits until the next desktop event becomes available.
+ *
+ * This function blocks the calling thread until an event is available or
+ * an error occurs. The received event is written to @p out_event.
+ *
+ * @param desktop The desktop instance to wait on.
+ * @param out_event Receives the next event.
+ *
+ * @return A Ember result code indicating success or an error.
+ */
+em_result emwin_wait_events(emwin_desktop* desktop, struct emwin_desktop_event* out_event);
+
 /**
  * @brief Put UTF-8 text into the clipboard.
  *

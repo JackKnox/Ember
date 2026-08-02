@@ -54,9 +54,14 @@ typedef struct emgpu_frame {
     u64 buffer_capacity;
 } emgpu_frame;
 
-typedef struct emgpu_frame_submit_info {
-    emgpu_frame* frame;
-} emgpu_frame_submit_info;
+/**
+ * @brief Submits a frame object for GPU execution.
+ *
+ * @param device Pointer to the device instance.
+ * @param frame Pointer to frame object.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeds.
+ */
+em_result emgpu_device_submit(emgpu_device* device, const emgpu_frame* frame);
 
 /**
  * @brief Initializes a GPU frame for command recording.
