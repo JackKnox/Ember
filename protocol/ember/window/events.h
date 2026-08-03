@@ -85,6 +85,9 @@ typedef struct emwin_desktop_event {
          * Represents a keyboard key press or release.
          */
         struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+
             /** @brief Key code. */
             emwin_key_code key;
 
@@ -93,22 +96,14 @@ typedef struct emwin_desktop_event {
         } input_key_action;
 
         /**
-         * @brief Data for EMWIN_EVENT_INPUT_TEXT_INPUT.
-         *
-         * Contains user-entered text after keyboard layout and input
-         * method processing.
-         */
-        struct {
-            /** @brief UTF-8 encoded text input. */
-            char text[32];
-        } text_input;
-
-        /**
          * @brief Data for EMWIN_EVENT_INPUT_MOUSE_MOTION.
          *
          * Contains relative mouse movement.
          */
         struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+
             /** @brief Mouse movement delta. */
             uvec2 delta_pos;
         } mouse_motion;
@@ -119,6 +114,9 @@ typedef struct emwin_desktop_event {
          * Represents a mouse button press or release.
          */
         struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+
             /** @brief Mouse button code. */
             emwin_mouse_code button;
 
@@ -132,6 +130,9 @@ typedef struct emwin_desktop_event {
          * Contains scroll movement.
          */
         struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+
             /** @brief Scroll delta. */
             vec2 delta_scroll;
         } mouse_wheel;
