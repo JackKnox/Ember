@@ -78,6 +78,12 @@ typedef struct emwin_window_config {
     emwin_desktop* desktop;
 } emwin_window_config;
 
+/*
+ * @brief Unique identifier for a windo local to it's assigned desktop.
+ *
+ * @note Two windows from different desktops many have the
+ *       same window id.
+ */
 typedef u64 emwin_window_id;
 
 /**
@@ -90,7 +96,8 @@ typedef u64 emwin_window_id;
 typedef struct emwin_window {
     /** @brief Current client area size in pixels. Updated on resize events. */
     uvec2 size;
-    
+
+    /** @brief Assigned ID of the window. */
     emwin_window_id id;
 
     /**
@@ -152,17 +159,6 @@ void emwin_window_close(em_allocator* allocator, emwin_window* window);
  *       next time you call @ref emwin_window_should_close, you may or may not choose to ignore it.
  */
 void emwin_window_request_close(emwin_window* window);
-
-/**
- * @brief Checks whether the window has been requested to close.
- *
- * This typically becomes TRUE when the user attempts to close the window
- * (e.g., clicking the close button) or after calling @ref emwin_window_request_close.
- *
- * @param window Pointer to the window.
- * @return TRUE if the window should close; otherwise FALSE.
- */
-b8 emwin_window_should_close(const emwin_window* window);
 
 /**
  * @brief Set visbility of the window.
