@@ -45,7 +45,6 @@ EM_STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define EM_ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
 #define EM_OFFSETOF(s, m) ((u64)(&(((s*)0)->m)))
 
-#include "ember/core/logger.h"
 #include "ember/core/memory.h"
 #include "ember/core/math_types.h"
 #include "ember/core/format.h"
