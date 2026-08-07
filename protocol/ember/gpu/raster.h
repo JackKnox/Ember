@@ -49,9 +49,6 @@ typedef struct emgpu_colour_attachment {
  * the Graphics Pipeline.
  */
 typedef struct emgpu_renderpass_config {
-    /** @brief Refrence to extra configuration structure specific to API type. */
-    void* api_next;
-
     /** @brief Attachments for colour data output. */
     const emgpu_colour_attachment* colour_attachments;
 
@@ -256,6 +253,23 @@ em_result emgpu_raster_pipeline_create(
  * @param pipeline Pipeline to bind.
  */
 void emgpu_cmd_bind_raster_pipeline(emgpu_command_buffer* command_buf, emgpu_raster_bind_info* bind_info);
+
+/**
+ * @brief Binds vertex buffers to current raster pipeline.
+ *
+ * @param command_buf Pointer to the command buffer;
+ * @param vertex_buffer_count Number of vertex buffers.
+ * @param vertex_buffer Vertex buffers.
+ */
+void emgpu_cmd_bind_vertex_buffers(emgpu_command_buffer* command_buf, u32 vertex_buffer_count, emgpu_buffer* vertex_buffers);
+
+/**
+ * @brief Binds index buffer to current raster pipeline.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param indx_biffer Index buffer to bind.
+ */
+void emgpu_cmd_bind_index_buffer(emgpu_command_buffer* command_buf, emgpu_buffer* index_buffer);
 
 /**
  * @brief Issues a draw call.

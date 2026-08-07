@@ -30,7 +30,7 @@ Application
      │                 │    Extensions    │
      ▼                 └──────────────────┘
 ┌──────────────────┐        |
-│     Driver       │◀──────┘
+│     Driver       │◀───────┘
 └──────────────────┘
      │
      ├─ Win32 / Wayland / Cocoa

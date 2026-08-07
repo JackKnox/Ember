@@ -213,15 +213,33 @@ typedef struct emgpu_update_descriptors {
     };
 } emgpu_update_descriptors;
 
+/**
+ * @brief Descriptor for importing a resource into a live pipeline execution 
+ * for use in descriptors.
+ */
 typedef struct emgpu_resource_import {
-    u32 src_binding;
+    /** @brief Bind index to import the resource. */
+    u32 dst_binding;
+
+    /** @brief Local reference to the resource. */
     emgpu_local_resource resource;
+
+    /** @brief Allowed access for the revelent pipeline. */
     emgpu_access_flags access_flags;
 } emgpu_resource_import;
 
+/**
+ * @brief Descriptor for relasing resource control from a live pipeline
+ * execution to another consumer.
+ */
 typedef struct emgpu_resource_export {
-    u32 dst_binding;
+    /** @brief Bind index of the resource to export. */
+    u32 src_binding;
+
+    /** @brief Destination local resource handle. */
     emgpu_local_resource resource;
+
+    /** @brief Authorized access of other consumers for this resource. */
     emgpu_access_flags access_flags;
 } emgpu_resource_export;
 

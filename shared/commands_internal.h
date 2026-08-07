@@ -4,16 +4,37 @@
 
 #include "ember/gpu/command_buffer.h"
 
-typedef enum rendercmd_payload_type {
-    RENDERCMD_ACCQUIRE_SURFACE,
-    RENDERCMD_IMPORT_TEXTURE,
-    RENDERCMD_SET_RENDERAREA,
-    RENDERCMD_BEGIN_RENDERPASS,
-    RENDERCMD_END_RENDERPASS,
-    RENDERCMD_BIND_PIPELINE,
-    RENDERCMD_DRAW,
-    RENDERCMD_DRAW_INDEXED,
-    RENDERCMD_DISPATCH,
+#include "ember/gpu/compute.h"
+#include "ember/gpu/raster.h"
+#include "ember/gpu/resources.h"
+#include "ember/gpu/surface.h"
+
+typedef enum cmd_payload_type {
+    COMMAND_EMPTY, // Prevents against corrupted memory.
+
+    // Compute mode.
+    // -------------------------
+    COMMAND_BEGIN_COMPUTEPASS,
+    COMMAND_DISPATCH,
+    COMMAND_END_COMPUTEPASS,
+
+    // Graphics work.
+    // -------------------------
+    COMMAND_BEGIN_RENDERPASS,
+    COMMAND_END_RENDERPASS,
+    COMMAND_SET_VIEWPORT,
+    COMMAND_SET_SCISSOR,
+
+    // Raster mode.
+    // -------------------------
+    COMMAND_BIND_RASTER_PIPELINE,
+    COMMAND_BIND_VERTEX_BUFFERS,
+    COMMAND_BIND_INDEX_BUFFER,
+    COMMAND_DRAW,
+
+    COMMAND_IMPORT_TEXTURE,
+
+    COMMAND_ACQUIRE_SURFACE,
 } rendercmd_payload_type;
 
 typedef struct rendercmd_payload {
@@ -24,43 +45,69 @@ typedef struct rendercmd_payload {
 
     union {
         struct {
-            emgpu_surface* surface;
-            emgpu_frame_texture dst_texture;
-        } accquire_surface;
+            const emgpu_pipeline* pipeline;
+            emgpu_resource_export* exports;
+            emgpu_resource_import* imports;
+            uvec3 local_size;
+            u32 export_resource_count;
+            u32 import_resource_count;
+        } begin_computepass;
 
         struct {
-            emgpu_texture* texture;
-            emgpu_frame_texture dst_texture;
-        } import_texture;
+            uvec3 group_size;
+        } dispatch;
 
         struct {
-            uvec2 origin, size;
-            u64 _p;
-        } set_renderarea;
+            b8 _p;
+        } end_computepass;
 
         struct {
-            emgpu_renderpass* renderpass;
-            u32 attachment_count;
-            u32 clear_colour;
-            emgpu_frame_texture attachments[];
+            emgpu_colour_attachment* colours;
+            u32 colour_attachment_count;
         } begin_renderpass;
 
         struct {
-            emgpu_pipeline* pipeline;
-            emgpu_buffer* vertex_buffers, * index_buffer;
+            b8 _p;
+        } end_renderpass;
+
+        struct {
+            uvec2 origin, size;
+            f32 min_depth, max_depth;
+        } set_viewport;
+
+        struct {
+            uvec2 origin, size;
+        } set_scissor;
+
+        struct {
+            const emgpu_pipeline* pipeline;
+            emgpu_resource_export* exports;
+            emgpu_resource_import* imports;
+            u32 export_resource_count;
+            u32 import_resource_count;
+        } bind_raster_pipeline;
+
+        struct {
+            emgpu_buffer* vertex_buffers;
             u32 vertex_buffer_count;
-        } bind_pipeline;
+        } bind_vertex_buffers;
+
+        struct {
+            emgpu_buffer* index_buffer;
+        } bind_index_buffer;
 
         struct {
             u32 vertex_count, instance_count;
         } draw;
 
         struct {
-            u32 index_count, instance_count;
-        } draw_indexed;
+            emgpu_texture* texture;
+            emgpu_local_framebuffer dst_framebuffer;
+        } import_texture;
 
         struct {
-            uvec3 group_size;
-        } dispatch;
+            emgpu_surface* surface;
+            emgpu_local_framebuffer dst_framebuffer;
+        } acquire_surface;
     };
 } rendercmd_payload;
