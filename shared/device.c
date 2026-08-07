@@ -112,26 +112,6 @@ emgpu_texture_config emgpu_texture_default() {
 u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture) {
 	return texture->size.x * texture->size.y * EMBER_FORMAT_SIZE(texture->image_format);
 }
-
-emgpu_attachment_config emgpu_attachment_from_surface(emgpu_surface* surface) {
-    emgpu_attachment_config attachment = {};
-    attachment.type = EMBER_ATTACHMENT_TYPE_COLOUR;
-    attachment.format = surface->pixel_format;
-    attachment.load_op = EMBER_LOAD_OP_LOAD;
-    attachment.store_op = EMBER_STORE_OP_STORE;
-    attachment.stencil_load_op = EMBER_LOAD_OP_DONT_CARE;
-    attachment.stencil_store_op = EMBER_STORE_OP_DONT_CARE;
-    attachment.presentable = EMTRUE;
-    
-    if (EMBER_FORMAT_FLAGS(surface->pixel_format) & EMBER_FORMAT_FLAG_DEPTH)
-        attachment.type = EMBER_ATTACHMENT_TYPE_DEPTH;
-    if (EMBER_FORMAT_FLAGS(surface->pixel_format) & EMBER_FORMAT_FLAG_STENCIL)
-        attachment.type = EMBER_ATTACHMENT_TYPE_STENCIL;
-    if (EMBER_FORMAT_FLAGS(surface->pixel_format) & EMBER_FORMAT_FLAG_DEPTH && EMBER_FORMAT_FLAGS(surface->pixel_format) & EMBER_FORMAT_FLAG_STENCIL)
-        attachment.type = EMBER_ATTACHMENT_TYPE_DEPTH_STENCIL;
-    return attachment;
-}
-
 emgpu_renderpass_config emgpu_renderpass_default() {
     emgpu_renderpass_config config = {};
     return config;

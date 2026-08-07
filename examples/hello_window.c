@@ -2,6 +2,7 @@
 //
 #define EMBER_DEFINE_HELPERS
 
+#include <ember/platform/logger.h>
 #include <ember/platform/system.h>
 
 #include <ember/window/window.h>
@@ -17,7 +18,7 @@
     {                                                      \
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
-            emlog_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
+            emplat_printf(EMBER_LOG_LEVEL_ERROR, message ": %s", \
 				em_result_string(result, true));           \
             goto cleanup;                                  \
         }                                                  \
@@ -55,15 +56,15 @@ int main(int argc, char** argv) {
     // the window every frame. If you don't do this you get those 'X not responding screens' 
     // and your window becomes unresponsive.
 
-    // emwin_window_should_close will become true when the user presses the X in the
-    // corner of the window or you send a signal to the window. You may choose to ignore this value.
-    while (!emwin_window_should_close(&window)) {
+    b8 running = EMTRUE;
+    while (running) {
         emwin_desktop_event desk_event = {};
 
         while (emwin_poll_events(desktop, &desk_event) == EMBER_RESULT_OK) {
             switch (desk_event.type) {
                 case EMWIN_EVENT_WINDOW_CLOSE:
                     // data = window_id
+                    running = EMFALSE;
                     break;
                 case EMWIN_EVENT_WINDOW_RESIZE:
                     // data = window_id

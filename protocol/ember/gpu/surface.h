@@ -5,6 +5,8 @@
 #include "ember/gpu/types.h"
 #include "ember/gpu/device.h"
 
+#include "ember/gpu/command_buffer.h"
+
 /**
  * @brief Backend-agnostic GPU surface objects.
  *
@@ -31,7 +33,7 @@ typedef struct emgpu_surface {
  *       some backends surface is resized next frame it's rendered to.
  */
 em_result emgpu_surface_resize(
-    emgpu_device* device, 
+    const emgpu_device* device, 
     emgpu_surface* surface, 
     uvec2 new_size);
 
@@ -43,6 +45,19 @@ em_result emgpu_surface_resize(
  * @param surface Surface to destroy.
  */
 void emgpu_surface_destroy(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     emgpu_surface* surface);
+
+/**
+ * @brief Acquires the next available surface texture for rendering.
+ *
+ * Enqueues a presentation acquisition operation and returns a local
+ * reference to the acquired surface texture.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param surface Surface to acquire the next presentation image from.
+ *
+ * @return A local framebuffer handle valid for the duration of the command buffer recording.
+ */
+emgpu_local_framebuffer emgpu_cmd_acquire_surface(emgpu_command_buffer* command_buf, emgpu_surface* surface);

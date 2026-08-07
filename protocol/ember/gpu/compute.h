@@ -24,6 +24,33 @@ typedef struct emgpu_compute_pipeline_config {
     emgpu_descriptor_desc* descriptors;
 } emgpu_compute_pipeline_config;
 
+/**
+ * @brief Configuration for a compute pass.
+ *
+ * A compute pass is a live context of a compute pipeline
+ * within a command buffer. It requires info about local group size,
+ * resource imports and resource exports.
+ */
+typedef struct emgpu_computepass_config {
+    /** @brief Connected pipeline to computepass. */
+    const emgpu_pipeline* pipeline;
+
+    /** @brief Size of each work group in GPU execution. */
+    uvec3 local_size;
+
+    /** @brief Resources to export from pipeline. */
+    const emgpu_resource_export* export_resources;
+
+    /** @brief Number of export resources. */
+    u32 export_resource_count;
+
+    /** @brief Resources to import into pipeline. */
+    const emgpu_resource_import* import_resources;
+
+    /** @brief Number of import resources. */
+    u32 import_resource_count;
+} emgpu_computepass_config;
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -45,7 +72,30 @@ emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_compute_pipeline_create(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     const emgpu_compute_pipeline_config* config, 
     emgpu_pipeline* out_compute_pipeline);
+
+/**
+ * @brief Begins a compute pass.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param config Compute pass configuration.
+ */
+void emgpu_cmd_begin_computepass(emgpu_command_buffer* command_buf, const emgpu_computepass_config* config);
+
+/**
+ * @brief Dispatches a compute workload.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param group_size Number of compute workgroups in XYZ dimensions.
+ */
+void emgpu_cmd_dispatch(emgpu_command_buffer* command_buf, uvec3 group_size);
+
+/**
+ * @brief Ends current compute pass.
+ *
+ * @param command_buf Pointer to the command buffer.
+ */
+void emgpu_cmd_end_computepass(emgpu_command_buffer* command_buf);

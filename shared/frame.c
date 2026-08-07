@@ -1,7 +1,7 @@
 #include "ember/core.h"
-#include "ember/gpu/frame.h"
+#include "ember/gpu/command_buffer.h"
 
-#include "ember/gpu/frame_internal.h"
+#include "commands_internal.h"
 
 #include <string.h>
 

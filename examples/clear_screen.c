@@ -3,13 +3,14 @@
 #define EMBER_DEFINE_HELPERS
 
 #include <ember/platform/system.h>
+#include <ember/platform/logger.h>
 
 #include <ember/window/window.h>
 #include <ember/window/events.h>
 #include <ember/gpu/ext/emwin_surface.h>
 
+#include <ember/gpu/command_buffer.h>
 #include <ember/gpu/raster.h>
-#include <ember/gpu/frame.h>
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -21,7 +22,7 @@
     {                                                      \
         em_result result = func;                           \
         if (result != EMBER_RESULT_OK) {                   \
-            emlog_console(LOG_LEVEL_ERROR, "Examples", message ": %s", \
+            emplat_printf(EMBER_LOG_LEVEL_ERROR, message ": %s", \
 				em_result_string(result, true));           \
             goto cleanup;                                  \
         }                                                  \
@@ -74,7 +75,7 @@ int main(int argc, char** argv) {
 	
 	emgpu_device device = {};
 	CHECK_FUNC(
-		emgpu_device_init(&device_config, &system_alloc, &device), 
+		emgpu_device_init(&system_alloc, &device_config, &device), 
 		"Failed to create rendering device");
 
 	// Let's see what the chosen device actually supports and print it to the trace logger — handy during development.
@@ -96,41 +97,22 @@ int main(int argc, char** argv) {
 		wsi_extension.create_surface(&device, &system_alloc, &surface_config, &surface),
 		"Failed to create window surface");
 
-	// A renderpass describes what attachments we're going to draw into and how.
-	// Here we just have a single colour attachment that will be presented to the screen.
-	// load_op CLEAR means 'wipe it at the start of the pass'.
-	// store_op STORE means 'keep the result so we can present it'.
-	emgpu_attachment_config attachments[] = {
-		emgpu_attachment_from_surface(&surface) // Match whatever format the surface negotiated.
-
-		// Equivalent to this...
-		//{
-		//	.type = EMBER_ATTACHMENT_TYPE_COLOUR,
-		//	.format = surface.pixel_format,  
-		//	.load_op = EMBER_LOAD_OP_CLEAR,
-		//	.store_op = EMBER_STORE_OP_STORE,
-		//	.stencil_load_op = EMBER_LOAD_OP_DONT_CARE,   // No stencil buffer — we don't care.
-		//	.stencil_store_op = EMBER_STORE_OP_DONT_CARE,
-		//	.presentable = TRUE, // Tells the backend this attachment will be shown on screen.
-		//}
-	};
-
-	emgpu_renderpass_config renderpass_config = emgpu_renderpass_default();
-	renderpass_config.attachments      = attachments;
-	renderpass_config.attachment_count = EM_ARRAYSIZE(attachments);
-
-	emgpu_renderpass mainpass = {};
-	CHECK_FUNC(
-		emgpu_renderpass_create(&device, &system_alloc, &renderpass_config, &mainpass), 
-		"Failed to create main renderpass (present)");
+    emgpu_queue main_queue = 0ULL;
+    CHECK_FUNC(
+        emgpu_device_open_queue(&device, &main_queue),
+        "Failed to open main GPU device queue");
 
 	// Main loop. emwin_window_should_close becomes true when the user hits the X
 	// button or we signal the window to close ourselves.
-	while (!emwin_window_should_close(&window)) {
+    b8 running = EMTRUE;
+	while (running) {
         emwin_desktop_event desk_event = {};
 
         while (emwin_poll_events(desktop, &desk_event) == EMBER_RESULT_OK) {
             switch (desk_event.type) {
+                case EMWIN_EVENT_WINDOW_CLOSE:
+                    running = EMFALSE;
+                    break;
                 case EMWIN_EVENT_WINDOW_RESIZE:
                     emgpu_surface_resize(&device, &surface, desk_event.window_resize.size);
                     break;
@@ -141,24 +123,39 @@ int main(int argc, char** argv) {
 		// Each frame is driven by emgpu_frame. It manages per-frame allocations
 		// using the device's frame_allocator — everything allocated here is
 		// automatically freed when the frame is submitted.
-		emgpu_frame frame = {};
+		emgpu_command_buffer frame = {};
         CHECK_FUNC(
-            emgpu_frame_init(&device, &frame),
-            "Failed to init frame object");
+            emgpu_command_buffer_create(&device, &frame),
+            "Failed to init frame command buffer");
 
         // Grab the next texture from the swapchain to render into.
-        emgpu_frame_texture window_tex = emgpu_frame_accquire_surface(&frame, &surface);
+        emgpu_local_framebuffer window_tex = emgpu_cmd_acquire_surface(&frame, &surface);
+    
+        emgpu_colour_attachment attachments[] = {
+            {
+                .framebuffer = window_tex,
+                .load_op = EMBER_LOAD_OP_CLEAR,
+                .store_op = EMBER_STORE_OP_STORE,
+                .stencil_load_op = EMBER_LOAD_OP_DONT_CARE,
+                .stencil_store_op = EMBER_STORE_OP_DONT_CARE,
+                .presentable = EMTRUE,
+                .clear_colour = 0xFFAAAAFF
+            }
+        };
 
-        // Set the render area to cover the full window, begin our single pass,
-        // then immediately end it. No actual draw calls yet — this just clears the surface.
-        emgpu_frame_set_renderarea(&frame, (uvec2) { 0, 0 }, window.size);
-        emgpu_frame_begin_renderpass(&frame, &mainpass, 0xAAFFFFFF, &window_tex, 1);
-        emgpu_frame_end_renderpass(&frame);
+        emgpu_renderpass_config render_begin_info = emgpu_renderpass_default();
+        render_begin_info.colour_attachments = attachments;
+        render_begin_info.colour_attachment_count = EM_ARRAYSIZE(attachments);
+        emgpu_cmd_begin_renderpass(&frame, &render_begin_info);
+        emgpu_cmd_set_viewport(&frame, (uvec2) { 0, 0 }, window.size, 0.0f, 1.0f);
+        emgpu_cmd_set_scissor(&frame, (uvec2) { 0, 0 }, window.size);
+
+        emgpu_cmd_end_renderpass(&frame);
 
         // Submit the frame to the GPU. This also handles presentation — CHECK_FUNC
         // will jump to cleanup if something goes wrong here.
         CHECK_FUNC(
-            emgpu_device_submit(&device, &frame),
+            emgpu_device_submit(&device, main_queue, &frame),
             "Failed to submit frame to GPU");
 	}
 
@@ -167,7 +164,6 @@ int main(int argc, char** argv) {
 	// The allocator passed to each destroy call MUST match the one used to create it
 	// or you'll corrupt the allocator's internal state.
 cleanup:
-	emgpu_renderpass_destroy(&device, &system_alloc, &mainpass);
 	emgpu_surface_destroy(&device, &system_alloc, &surface);
 	emgpu_device_shutdown(&system_alloc, &device);
 	emwin_window_close(&system_alloc, &window); // Also tears down the desktop connection.

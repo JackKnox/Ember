@@ -72,6 +72,8 @@ typedef struct emgpu_extension_desc {
     u8 user_data[16];
 } emgpu_extension_desc;
 
+typedef u64 emgpu_queue;
+
 /**
  * @brief Configuration used for creating a GPU device.
  */
@@ -156,11 +158,12 @@ typedef struct emgpu_device {
  * This function sets up the device and assigns the appropriate backend
  * implementation based on the provided configuration.
  *
+ * @param allocator Allocater used to allocate device memory.
  * @param config Device configuration parameters.
  * @param out_device Output device instance.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* allocator, emgpu_device* out_device);
+em_result emgpu_device_init(const em_allocator* allocator, const emgpu_device_config* config, emgpu_device* out_device);
 
 /**
  * @brief Shuts down a GPU device.
@@ -168,9 +171,10 @@ em_result emgpu_device_init(const emgpu_device_config* config, em_allocator* all
  * Releases all resources associated with the device and performs
  * backend-specific cleanup.
  *
+ * @param allocator Allocator originally used allocate device memory.
  * @param device Pointer to the device instance.
  */
-void emgpu_device_shutdown(em_allocator* allocator, emgpu_device* device);
+void emgpu_device_shutdown(const em_allocator* allocator, emgpu_device* device);
 
 /**
  * @brief Retreives capabilties of the rendering device.
@@ -180,8 +184,16 @@ void emgpu_device_shutdown(em_allocator* allocator, emgpu_device* device);
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_device_get_capabilities(
-    emgpu_device* device, 
+    const emgpu_device* device, 
     emgpu_device_capabilities* out_capabilities);
+
+em_result emgpu_device_open_queue(
+    const emgpu_device* device,
+    emgpu_queue* out_queue);
+
+em_result emgpu_queue_wait_idle(
+    const emgpu_device* device,
+    emgpu_queue queue);
 
 #ifdef EMBER_DEFINE_HELPERS
 

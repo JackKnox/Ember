@@ -2,14 +2,8 @@
 
 #include "ember/core.h"
 
-#include "ember/gpu/frame.h"
+#include "ember/gpu/command_buffer.h"
 
-/**
- * @brief Render command types.
- *
- * Represent high-level rendering operations that are translated
- * into backend-specific API calls (OpenGL, Vulkan, etc.).
- */
 typedef enum rendercmd_payload_type {
     RENDERCMD_ACCQUIRE_SURFACE,
     RENDERCMD_IMPORT_TEXTURE,

@@ -1,49 +1,23 @@
 #include "ember/core.h"
 
-#include <ember/platform/system.h>
+#include <ember/platform/logger.h>
 
-#include <stdarg.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-// Always define emdebug_break in case it is ever needed outside assertions (i.e fatal log errors)
-// Try via __has_builtin first.
-#if defined(__has_builtin) && !defined(__ibmxl__)
-#    if __has_builtin(__builtin_debugtrap)
-#        define emdebug_break() __builtin_debugtrap()
-#    elif __has_builtin(__debugbreak)
-#        define emdebug_break() __debugbreak()
-#    endif
-#endif
+// TODO: Move to drivers.
 
-// If not setup, try the old way.
-#if !defined(emdebug_break)
-#    if defined(__clang__) || defined(__GNUC__)
-#        define emdebug_break() __builtin_trap()
-#    elif defined(_MSC_VER)
-#        include <intrin.h>
-#        define emdebug_break() __debugbreak()
-#    else
-// Fall back to x86/x86_64
-#        define emdebug_break() asm { int 3 }
-#    endif
-#endif
+void emplat_print(emplat_log_level log_level, const char* message) {
+    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m" };
 
-static char message_buf[64] = {};
-static PFN_log_output logger = NULL;
-
-void default_logger(log_level level, const char* subsystem, const char* message) {
-    const char* level_strings[] = { "FATAL", "ERROR",  "WARN",  "INFO",  "TRACE", "DEV" };
-    static const char* colours[] = { "\033[1;37;101m", "\033[1;31m", "\033[1;33m", "\033[1;32m", "\033[1;36m", "\033[0;37m" };
-
-    printf("%s[%-5s] %-*s: %s\033[0m\n",
-        colours[level],
-        level_strings[level],
-        16,
-        subsystem,
+    printf("%s%s\033[0m\n",
+        colours[log_level],
         message);
 }
 
-void emlog_console(log_level level, const char* subsystem, const char* message, ...) {
+static char message_buf[64] = {};
+
+void emplat_printf(emplat_log_level log_level, const char* message, ...) {
     va_list args;
     va_start(args, message);
 
@@ -57,15 +31,5 @@ void emlog_console(log_level level, const char* subsystem, const char* message, 
 
     va_end(args);
 
-    if (!logger)
-        default_logger(level, subsystem, message_buf);
-    else
-        logger(level, subsystem, message_buf);
-
-    if (level == LOG_LEVEL_FATAL)
-        emdebug_break();
-}
-
-void set_log_callback(PFN_log_output func) {
-    logger = func;
+    emplat_print(log_level, message_buf);
 }

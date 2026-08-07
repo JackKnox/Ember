@@ -5,6 +5,8 @@
 #include "ember/gpu/types.h"
 #include "ember/gpu/device.h"
 
+#include "ember/gpu/command_buffer.h"
+
 /**
  * @brief Configuration for a render buffer.
  *
@@ -59,46 +61,10 @@ emgpu_buffer_config emgpu_buffer_default();
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_buffer_create(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     const emgpu_buffer_config* config, 
     emgpu_buffer* out_buffer);
-
-/**
- * @brief Copies data between two managed buffers.
- *
- * @param device Pointer to the device instance.
- * @param src_buffer Source buffer to copy from.
- * @param dst_buffer Destination buffer to copy into.
- * @param src_offset Offset (in bytes) into the source buffer.
- * @param dst_offset Offset (in bytes) into the destination buffer.
- * @param region Number of bytes to copy.
- * @return Ember result code; returns `EMBER_RESULT_OK` on success.
- * 
- * @note Performance may vary if buffers must copy over CPU-GPU boundaries.
- */
-em_result emgpu_buffer_copy(
-    emgpu_device* device, 
-    emgpu_buffer* src_buffer,
-    emgpu_buffer* dst_buffer, 
-    u64 src_offset, u64 dst_offset, 
-    u64 region);
-
-/**
- * @brief Uploads data from host memory into a GPU buffer.
- *
- * @param device GPU device handle used to perform the upload.
- * @param buffer Destination GPU buffer to receive the data.
- * @param data Pointer to the source memory containing the data.
- * @param offset Byte offset into the destination buffer where data will be written.
- * @param region Number of bytes to upload from the source data.
- * @return Ember result code; returns `EMBER_RESULT_OK` on success.
- */
-em_result emgpu_buffer_upload(
-    emgpu_device* device, 
-    emgpu_buffer* buffer, 
-    const void* data, 
-    u64 offset, u64 region);
 
 /**
  * @brief Destroys a buffer.
@@ -108,8 +74,8 @@ em_result emgpu_buffer_upload(
  * @param buffer Buffer to destroy.
  */
 void emgpu_buffer_destroy(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     emgpu_buffer* buffer);
 
 /**
@@ -189,39 +155,35 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_texture_create(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     const emgpu_texture_config* config, 
     emgpu_texture* out_texture);
 
 /**
- * @brief Uploads data to a texture.
- *
- * @param device Pointer to the device instance.
- * @param texture Target texture.
- * @param data Pointer to source data.
- * @param start_offset Starting texel position.
- * @param region Size of the region to update.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
- */
-em_result emgpu_texture_upload(
-    emgpu_device* device, 
-    emgpu_texture* texture, 
-    const void* data, 
-    uvec2 start_offset, 
-    uvec2 region);
-
-/**
- * @brief Destroys a texture.
+ * @brief Destroys a textures.
  *
  * @param device Pointer to the device instance.
  * @param allocator Allocator used to manage device memory.
  * @param texture Texture to destroy.
  */
 void emgpu_texture_destroy(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device,
+    const em_allocator* allocator,
     emgpu_texture* texture);
+
+/**
+ * @brief Imports a persistent texture into the command buffer.
+ *
+ * Registers an external GPU texture for use within the command buffer
+ * and returns a valid framebuffer handle to it.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param texture Pointer to the GPU texture to import.
+ *
+ * @return A local framebuffer handle.
+ */
+emgpu_local_framebuffer emgpu_cmd_import_texture(emgpu_command_buffer* command_buf, emgpu_texture* texture);
 
 /**
  * @brief Describes a single descriptor update for a pipeline.
@@ -251,6 +213,18 @@ typedef struct emgpu_update_descriptors {
     };
 } emgpu_update_descriptors;
 
+typedef struct emgpu_resource_import {
+    u32 src_binding;
+    emgpu_local_resource resource;
+    emgpu_access_flags access_flags;
+} emgpu_resource_import;
+
+typedef struct emgpu_resource_export {
+    u32 dst_binding;
+    emgpu_local_resource resource;
+    emgpu_access_flags access_flags;
+} emgpu_resource_export;
+
 /**
  * @brief Backend-agnostic GPU pipeline handle.
  *
@@ -276,7 +250,7 @@ typedef struct emgpu_pipeline {
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_pipeline_upload_descriptors(
-    emgpu_device* device, 
+    const emgpu_device* device, 
     emgpu_pipeline* pipeline, 
     emgpu_update_descriptors* descriptors, 
     u32 descriptor_count);
@@ -289,6 +263,7 @@ em_result emgpu_pipeline_upload_descriptors(
  * @param pipeline Pipeline to destroy.
  */
 void emgpu_pipeline_destroy(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     emgpu_pipeline* pipeline);
+

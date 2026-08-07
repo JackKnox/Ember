@@ -65,7 +65,8 @@ typedef enum emgpu_buffer_usage {
     EMBER_BUFFER_USAGE_UNIFORM = 1 << 2, /**< Uniform buffer */
     EMBER_BUFFER_USAGE_STORAGE = 1 << 3, /**< Storage buffer */
     EMBER_BUFFER_USAGE_TRANSFER_SRC = 1 << 4, /**< Transfer from this buffer */
-    EMBER_BUFFER_USAGE_CPU_VISIBLE  = 1 << 5, /**< CPU-coherent buffer */
+    EMBER_BUFFER_USAGE_TRANSFER_DST = 1 << 5, /**< Transfer to this buffer */
+    EMBER_BUFFER_USAGE_CPU_VISIBLE  = 1 << 6, /**< CPU-coherent buffer */
 } emgpu_buffer_usage;
 
 /**
@@ -77,7 +78,8 @@ typedef enum emgpu_texture_usage {
     EMBER_TEXTURE_USAGE_STORAGE = 1 << 0,      /**< Storage image */
     EMBER_TEXTURE_USAGE_SAMPLED = 1 << 1,      /**< Texture created with sampler */
     EMBER_TEXTURE_USAGE_TRANSFER_SRC = 1 << 2, /**< Transfer from this texture */
-    EMBER_TEXTURE_USAGE_ATTACHMENT_DST = 1 << 4, /**< Used as a texture in a renderpass */
+    EMBER_TEXTURE_USAGE_TRANSFER_DST = 1 << 3, /**< Transfer to this texture */
+    EMBER_TEXTURE_USAGE_ATTACHMENT_DST = 1 << 4, /**< Used as a output texture in a renderpass */
 } emgpu_texture_usage;
 
 /**

@@ -7,17 +7,14 @@
 #include "ember/gpu/device.h"
 #include "ember/gpu/resources.h"
 
-#include "ember/gpu/surface.h"
+#include "ember/gpu/command_buffer.h"
 
 /**
  * @brief Describes a single render pass attachment.
  */
-typedef struct emgpu_attachment_config {
-    /** @brief Logical attachment type (colour, depth, stencil, etc.). */
-    emgpu_attachment_type type;
-
-    /** @brief Library-defined pixel format. Must be compatible with the attachment type. */
-    emgpu_format format;
+typedef struct emgpu_colour_attachment {
+    /** @brief Local framebuffer to render all output to. */
+    emgpu_local_framebuffer framebuffer;
 
     /** @brief Load operation for colour or depth aspect. */
     emgpu_load_op load_op;
@@ -36,47 +33,31 @@ typedef struct emgpu_attachment_config {
      * Only relevant for stencil or depth-stencil attachments.
      */
     emgpu_store_op stencil_store_op;
+    
+    /** @brief Default colour of the output framebuffer. */
+    u32 clear_colour;
 
     /** @brief Compatible with rendering to a surface object. */
     b8 presentable;
-} emgpu_attachment_config;
+} emgpu_colour_attachment;
 
 /**
- * @brief Returns a basic attachment guaranteed to work on a surface.
- */
-emgpu_attachment_config emgpu_attachment_from_surface(emgpu_surface* surface);
-
-/**
- * @brief Configuration for a renderpass.
+ * @brief Configuration for a command buffer renderpass.
  *
- * Contains attachments, image layout transitions
- * and attachment images.
+ * A renderpass is a context of execution within a command buffer
+ * specifically for using the rendering capabilities of the GPU and uses
+ * the Graphics Pipeline.
  */
 typedef struct emgpu_renderpass_config {
     /** @brief Refrence to extra configuration structure specific to API type. */
     void* api_next;
 
-    /** @brief Number of attachments attached to the renderpass. */
-    u32 attachment_count;
+    /** @brief Attachments for colour data output. */
+    const emgpu_colour_attachment* colour_attachments;
 
-    /** @brief Attachments created within the renderpass. */
-    emgpu_attachment_config* attachments;
+    /** @brief Number of colour attachments. */
+    u32 colour_attachment_count;
 } emgpu_renderpass_config;
-
-/**
- * @brief Represents a render pass used by the renderer backend.
- *
- * A render pass is the blueprint for rendering operations. It can either
- * represent a window-backed surface (such as a swapchain image) or an
- * offscreen render pass.
- */
-typedef struct emgpu_renderpass {
-    /** @brief Backend-specific internal data. */
-    void* internal_data;
-
-    /** @brief Number of attachments attached to the renderpass. */
-    u32 attachment_count;
-} emgpu_renderpass;
 
 #ifdef EMBER_DEFINE_HELPERS
 
@@ -90,31 +71,45 @@ emgpu_renderpass_config emgpu_renderpass_default();
 #endif
 
 /**
- * @brief Creates a render pass.
+ * @brief Begins a renderpass within the given command buffer.
  *
- * @param device Pointer to the device instance.
- * @param allocator Allocator used to manage device memory.
- * @param config Render pass configuration.
- * @param out_renderpass Output render pass.
- * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ * @param command_buf Pointer to the command buffer.
+ * @param config Renderpass configuration.
  */
-em_result emgpu_renderpass_create(
-    emgpu_device* device, 
-    em_allocator* allocator, 
-    const emgpu_renderpass_config* config, 
-    emgpu_renderpass* out_renderpass);
+void emgpu_cmd_begin_renderpass(emgpu_command_buffer* command_buf, const emgpu_renderpass_config* config);
 
 /**
- * @brief Destroys a render pass.
+ * @brief Ends the currently active render pass.
  *
- * @param device Pointer to the device instance.
- * @param allocator Allocator used to manage device memory.
- * @param renderpass Pass to destroy.
+ * @param command_buf Pointer to the command buffer.
  */
-void emgpu_renderpass_destroy(
-    emgpu_device* device, 
-    em_allocator* allocator, 
-    emgpu_renderpass* renderpass);
+void emgpu_cmd_end_renderpass(emgpu_command_buffer* command_buf);
+
+/**
+ * @brief Sets the viewport for subsequent rendering commands.
+ *
+ * Defines the viewport used by following graphics commands.
+ * This does not affect compute operations.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param origin Top-left coordinate of the viewport.
+ * @param size Dimensions of the viewport.
+ * @param min_depth Mask for minimum depth displayed by the GPU. 
+ * @param max_depth Mask for maximum depth displayed by the GPU.
+ */
+void emgpu_cmd_set_viewport(emgpu_command_buffer* command_buf, uvec2 origin, uvec2 size, f32 min_depth, f32 max_depth);
+
+/**
+ * @brief Set the scissor for subsequent rendering commands.
+ *
+ * Defines the scissor used by following graphics commands.
+ * This does not affect compute operations.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param origin Top-left coordinate of the scissor.
+ * @param size Dimensions of the scissor.
+ */
+void emgpu_cmd_set_scissor(emgpu_command_buffer* command_buf, uvec2 origin, uvec2 size);
 
 /**
  * @brief Configuration for rasterization blending state.
@@ -208,6 +203,26 @@ typedef struct emgpu_raster_pipeline_config {
     emgpu_raster_vertex_config* vertex_input;
 } emgpu_raster_pipeline_config;
 
+/**
+ * @brief Info for binding a raster pipeline to the current renderpass.
+ */
+typedef struct emgpu_raster_bind_info {
+    /** @brief Connected pipeline to computepass. */
+    const emgpu_pipeline* pipeline;
+
+    /** @brief Resources to export from pipeline. */
+    const emgpu_resource_export* export_resources;
+
+    /** @brief Number of export resources. */
+    u32 export_resource_count;
+
+    /** @brief Resources to import into pipeline. */
+    const emgpu_resource_import* import_resources;
+
+    /** @brief Number of import resources. */
+    u32 import_resource_count;
+} emgpu_raster_bind_info;
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -225,13 +240,32 @@ emgpu_raster_pipeline_config emgpu_pipeline_default_raster();
  * @param device Pointer to the device instance.
  * @param allocator Allocator used to manage device memory.
  * @param config Pipeline configuration.
- * @param bound_renderpass Render pass the pipeline is compatible with.
  * @param out_pipeline Output pipeline.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_raster_pipeline_create(
-    emgpu_device* device, 
-    em_allocator* allocator, 
+    const emgpu_device* device, 
+    const em_allocator* allocator, 
     const emgpu_raster_pipeline_config* config, 
-    emgpu_renderpass* bound_renderpass, 
     emgpu_pipeline* out_pipeline);
+
+/**
+ * @brief Binds a raster pipeline.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param pipeline Pipeline to bind.
+ */
+void emgpu_cmd_bind_raster_pipeline(emgpu_command_buffer* command_buf, emgpu_raster_bind_info* bind_info);
+
+/**
+ * @brief Issues a draw call.
+ *
+ * @param command_buf Pointer to the command buffer.
+ * @param vertex_count Number of vertices to draw.
+ * @param instance_count Number of instances to draw.
+ *
+ * @note Whetever a index buffer was bound
+ *       indicates whetever its a indexed call.
+ */
+void emgpu_cmd_draw(emgpu_command_buffer* command_buf, u32 vertex_count, u32 instance_count);
+
