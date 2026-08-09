@@ -193,6 +193,18 @@ typedef struct emgpu_raster_pipeline_config {
     /** @brief Descriptor binding descriptions used by the pipeline. */
     emgpu_descriptor_desc* descriptors;
 
+    /** @brief Number of colour attachments. */
+    u32 colour_attachment_count;
+
+    /** @brief Compatiable colour attachments with pipeline. */
+    emgpu_format* colour_attachments;
+
+    /** @brief Pipeline's compatiable depth format. */
+    emgpu_format depth_format;
+
+    /** @brief Pipeline's compatiable stencil format. */
+    emgpu_format stencil_format;
+
     /** @brief Blending configuration, must not be NULL for blending to be enabled. */
     emgpu_raster_blend_config* blend_state;
 
