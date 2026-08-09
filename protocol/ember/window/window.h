@@ -129,8 +129,8 @@ emwin_window_config emwin_window_default();
  * Initialises a platform window using the provided configuration and writes
  * the resulting state to @p out_window.
  *
- * @param config Pointer to the window configuration.
  * @param allocator Allocator used for internal allocations.
+ * @param config Pointer to the window configuration.
  * @param out_window Pointer to the window to initialise.
  * @param out_desktop Pointer to already created desktop, may be NULL.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
@@ -138,7 +138,7 @@ emwin_window_config emwin_window_default();
  * @note Passing a valid @p out_desktop is strongly recommended to avoid
  *       reinitialising shared global platform state.
  */
-em_result emwin_window_open(const emwin_window_config* config, em_allocator* allocator, emwin_window* out_window, emwin_desktop** out_desktop);
+em_result emwin_window_open(em_allocator* allocator, const emwin_window_config* config, emwin_window* out_window, emwin_desktop** out_desktop);
 
 /**
  * @brief Forces closing a window and destroys all OS resources.
