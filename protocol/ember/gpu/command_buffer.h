@@ -37,7 +37,7 @@ typedef struct emgpu_command_buffer {
     u32 current_resource_idx;
     
     /** @brief A reference to the allocator used to manage command buffer memory. */
-    const em_allocator* allocator;
+    em_allocator* allocator;
 
     /**
      * @brief Linear command buffer storing recorded GPU commands.
@@ -69,3 +69,11 @@ em_result emgpu_device_submit(const emgpu_device* device, emgpu_queue queue, con
  * @return Ember result code; `EMBER_RESULT_OK` if succeds.
  */
 em_result emgpu_command_buffer_create(const emgpu_device* device, emgpu_command_buffer* out_command_buffer);
+
+/**
+ * @brief Reserves a slot for a local resource.
+ *
+ * @param commands_buf Pointer to the command buffer.
+ * @return Empty resource handle.
+ */
+emgpu_local_framebuffer emgpu_cmd_empty_resource(emgpu_command_buffer* command_buf);

@@ -72,6 +72,9 @@ typedef struct emgpu_extension_desc {
     u8 user_data[16];
 } emgpu_extension_desc;
 
+/**
+ * @brief Representes a thread of execution on the GPU.
+ */
 typedef u64 emgpu_queue;
 
 /**
@@ -183,17 +186,23 @@ void emgpu_device_shutdown(const em_allocator* allocator, emgpu_device* device);
  * @param out_capabilities Output capabilties structure.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
-em_result emgpu_device_get_capabilities(
-    const emgpu_device* device, 
-    emgpu_device_capabilities* out_capabilities);
+em_result emgpu_device_get_capabilities(const emgpu_device* device, emgpu_device_capabilities* out_capabilities);
 
-em_result emgpu_device_open_queue(
-    const emgpu_device* device,
-    emgpu_queue* out_queue);
+/**
+ * @brief Opens a queue of execution on the GPU.
+ *
+ * @param device Pointer to the device instance.
+ * @param out_queue Output queue.
+ */
+em_result emgpu_device_open_queue(const emgpu_device* device, emgpu_queue* out_queue);
 
-em_result emgpu_queue_wait_idle(
-    const emgpu_device* device,
-    emgpu_queue queue);
+/**
+ * @brief Blocks thread until all command buffers submitted are finished.
+ *
+ * @param device Pointer to the device instance.
+ * @param queue Queue identifier.
+ */
+em_result emgpu_queue_wait_idle(const emgpu_device* device, emgpu_queue queue);
 
 #ifdef EMBER_DEFINE_HELPERS
 
