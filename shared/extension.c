@@ -2,7 +2,7 @@
 
 #include "ember/gpu/ext/emwin_surface.h"
 
-emgpu_extension_desc emgpu_emwin_surface_extension(emwin_desktop* desktop, emgpu_emwin_surface_ext* out_extension) {
+emgpu_extension_desc emgpu_register_emwin_surface(emwin_desktop* desktop, emgpu_emwin_surface_ext* out_extension) {
     emgpu_extension_desc ext = {};
     ext.name = "EMGPU_EXT_emwin_surface";
     ext.version   = EMBER_VERSION;
