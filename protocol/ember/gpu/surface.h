@@ -33,7 +33,7 @@ typedef struct emgpu_surface {
  *       some backends surface is resized next frame it's rendered to.
  */
 em_result emgpu_surface_resize(
-    const emgpu_device* device, 
+    emgpu_device* device, 
     emgpu_surface* surface, 
     uvec2 new_size);
 
@@ -45,8 +45,8 @@ em_result emgpu_surface_resize(
  * @param surface Surface to destroy.
  */
 void emgpu_surface_destroy(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     emgpu_surface* surface);
 
 /**

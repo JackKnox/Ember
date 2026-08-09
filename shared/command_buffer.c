@@ -40,7 +40,7 @@ void* cmdalloc(emgpu_command_buffer* command_buf, cmd_payload_type type, u64 pay
     return (void*)((u8*)hdr + sizeof(cmd_header));
 }
 
-em_result emgpu_command_buffer_create(const emgpu_device* device, emgpu_command_buffer* out_command_buffer) {
+em_result emgpu_command_buffer_create(emgpu_device* device, emgpu_command_buffer* out_command_buffer) {
     out_command_buffer->initialized = EMTRUE;
     out_command_buffer->allocator = &device->frame_allocator;
     return EMBER_RESULT_OK;

@@ -58,7 +58,7 @@ typedef struct emgpu_command_buffer {
  * @param command_buf Pointer to command buffer.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeds.
  */
-em_result emgpu_device_submit(const emgpu_device* device, emgpu_queue queue, const emgpu_command_buffer* command_buf);
+em_result emgpu_device_submit(emgpu_device* device, emgpu_queue queue, const emgpu_command_buffer* command_buf);
 
 /**
  * @brief Initializes a GPU command buffer for recording.
@@ -68,7 +68,7 @@ em_result emgpu_device_submit(const emgpu_device* device, emgpu_queue queue, con
  *
  * @return Ember result code; `EMBER_RESULT_OK` if succeds.
  */
-em_result emgpu_command_buffer_create(const emgpu_device* device, emgpu_command_buffer* out_command_buffer);
+em_result emgpu_command_buffer_create(emgpu_device* device, emgpu_command_buffer* out_command_buffer);
 
 /**
  * @brief Reserves a slot for a local resource.

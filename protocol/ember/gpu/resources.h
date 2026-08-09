@@ -61,8 +61,8 @@ emgpu_buffer_config emgpu_buffer_default();
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_buffer_create(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     const emgpu_buffer_config* config, 
     emgpu_buffer* out_buffer);
 
@@ -74,8 +74,8 @@ em_result emgpu_buffer_create(
  * @param buffer Buffer to destroy.
  */
 void emgpu_buffer_destroy(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     emgpu_buffer* buffer);
 
 /**
@@ -155,8 +155,8 @@ u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_texture_create(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     const emgpu_texture_config* config, 
     emgpu_texture* out_texture);
 
@@ -168,8 +168,8 @@ em_result emgpu_texture_create(
  * @param texture Texture to destroy.
  */
 void emgpu_texture_destroy(
-    const emgpu_device* device,
-    const em_allocator* allocator,
+    emgpu_device* device,
+    em_allocator* allocator,
     emgpu_texture* texture);
 
 /**
@@ -268,7 +268,7 @@ typedef struct emgpu_pipeline {
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_pipeline_upload_descriptors(
-    const emgpu_device* device, 
+    emgpu_device* device, 
     emgpu_pipeline* pipeline, 
     emgpu_update_descriptors* descriptors, 
     u32 descriptor_count);
@@ -281,7 +281,7 @@ em_result emgpu_pipeline_upload_descriptors(
  * @param pipeline Pipeline to destroy.
  */
 void emgpu_pipeline_destroy(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     emgpu_pipeline* pipeline);
 

@@ -72,8 +72,8 @@ emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  */
 em_result emgpu_compute_pipeline_create(
-    const emgpu_device* device, 
-    const em_allocator* allocator, 
+    emgpu_device* device, 
+    em_allocator* allocator, 
     const emgpu_compute_pipeline_config* config, 
     emgpu_pipeline* out_compute_pipeline);
 
