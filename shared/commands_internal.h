@@ -4,10 +4,9 @@
 
 #include "ember/gpu/command_buffer.h"
 
-#include "ember/gpu/compute.h"
-#include "ember/gpu/raster.h"
 #include "ember/gpu/resources.h"
 #include "ember/gpu/surface.h"
+
 
 typedef enum cmd_payload_type {
     COMMAND_EMPTY, // Prevents against corrupted memory.
@@ -62,7 +61,7 @@ typedef union cmd_payload {
     } dispatch;
 
     struct {
-        uvec2 renderarea_origin, renderarea_size;
+        uvec2 render_origin, render_size;
         // colour_attachments
     } begin_renderpass;
 

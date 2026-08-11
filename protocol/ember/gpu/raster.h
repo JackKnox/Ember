@@ -22,18 +22,6 @@ typedef struct emgpu_colour_attachment {
     /** @brief Store operation for colour or depth aspect. */
     emgpu_store_op store_op;
 
-    /**
-     * @brief Load operation for stencil aspect.
-     * Only relevant for stencil or depth-stencil attachments.
-     */
-    emgpu_load_op stencil_load_op;
-
-    /**
-     * @brief Store operation for stencil aspect.
-     * Only relevant for stencil or depth-stencil attachments.
-     */
-    emgpu_store_op stencil_store_op;
-    
     /** @brief Default colour of the output framebuffer. */
     u32 clear_colour;
 
@@ -49,6 +37,12 @@ typedef struct emgpu_colour_attachment {
  * the Graphics Pipeline.
  */
 typedef struct emgpu_renderpass_config {
+    /** @brief Origin of the renderarea rect, local to the current framebuffer. */
+    uvec2 render_origin;
+
+    /** @brief Size of the renderarea rect, local to the current framebuffe. */
+    uvec2 render_size;
+    
     /** @brief Attachments for colour data output. */
     const emgpu_colour_attachment* colour_attachments;
 

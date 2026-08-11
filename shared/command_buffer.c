@@ -3,6 +3,9 @@
 
 #include <string.h>
 
+#include "ember/gpu/compute.h"
+#include "ember/gpu/raster.h"
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L 
 // C11 and later
 #   define EM_ALIGNOF(type) _Alignof(type)
@@ -80,6 +83,9 @@ void emgpu_cmd_end_computepass(emgpu_command_buffer* command_buf) {
 void emgpu_cmd_begin_renderpass(emgpu_command_buffer* command_buf, const emgpu_renderpass_config* config) {
     cmd_payload* payload;
     payload = (cmd_payload*)cmdalloc(command_buf, COMMAND_BEGIN_RENDERPASS, sizeof(payload->begin_renderpass));
+    payload->begin_renderpass.render_origin = config->render_origin;
+    payload->begin_renderpass.render_size   = config->render_size;
+
     // payload->begin_renderpass.colours
     emgpu_colour_attachment* colours;
     colours = (emgpu_colour_attachment*)cmdalloc(command_buf, COMMAND_COLOUR_ATTACHMENTS, sizeof(*colours) * config->colour_attachment_count);

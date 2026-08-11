@@ -136,17 +136,19 @@ int main(int argc, char** argv) {
                 .framebuffer = window_tex,
                 .load_op = EMBER_LOAD_OP_CLEAR,
                 .store_op = EMBER_STORE_OP_STORE,
-                .stencil_load_op = EMBER_LOAD_OP_DONT_CARE,
-                .stencil_store_op = EMBER_STORE_OP_DONT_CARE,
                 .presentable = EMTRUE,
                 .clear_colour = 0xFFAAAAFF
             }
         };
 
         emgpu_renderpass_config render_begin_info = emgpu_renderpass_default();
+        render_begin_info.render_origin = (uvec2) { 0, 0 };
+        render_begin_info.render_size   = window.size;
+
         render_begin_info.colour_attachments = attachments;
         render_begin_info.colour_attachment_count = EM_ARRAYSIZE(attachments);
         emgpu_cmd_begin_renderpass(&frame, &render_begin_info);
+        
         emgpu_cmd_set_viewport(&frame, (uvec2) { 0, 0 }, window.size, 0.0f, 1.0f);
         emgpu_cmd_set_scissor(&frame, (uvec2) { 0, 0 }, window.size);
 
