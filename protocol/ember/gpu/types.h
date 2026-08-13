@@ -168,6 +168,7 @@ typedef enum emgpu_store_op {
  * Usage flags may be combined.
  */
 typedef enum emgpu_access_flags {
+    EMBER_ACCESS_NONE                    = 0,       /**< Resource has no synchronization rules. **/
     EMBER_ACCESS_SHADER_WRITE            = 1 << 0,  /**< Written by a shader */
     EMBER_ACCESS_SHADER_READ             = 1 << 1,  /**< Resource read by a shader */
     EMBER_ACCESS_VERTEX_ATTRIBUTE_READ   = 1 << 2,  /**< Read as a vertex attribute during vertex input */
