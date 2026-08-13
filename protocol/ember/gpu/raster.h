@@ -102,39 +102,52 @@ void emgpu_cmd_set_viewport(emgpu_command_buffer* command_buf, uvec2 origin, uve
  */
 void emgpu_cmd_set_scissor(emgpu_command_buffer* command_buf, uvec2 origin, uvec2 size);
 
-/**
- * @brief Configuration for rasterization blending state.
- * 
- * Defines how polygons are blended together with existing ones.
+/** 
+ * @brief Configures depth and stencil testing for a raster pipeline. 
  */
-typedef struct emgpu_raster_blend_config {
-    /** @brief Source blend factors for colour components. */
-    emgpu_blend_factor src_colour;
+typedef struct emgpu_raster_depth_stencil_config {
+    /** @brief Depth format compatible with the pipeline. */
+    emgpu_format depth_format;
 
-    /** @brief Destination blend factors for colour components. */
-    emgpu_blend_factor dst_colour;
+    /** @brief Stencil format compatible with the pipeline. */
+    emgpu_format stencil_format;
 
-    /** @brief Blend operation applied to colour components. */
-    emgpu_blend_op colour_op;
+    /** @brief Enables depth testing. */
+    b8 depth_test_enable;
 
-    /** @brief Source blend factors for alpha component. */
-    emgpu_blend_factor src_alpha;
+    /** @brief Enables writing depth values to the depth attachment. */
+    b8 depth_write_enabled;
 
-    /** @brief Destination blend factors for alpha component. */
-    emgpu_blend_factor dst_alpha;
+    /** @brief Comparison operation used for depth testing. */
+    emgpu_compare_op compare_op;
 
-    /** @brief Blend operation applied to alpha component. */
-    emgpu_blend_op alpha_op;
-} emgpu_raster_blend_config;
+    /** @brief Enables depth bounds testing. */
+    b8 depth_bounds_test_enable;
+
+    /** @brief Enables stencil testing. */
+    b8 stencil_test_enable;
+
+    /** @brief Stencil operation applied to front-facing fragments. */
+    emgpu_stencil_op front_stencil;
+
+    /** @brief Stencil operation applied to back-facing fragments. */
+    emgpu_stencil_op back_stencil;
+
+    /** @brief Minimum depth value used for depth bounds testing. */
+    f32 min_depth_bounds;
+
+    /** @brief Maximum depth value used for depth bounds testing. */
+    f32 max_depth_bounds;
+} emgpu_raster_depth_stencil_config;
 
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
- * @brief Creates a default raster blending configuration.
+ * @brief Creates a default raster depth stencil configuration.
  *
- * @return A default-initialized emgpu_raster_blend_config.
+ * @return A default-initialized emgpu_raster_depth_stencil_config.
  */
-emgpu_raster_blend_config emgpu_raster_blend_default();
+emgpu_raster_depth_stencil_config emgpu_raster_depth_stencil_default();
 
 #endif
 
@@ -165,6 +178,32 @@ emgpu_raster_vertex_config emgpu_raster_vertex_default();
 
 #endif
 
+typedef struct emgpu_pipeline_colour_attachment {
+    /** @brief Pixel format of the colour attachment. */
+    emgpu_format format;
+
+    /** @brief If TRUE, enables blending across colour attachments. */
+    b8 blend_enable;
+
+    /** @brief Source blend factors for colour components. */
+    emgpu_blend_factor src_colour;
+
+    /** @brief Destination blend factors for colour components. */
+    emgpu_blend_factor dst_colour;
+
+    /** @brief Blend operation applied to colour components. */
+    emgpu_blend_op colour_op;
+
+    /** @brief Source blend factors for alpha component. */
+    emgpu_blend_factor src_alpha;
+
+    /** @brief Destination blend factors for alpha component. */
+    emgpu_blend_factor dst_alpha;
+
+    /** @brief Blend operation applied to alpha component. */
+    emgpu_blend_op alpha_op;
+} emgpu_pipeline_colour_attachment;
+
 /**
  * @brief Configuration for a raster pipeline.
  *
@@ -191,16 +230,10 @@ typedef struct emgpu_raster_pipeline_config {
     u32 colour_attachment_count;
 
     /** @brief Compatiable colour attachments with pipeline. */
-    emgpu_format* colour_attachments;
+    emgpu_pipeline_colour_attachment* colour_attachments;
 
-    /** @brief Pipeline's compatiable depth format. */
-    emgpu_format depth_format;
-
-    /** @brief Pipeline's compatiable stencil format. */
-    emgpu_format stencil_format;
-
-    /** @brief Blending configuration, must not be NULL for blending to be enabled. */
-    emgpu_raster_blend_config* blend_state;
+    /** @brief Depth/stencil configuration, must not be NULL for depth or stencil operations to be enabled. */
+    emgpu_raster_depth_stencil_config* depth_stencil;
 
     /** @brief Vertex input configuration, must not be NULL to enable rasterization. */
     emgpu_raster_vertex_config* vertex_input;

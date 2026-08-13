@@ -168,7 +168,7 @@ typedef enum emgpu_store_op {
  * Usage flags may be combined.
  */
 typedef enum emgpu_access_flags {
-    EMBER_ACCESS_NONE                    = 0,       /**< Resource has no synchronization rules. **/
+    EMBER_ACCESS_NONE                    = 0,       /**< Resource has no synchronization rules. */
     EMBER_ACCESS_SHADER_WRITE            = 1 << 0,  /**< Written by a shader */
     EMBER_ACCESS_SHADER_READ             = 1 << 1,  /**< Resource read by a shader */
     EMBER_ACCESS_VERTEX_ATTRIBUTE_READ   = 1 << 2,  /**< Read as a vertex attribute during vertex input */
@@ -202,11 +202,25 @@ typedef enum emgpu_blend_factor {
     EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,       /**< 1 - source alpha */
     EMBER_BLEND_FACTOR_DST_ALPHA,                 /**< Destination alpha */
     EMBER_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,       /**< 1 - destination alpha */
-    EMBER_BLEND_FACTOR_CONSTANT_COLOUR,            /**< Constant blend colour */
+    EMBER_BLEND_FACTOR_CONSTANT_COLOUR,           /**< Constant blend colour */
     EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOUR, /**< 1 - constant colour */
     EMBER_BLEND_FACTOR_CONSTANT_ALPHA,            /**< Constant alpha */
     EMBER_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,  /**< 1 - constant alpha */
 } emgpu_blend_factor;
+
+/**
+ * @brief Comparison operation used for depth and stencil tests.
+ */
+typedef enum emgpu_compare_op {
+    EMBER_COMPARE_OP_NEVER,            /**< The comparison always fails. */
+    EMBER_COMPARE_OP_LESS,             /**< Passes if the first value is less than the second value. */
+    EMBER_COMPARE_OP_EQUAL,            /**< Passes if the first value is equal to the second value. */
+    EMBER_COMPARE_OP_LESS_OR_EQUAL,    /**< Passes if the first value is less than or equal to the second value. */
+    EMBER_COMPARE_OP_GREATER,          /**< Passes if the first value is greater than the second value. */
+    EMBER_COMPARE_OP_NOT_EQUAL,        /**< Passes if the first value is not equal to the second value. */
+    EMBER_COMPARE_OP_GREATER_OR_EQUAL, /**< Passes if the first value is greater than or equal to the second value. */
+    EMBER_COMPARE_OP_ALWAYS,           /**< The comparison always passes. */
+} emgpu_compare_op;
 
 /**
  * @brief Blend operations used to combine source and destination values.
@@ -218,6 +232,20 @@ typedef enum emgpu_blend_op {
     EMBER_BLEND_OP_MIN,               /**< min(src, dst) */
     EMBER_BLEND_OP_MAX                /**< max(src, dst) */
 } emgpu_blend_op;
+
+/**
+ * @brief Operation performed on a stencil value.
+ */
+typedef enum emgpu_stencil_op {
+    EMBER_STENCIL_OP_KEEP,                /**< Keep the existing stencil value unchanged. */
+    EMBER_STENCIL_OP_ZERO,                /**< Replace the stencil value with zero. */
+    EMBER_STENCIL_OP_REPLACE,             /**< Replace the stencil value with the reference value. */
+    EMBER_STENCIL_OP_INCREMENT_AND_CLAMP, /**< Increment the stencil value, clamping at the maximum value. */
+    EMBER_STENCIL_OP_DECREMENT_AND_CLAMP, /**< Decrement the stencil value, clamping at zero. */
+    EMBER_STENCIL_OP_INVERT,              /**< Invert all bits of the stencil value. */
+    EMBER_STENCIL_OP_INCREMENT_AND_WRAP,  /**< Increment the stencil value, wrapping at the maximum value. */
+    EMBER_STENCIL_OP_DECREMENT_AND_WRAP,  /**< Decrement the stencil value, wrapping at zero. */
+} emgpu_stencil_op;
 
 /**
  * @brief Texture filtering modes.
@@ -247,6 +275,32 @@ typedef enum emgpu_address_mode {
     EMBER_ADDRESS_MODE_CLAMP_TO_BORDER,      /**< Clamp to border colour */
     EMBER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE, /**< Mirror then clamp to edge */
 } emgpu_address_mode;
+
+/**
+ * @brief Describes the operations and masks used by a stencil test.
+ */
+typedef struct emgpu_stencil_op_state {
+    /** @brief Operation performed when the stencil test fails. */
+    emgpu_stencil_op fail_op;
+
+    /** @brief Operation performed when both the stencil and depth tests pass. */
+    emgpu_stencil_op pass_op;
+
+    /** @brief Operation performed when the stencil test passes but the depth test fails. */
+    emgpu_stencil_op depth_fail_op;
+
+    /** @brief Comparison operation used by the stencil test. */
+    emgpu_compare_op compare_op;
+
+    /** @brief Bit mask applied to stencil values before comparison. */
+    u32 compare_mask;
+
+    /** @brief Bit mask controlling which stencil bits may be written. */
+    u32 write_mask;
+
+    /** @brief Reference value used by the stencil comparison. */
+    u32 reference;
+} emgpu_stencil_op_state;
 
 /**
  * @brief Describes a single descriptor binding.

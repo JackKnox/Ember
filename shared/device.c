@@ -71,14 +71,8 @@ emgpu_buffer_config emgpu_buffer_default() {
 	return config;
 }
 
-emgpu_raster_blend_config emgpu_raster_blend_default() {
-    emgpu_raster_blend_config config = {};
-    config.src_colour = EMBER_BLEND_FACTOR_SRC_ALPHA;
-    config.dst_colour = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    config.colour_op  = EMBER_BLEND_OP_ADD;
-    config.src_alpha = EMBER_BLEND_FACTOR_SRC_ALPHA;
-    config.dst_alpha = EMBER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    config.alpha_op  = EMBER_BLEND_OP_ADD;
+emgpu_raster_depth_stencil_config emgpu_raster_depth_stencil_default() {
+    emgpu_raster_depth_stencil_config config = {};
     return config;
 }
 
