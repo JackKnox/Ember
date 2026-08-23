@@ -2,6 +2,22 @@
 
 #include "ember/core.h"
 
+/*
+ * @brief Unique identifier for a window.
+ *
+ * @note Two windows from different desktops may have the
+ *       same window id.
+ */
+typedef u64 emwin_window_id;
+
+/*
+ * @brief Unique identifier for a monitor.
+ *
+ * @note Two monitors from different desktops may have the 
+ *       same monitor id.
+ */
+typedef u64 emwin_monitor_id;
+
 /**
  * @brief Platform desktop handle.
  * 
@@ -16,6 +32,38 @@ typedef struct emwin_desktop {
     /** @brief Platform-specific display state. */
     void* internal_context;
 } emwin_desktop;
+
+/**
+ * @brief Describes a physical display monitor.
+ */
+typedef struct emwin_monitor {
+    /** @brief Position of the monitor in compositor space. */
+    uvec2 position;
+
+    /** @brief Physical dimensions of the monitor in millimeters. */
+    uvec2 physical_size;
+
+    /** @brief Logical dimensions of the monitor in pixels. */
+    uvec2 size;
+
+    /** @brief Subpixel layout of the monitor. */
+    i32 subpixel;
+
+    /** @brief Manufacturer name. */
+    const char* make;
+
+    /** @brief Model name. */
+    const char* model;
+
+    /** @brief Unique output name assigned by the compositor. */
+    const char* name;
+
+    /** @brief Transform applied to the monitor. */
+    i32 transform;
+
+    /** @brief Unique identifier for the monitor. */
+    emwin_monitor_id id;
+} emwin_monitor;
 
 struct emwin_desktop_event;
 

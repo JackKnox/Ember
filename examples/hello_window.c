@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     emwin_window window = {};
     
     CHECK_FUNC(
-        emwin_window_open(&system_malloc, &window_config, &window, &desktop),
+        emwin_window_open(&system_malloc, &window_config, 0, &window, &desktop),
         "Failed to open ember window");
 
     // Boom. A window is now open on your desktop. However we still need to update

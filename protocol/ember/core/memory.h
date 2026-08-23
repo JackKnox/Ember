@@ -38,11 +38,10 @@ typedef void (*PFN_free_mem)(struct em_allocator* allocator, void* block, u64 si
  * 
  * @param allocator Allocator instance.
  * @param block Pointer to memory block to reallocate.
- * @param old_size Previous allocation size.
  * @param new_size New allocation size.
  * @param alignment Alignment used during allocation.
  */
-typedef void* (*PFN_reallocate_mem)(struct em_allocator* allocator, void* block, u64 old_size, u64 new_size, u64 alignment);
+typedef void* (*PFN_reallocate_mem)(struct em_allocator* allocator, void* block, u64 new_size, u64 alignment);
 
 /**
  * @brief Generic allocator interface used across the library.
@@ -109,8 +108,7 @@ void mem_free(em_allocator* allocator, void* block, u64 size);
  * 
  * @param allocator Allocator instance.
  * @param block Pointer to memory block.
- * @param old_size Original allocation size.
  * @param new_size New allocation size.
  * @return Pointer to reallocated memory, or NULL on failure.
  */
-void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size);
+void* mem_reallocate(em_allocator* allocator, void* block, u64 new_size);

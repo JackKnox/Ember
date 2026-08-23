@@ -4,6 +4,14 @@
 
 #include "ember/gpu/device.h"
 
+/*
+ * @brief Opaque resource handle local to a single GPU command buffer.
+ *
+ * Represents a transient resource binding within a frame. These handles
+ * are only valid for the duration of the frame execution.
+ */
+typedef u32 emgpu_local_resource;
+
 /**
  * @brief Framebuffer handle local to a single GPU command buffer.
  *
@@ -13,14 +21,6 @@
  * syncronization and lifetime guarantees.
  */
 typedef u32 emgpu_local_framebuffer;
-
-/**
- * @brief Opaque resource handle local to a single GPU command buffer.
- *
- * Represents a transient resource binding within a frame. These handles
- * are only valid for the duration of the frame execution.
- */
-typedef u32 emgpu_local_resource;
 
 /**
  * @brief Represents a linear sequance of commands relevent to the current GPU device.

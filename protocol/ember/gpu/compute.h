@@ -24,6 +24,17 @@ typedef struct emgpu_compute_pipeline_config {
     emgpu_descriptor_desc* descriptors;
 } emgpu_compute_pipeline_config;
 
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Creates a default compute stage configuration.
+ *
+ * @return A default-initialized emgpu_compute_pipeline_config.
+ */
+emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
+
+#endif
+
 /**
  * @brief Configuration for a compute pass.
  *
@@ -34,9 +45,6 @@ typedef struct emgpu_compute_pipeline_config {
 typedef struct emgpu_computepass_config {
     /** @brief Connected pipeline to computepass. */
     const emgpu_pipeline* pipeline;
-
-    /** @brief Size of each work group in GPU execution. */
-    uvec3 local_size;
 
     /** @brief Resources to export from pipeline. */
     const emgpu_resource_export* export_resources;
@@ -54,11 +62,11 @@ typedef struct emgpu_computepass_config {
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
- * @brief Creates a default compute stage configuration.
+ * @brief Creates a default-initialized compute pass configuration.
  *
- * @return A default-initialized emgpu_compute_pipeline_config.
+ * @return A default-initialized emgpu_computepass_config.
  */
-emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
+emgpu_computepass_config emgpu_computepass_default();
 
 #endif
 

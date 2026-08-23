@@ -2,6 +2,7 @@
 
 #include "ember/core.h"
 
+#include "ember/window/desktop.h"
 #include "ember/window/window.h"
 #include "ember/window/input.h"
 
@@ -12,6 +13,8 @@
  * emwin_desktop_open_events().
  */
 typedef enum emwin_event_type {
+    EMWIN_EVENT_MONITOR_CONNECT,           /**< New monitor was connected. */
+    EMWIN_EVENT_MONITOR_DISCONNECT,        /**< Monitor has been disconnected. */
     EMWIN_EVENT_WINDOW_CLOSE,              /**< Window close was requested. */
     EMWIN_EVENT_WINDOW_RESIZE,             /**< Window client area size changed. */
     EMWIN_EVENT_WINDOW_FOCUS_GAINED,       /**< Window client area size changed. */
@@ -48,6 +51,24 @@ typedef struct emwin_desktop_event {
             /** @brief Window identifier. */
             emwin_window_id id;
         } window_close;
+
+        /**
+         * @brief Data for EMWIN_EVENT_MONITOR_CONNECT.
+         *
+         * Contains the identifier of the monitor that has been connected.
+         */
+        struct {
+            emwin_monitor monitor;
+        } monitor_connect;
+
+        /**
+         * @brief Data for EMWIN_EVENT_MONITOR_DISCONNECT.
+         *
+         * Contains the identifier of the monitor that has been disconnected.
+         */
+        struct {
+            emwin_monitor monitor;
+        } monitor_disconnect;
 
         /**
          * @brief Data for EMWIN_EVENT_WINDOW_RESIZE.

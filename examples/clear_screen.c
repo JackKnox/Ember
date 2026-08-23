@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 	// we need it for the GPU surface extension below.
 	emwin_window window = {};
 	CHECK_FUNC(
-		emwin_window_open(&system_alloc, &window_config, &window, &desktop), 
+		emwin_window_open(&system_alloc, &window_config, 0, &window, &desktop), 
 		"Failed to open window");
 	
 	// The GPU device supports extensions for platform-specific surface creation.

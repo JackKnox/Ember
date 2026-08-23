@@ -69,28 +69,24 @@ typedef struct emwin_window_config {
 
     /** @brief Initial client area size in pixels. */
     uvec2 size;
-
-    /** 
-     * @brief A connection to the global system's WM. 
-     * 
-     * If NULL, a new desktop object will be created on window open. 
-     */
-    emwin_desktop* desktop;
 } emwin_window_config;
 
-/*
- * @brief Unique identifier for a windo local to it's assigned desktop.
+#ifdef EMBER_DEFINE_HELPERS
+
+/**
+ * @brief Creates a default window configuration.
  *
- * @note Two windows from different desktops many have the
- *       same window id.
+ * @return A default-initialized emwin_window_config.
  */
-typedef u64 emwin_window_id;
+emwin_window_config emwin_window_default();
+
+#endif
 
 /**
  * @brief Platform window handle.
  *
  * Represents a platform window and its associated state.
- * All platform- and renderer-specific details are stored internally
+ * All platform-specific and renderer-specific details are stored internally
  * and are opaque to the user.
  */
 typedef struct emwin_window {
@@ -115,15 +111,6 @@ typedef struct emwin_window {
 } emwin_window;
 
 /**
- * @brief Creates a default window configuration.
- *
- * The returned configuration contains sensible defaults for all fields.
- *
- * @return A default-initialized @ref emwin_window_config.
- */
-emwin_window_config emwin_window_default();
-
-/**
  * @brief Creates and opens a window.
  *
  * Initialises a platform window using the provided configuration and writes
@@ -131,19 +118,20 @@ emwin_window_config emwin_window_default();
  *
  * @param allocator Allocator used for internal allocations.
  * @param config Pointer to the window configuration.
+ * @param monitor Monitor to assign window to.
  * @param out_window Pointer to the window to initialise.
- * @param out_desktop Pointer to already created desktop, may be NULL.
+ * @param out_desktop Pointer to desktop, lazyily initialises.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
  *
  * @note Passing a valid @p out_desktop is strongly recommended to avoid
  *       reinitialising shared global platform state.
  */
-em_result emwin_window_open(em_allocator* allocator, const emwin_window_config* config, emwin_window* out_window, emwin_desktop** out_desktop);
+em_result emwin_window_open(em_allocator* allocator, const emwin_window_config* config, emwin_monitor_id monitor, emwin_window* out_window, emwin_desktop** out_desktop);
 
 /**
  * @brief Forces closing a window and destroys all OS resources.
  *
- * Releases all platform and renderer resources associated with the window and immediatly closes window.
+ * Releases all platform and renderer resources associated with the window and immediatly closes.
  *
  * @param window Pointer to the window to close.
  */
@@ -152,11 +140,12 @@ void emwin_window_close(em_allocator* allocator, emwin_window* window);
 /**
  * @brief Request the closure of window.
  * 
- * This sets the value in @ref emwin_window_should_close to TRUE.
+ * This submits a window close event to the desktop-wide event queue.
  * 
  * @param window Pointer to the window to close.
- * @note This is different to @ref emwin_window_close as it only notifies your application
- *       next time you call @ref emwin_window_should_close, you may or may not choose to ignore it.
+ *
+ * @note This is different to @ref emwin_window_close 
+ *       as it only notifies your application
  */
 void emwin_window_request_close(emwin_window* window);
 
