@@ -53,7 +53,6 @@ void emgpu_cmd_begin_computepass(emgpu_command_buffer* command_buf, const emgpu_
     cmd_payload* payload;
     payload = (cmd_payload*)cmdalloc(command_buf, COMMAND_BEGIN_COMPUTEPASS, sizeof(payload->begin_computepass));
     payload->begin_computepass.pipeline = config->pipeline;
-    payload->begin_computepass.local_size = config->local_size;
     
     // payload->begin_computepass.exports
     emgpu_resource_export* exports;

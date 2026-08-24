@@ -2,9 +2,8 @@
 
 #include "ember/core.h"
 
-#include "ember/core/memory.h"
-#include "ember/core/result.h"
 #include "ember/window/desktop.h"
+#include "ember/window/shm.h"
 
 /*
  * @brief Configuration used when creating an overlay.
@@ -82,7 +81,7 @@ typedef struct emwin_overlay {
  * @note Passing a valid @p out_desktop is strongly recommended to avoid
  *       reinitialising shared global platform state.
  */
-em_result emwin_overlay_open(em_allocator* allocator, emwin_overlay_config* config, emwin_monitor_id monitor, emwin_overlay* out_overlay, emwin_desktop* out_desktop);
+em_result emwin_overlay_open(em_allocator* allocator, const emwin_overlay_config* config, emwin_monitor_id monitor, emwin_overlay* out_overlay, emwin_desktop* out_desktop);
 
 /*
  * @brief Forces closing a overley and destroys all OS resources.
@@ -90,3 +89,32 @@ em_result emwin_overlay_open(em_allocator* allocator, emwin_overlay_config* conf
  * Releases all platform and renderer resource associated with the window and immedialtly closes.
  */
 void emwin_overlay_close(em_allocator* allocator, emwin_overlay* overlay);
+
+/**
+ * @brief Attaches a shared-memory buffer to a overlay.
+ *
+ * The buffer is used as the overlay's backing pixel storage. The specified
+ * offset determines the position within the window at which the buffer is
+ * attached.
+ *
+ * @param overlay Overlay to attach the buffer to.
+ * @param buffer Shared-memory buffer to attach.
+ * @param offset Offset within the window at which to attach the buffer.
+ *
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emwin_overlay_attach(emwin_overlay* overlay, emwin_shm_buffer* buffer, uvec2 offset);
+
+/**
+ * @brief Marks a region of a overlay as damaged.
+ *
+ * The damaged region indicates an area whose contents have changed and
+ * should be presented to the desktop.
+ *
+ * @param overlay Overlay whose contents were modified.
+ * @param offset Offset of the damaged region within the window.
+ * @param size Size of the damaged region.
+ *
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emwin_overlay_damage(emwin_overlay* overlay, uvec2 offset, uvec2 size);

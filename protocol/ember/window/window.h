@@ -3,6 +3,7 @@
 #include "ember/core.h"
 
 #include "ember/window/desktop.h"
+#include "ember/window/shm.h"
 
 /**
  * @brief Describes the display mode of a window.
@@ -166,3 +167,32 @@ void emwin_window_set_visible(emwin_window* window, b8 visible);
  * @return TRUE if the window is visible; otherwise FALSE.
  */
 b8 emwin_window_visible(const emwin_window* window);
+
+/**
+ * @brief Attaches a shared-memory buffer to a window.
+ *
+ * The buffer is used as the window's backing pixel storage. The specified
+ * offset determines the position within the window at which the buffer is
+ * attached.
+ *
+ * @param window Window to attach the buffer to.
+ * @param buffer Shared-memory buffer to attach.
+ * @param offset Offset within the window at which to attach the buffer.
+ *
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emwin_window_attach(emwin_window* window, emwin_shm_buffer* buffer, uvec2 offset);
+
+/**
+ * @brief Marks a region of a window as damaged.
+ *
+ * The damaged region indicates an area whose contents have changed and
+ * should be presented to the desktop.
+ *
+ * @param window Window whose contents were modified.
+ * @param offset Offset of the damaged region within the window.
+ * @param size Size of the damaged region.
+ *
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeeds.
+ */
+em_result emwin_window_damage(emwin_window* window, uvec2 offset, uvec2 size);

@@ -52,7 +52,6 @@ typedef struct cmd_header {
 typedef union cmd_payload {
     struct {
         const emgpu_pipeline* pipeline;
-        uvec3 local_size;
         // export_resources, import_resources.
     } begin_computepass;
 
