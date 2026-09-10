@@ -16,6 +16,12 @@ typedef struct emgpu_emwin_surface_config {
     /** @brief Whetever to exit if exact preferred format isn't found. */
     b8 force_format;
 
+    /** @brief Minimum number of presentable textures the user needs. */
+    u32 min_texture_count;
+
+    /** @brief Usage of the outputted textures. */
+    emgpu_texture_usage usage;
+
     /** @brief ember_window window to attach GPU surface to. */
     emwin_window* window;
 } emgpu_emwin_surface_config;
@@ -45,6 +51,12 @@ typedef em_result (*PFN_create_emwin_surface)(
 typedef struct emgpu_emwin_surface_ext {
     /** @brief Creates a ember_window surface backed by the GPU device. */
     PFN_create_emwin_surface create_surface;
+
+    /** @brief Minimum amount of textures a GPU surface can hold using this extension. */
+    u32 min_texture_count;
+
+    /** @brief Minimum amount of textures a GPU surface can hold using this extension. */
+    u32 max_texture_count;
 } emgpu_emwin_surface_ext;
 
 typedef struct emgpu_emwin_surface_params {

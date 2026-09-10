@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 	device_config.debug_name       = window_config.title;    // Shows up in GPU debug tooling.
 	device_config.frame_allocator  = emplat_system_allocator(); // Allocator used to allocate frame-local resources.
 	device_config.app_version      = EMBER_VERSION;
-	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER | EMBER_DEVICE_MODE_PRESENT; // We need both — no point continuing without them.
+	device_config.required_modes   = EMBER_DEVICE_MODE_RASTER; // We need it — no point continuing without it.
 	device_config.optional_modes   = EMBER_DEVICE_MODE_VALIDATION; // Nice to have for debugging but we won't bail if it's unavailable.
 	device_config.frames_in_flight = 3;                            // Triple buffering.
     device_config.extension_count  = EM_ARRAYSIZE(extensions);
@@ -87,9 +87,11 @@ int main(int argc, char** argv) {
     // Now we can create a ember_window-backed surface using the function pointer the device
 	// extension filled in for us. This connects the Vulkan swapchain to our window.
 	emgpu_emwin_surface_config surface_config = emgpu_emwin_surface_default();
-	surface_config.preferred_format = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
-	surface_config.force_format     = false;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
-    surface_config.window           = &window;
+	surface_config.preferred_format  = EMGPU_FORMAT_BGRA8_UNORM; // Common format; force_format = FALSE means we fall back gracefully if unavailable.
+	surface_config.force_format      = false;                    // force_format = TRUE means it will only accept the exact format. Still preserves colour / depth / stencil type.
+    surface_config.min_texture_count = wsi_extension.min_texture_count; // Usually three.
+    surface_config.usage             = EMBER_TEXTURE_USAGE_ATTACHMENT_DST; // How we are using the outputed texture on exec
+    surface_config.window            = &window;
 
 	// Call the function from the 'out extension' which creates the window.
 	emgpu_surface surface = {};
