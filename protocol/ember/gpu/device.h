@@ -27,6 +27,11 @@ typedef struct emgpu_device_capabilities {
     u32 vendor_signiture;
 } emgpu_device_capabilities;
 
+typedef union emgpu_extension_user_data {
+    u8 bytes[16];
+    u64 _align;
+} emgpu_extension_user_data;
+
 /**
  * @brief Describes an extension to the rendering device.
  *
@@ -69,7 +74,7 @@ typedef struct emgpu_extension_desc {
     b8 optional;
 
     /** @brief Type-erased create info for the extension. */
-    u8 user_data[16];
+    emgpu_extension_user_data user_data;
 } emgpu_extension_desc;
 
 /**

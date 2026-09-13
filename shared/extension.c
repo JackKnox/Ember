@@ -7,7 +7,7 @@ emgpu_extension_desc emgpu_register_emwin_surface(emwin_desktop* desktop, emgpu_
     ext.name = "EMGPU_EXT_emwin_surface";
     ext.version   = EMBER_VERSION;
 
-    emgpu_emwin_surface_params* params = (emgpu_emwin_surface_params*)ext.user_data;
+    emgpu_emwin_surface_params* params = (emgpu_emwin_surface_params*)ext.user_data.bytes;
     params->desktop = desktop;
     params->out_extension = out_extension;
     return ext;
