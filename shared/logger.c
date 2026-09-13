@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static char message_buf[64] = {};
+static char message_buf[128] = {};
 
 void emplat_printf(emplat_log_level log_level, const char* message, ...) {
     va_list args;
