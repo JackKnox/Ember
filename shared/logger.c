@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static char message_buf[128] = {};
+#include <stdlib.h>
 
 void emplat_printf(emplat_log_level log_level, const char* message, ...) {
     va_list args;
@@ -16,10 +16,14 @@ void emplat_printf(emplat_log_level log_level, const char* message, ...) {
     u64 length = (u64)vsnprintf(NULL, 0, message, args_copy);
     va_end(args_copy);
 
-    vsnprintf(message_buf, length + 1, message, args);
-    message_buf[length] = '\0';
+    char* formatted = malloc(length + 1);
+
+    vsnprintf(formatted, length + 1, message, args);
+    formatted[length] = '\0';
 
     va_end(args);
 
-    emplat_print(log_level, message_buf);
+    free(formatted);
+
+    emplat_print(log_level, formatted);
 }
