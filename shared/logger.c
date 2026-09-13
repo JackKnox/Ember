@@ -23,7 +23,6 @@ void emplat_printf(emplat_log_level log_level, const char* message, ...) {
 
     va_end(args);
 
-    free(formatted);
-
     emplat_print(log_level, formatted);
+    free(formatted);
 }
