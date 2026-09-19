@@ -6,18 +6,6 @@
 #include "ember/gpu/compute.h"
 #include "ember/gpu/raster.h"
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L 
-// C11 and later
-#   define EM_ALIGNOF(type) _Alignof(type)
-#elif defined(_MSC_VER) 
-// MSVC (works in both C and C++)
-#   define EM_ALIGNOF(type) __alignof(type)
-#elif defined(__GNUC__) || defined(__clang__) 
-// GCC / Clang (works in both C and C++)
-#   define EM_ALIGNOF(type) __alignof__(type)
-#endif
-
-
 u64 align_up_command(u64 value, u64 alignment) {
     // alignment must be a power of two
     return (value + alignment - 1) & ~(alignment - 1);
@@ -53,20 +41,20 @@ void emgpu_cmd_begin_computepass(emgpu_command_buffer* command_buf, const emgpu_
     cmd_payload* payload;
     payload = (cmd_payload*)cmdalloc(command_buf, COMMAND_BEGIN_COMPUTEPASS, sizeof(payload->begin_computepass));
     payload->begin_computepass.pipeline = config->pipeline;
-    
-    // payload->begin_computepass.exports
-    emgpu_resource_export* exports;
-    exports = (emgpu_resource_export*)cmdalloc(command_buf, COMMAND_IMPORT_RESOURCES, sizeof(*exports) * config->export_resource_count);
-    memcpy(exports, 
-           config->export_resources, 
-           sizeof(*exports) * config->export_resource_count);
 
     // payload->begin_computepass.imports
     emgpu_resource_import* imports;
-    imports = (emgpu_resource_import*)cmdalloc(command_buf, COMMAND_EXPORT_RESOURCES, sizeof(*imports) * config->import_resource_count);
+    imports = (emgpu_resource_import*)cmdalloc(command_buf, COMMAND_IMPORT_RESOURCES, sizeof(*imports) * config->import_resource_count);
     memcpy(imports,
            config->import_resources,
            sizeof(*imports) * config->import_resource_count);
+
+    // payload->begin_computepass.exports
+    emgpu_resource_export* exports;
+    exports = (emgpu_resource_export*)cmdalloc(command_buf, COMMAND_EXPORT_RESOURCES, sizeof(*exports) * config->export_resource_count);
+    memcpy(exports, 
+           config->export_resources, 
+           sizeof(*exports) * config->export_resource_count);
 }
 
 void emgpu_cmd_dispatch(emgpu_command_buffer* command_buf, uvec3 group_size) {
@@ -76,7 +64,7 @@ void emgpu_cmd_dispatch(emgpu_command_buffer* command_buf, uvec3 group_size) {
 }
 
 void emgpu_cmd_end_computepass(emgpu_command_buffer* command_buf) {
-    cmdalloc(command_buf, COMMAND_EMPTY_RESOURCE, 0);
+    cmdalloc(command_buf, COMMAND_END_COMPUTEPASS, 0);
 }
 
 void emgpu_cmd_begin_renderpass(emgpu_command_buffer* command_buf, const emgpu_renderpass_config* config) {
@@ -117,25 +105,25 @@ void emgpu_cmd_bind_raster_pipeline(emgpu_command_buffer* command_buf, emgpu_ras
     cmd_payload* payload;
     payload = (cmd_payload*)cmdalloc(command_buf, COMMAND_BIND_RASTER_PIPELINE, sizeof(payload->bind_raster_pipeline));
     payload->bind_raster_pipeline.pipeline = bind_info->pipeline;
-    
-    // payload->bind_raster_pipeline.exports
-    emgpu_resource_export* exports;
-    exports = (emgpu_resource_export*)cmdalloc(command_buf, COMMAND_IMPORT_RESOURCES, sizeof(*exports) * bind_info->export_resource_count);
-    memcpy(exports, 
-           bind_info->export_resources, 
-           sizeof(*exports) * bind_info->export_resource_count);
 
     // payload->bind_raster_pipeline.imports
     emgpu_resource_import* imports;
-    imports = (emgpu_resource_import*)cmdalloc(command_buf, COMMAND_EXPORT_RESOURCES, sizeof(*imports) * bind_info->import_resource_count);
+    imports = (emgpu_resource_import*)cmdalloc(command_buf, COMMAND_IMPORT_RESOURCES, sizeof(*imports) * bind_info->import_resource_count);
     memcpy(imports,
            bind_info->import_resources,
            sizeof(*imports) * bind_info->import_resource_count);
+
+    // payload->bind_raster_pipeline.exports
+    emgpu_resource_export* exports;
+    exports = (emgpu_resource_export*)cmdalloc(command_buf, COMMAND_EXPORT_RESOURCES, sizeof(*exports) * bind_info->export_resource_count);
+    memcpy(exports, 
+           bind_info->export_resources, 
+           sizeof(*exports) * bind_info->export_resource_count);
 }
 
 void emgpu_cmd_bind_vertex_buffers(emgpu_command_buffer* command_buf, u32 vertex_buffer_count, emgpu_buffer* vertex_buffers) {
     emgpu_buffer* buffers;
-    buffers = (emgpu_buffer*)cmdalloc(command_buf, COMMAND_VERTEX_BUFFERS, sizeof(*buffers) * vertex_buffer_count);
+    buffers = (emgpu_buffer*)cmdalloc(command_buf, COMMAND_BIND_VERTEX_BUFFERS, sizeof(*buffers) * vertex_buffer_count);
 
     // payload->bind_vertex_buffers.vertex_buffers
     memcpy(buffers,

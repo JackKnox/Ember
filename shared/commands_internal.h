@@ -7,7 +7,6 @@
 #include "ember/gpu/resources.h"
 #include "ember/gpu/surface.h"
 
-
 typedef enum cmd_payload_type {
     COMMAND_EMPTY, // Prevents against corrupted memory.
     
@@ -41,7 +40,7 @@ typedef enum cmd_payload_type {
     COMMAND_EXPORT_RESOURCES,
     COMMAND_IMPORT_RESOURCES,
     COMMAND_COLOUR_ATTACHMENTS,
-    COMMAND_VERTEX_BUFFERS,
+    COMMAND_BIND_VERTEX_BUFFERS,
 } cmd_payload_type;
 
 typedef struct cmd_header {
