@@ -27,6 +27,7 @@ typedef struct emgpu_surface {
  * @brief Resizes a rendering size to given size.
  * 
  * @param device Pointer to the device instance.
+ * @param allocator Pointer to same allocator used to create surface.
  * @param surface Surface to resize.
  * @param new_size New size of surface. 0, 0 = minimized.
  * @note Surface is not guarenteeed to be resized immediately; In
@@ -34,6 +35,7 @@ typedef struct emgpu_surface {
  */
 em_result emgpu_surface_resize(
     emgpu_device* device, 
+    em_allocator* allocator,
     emgpu_surface* surface, 
     uvec2 new_size);
 
