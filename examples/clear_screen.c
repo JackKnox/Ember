@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
                     running = EMFALSE;
                     break;
                 case EMWIN_EVENT_WINDOW_RESIZE:
-                    emgpu_surface_resize(&device, &surface, desk_event.window_resize.size);
+                    emgpu_surface_resize(&device, &system_alloc, &surface, desk_event.window_resize.size);
                     break;
                 default: break;
             }

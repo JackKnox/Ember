@@ -80,8 +80,6 @@ typedef struct em_allocator {
  */
 u64 alignment_ptr(u64 v, u64 alignment);
 
-#endif
-
 /**
  * @brief Allocates memory from the library allocator system.
  *
@@ -114,3 +112,5 @@ void mem_free(em_allocator* allocator, void* block, u64 size);
  * @return Pointer to reallocated memory, or NULL on failure.
  */
 void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size);
+
+#endif
