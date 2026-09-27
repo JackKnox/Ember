@@ -42,15 +42,6 @@ typedef struct emwin_desktop_event {
      * Only the member corresponding to @ref type is valid.
      */
     union {
-        /**
-         * @brief Data for EMWIN_EVENT_WINDOW_CLOSE.
-         *
-         * Contains the identifier of the window that requested closing.
-         */
-        struct {
-            /** @brief Window identifier. */
-            emwin_window_id id;
-        } window_close;
 
         /**
          * @brief Data for EMWIN_EVENT_MONITOR_CONNECT.
@@ -71,11 +62,24 @@ typedef struct emwin_desktop_event {
         } monitor_disconnect;
 
         /**
+         * @brief Data for EMWIN_EVENT_WINDOW_CLOSE.
+         *
+         * Contains the identifier of the window that requested closing.
+         */
+        struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+        } window_close;
+
+        /**
          * @brief Data for EMWIN_EVENT_WINDOW_RESIZE.
          *
          * Contains the new window dimensions.
          */
         struct {
+            /** @brief Window identifier. */
+            emwin_window_id id;
+
             /** @brief New window size in pixels. */
             uvec2 size;
         } window_resize;
