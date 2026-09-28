@@ -23,7 +23,7 @@ typedef struct emgpu_emwin_surface_config {
     emgpu_texture_usage usage;
 
     /** @brief ember_window window to attach GPU surface to. */
-    emwin_window* window;
+    const emwin_window* window;
 } emgpu_emwin_surface_config;
 
 /**
@@ -39,7 +39,7 @@ typedef struct emgpu_emwin_surface_config {
 typedef em_result (*PFN_create_emwin_surface)(
     emgpu_device* device,
     em_allocator* allocator,
-    emgpu_emwin_surface_config* config,
+    const emgpu_emwin_surface_config* config,
     emgpu_surface* out_surface);
 
 /**
