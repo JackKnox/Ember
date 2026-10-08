@@ -39,7 +39,7 @@ em_result emgpu_command_buffer_create(emgpu_device* device, emgpu_command_buffer
 }
 
 em_result emgpu_device_submit(emgpu_device* device, emgpu_queue queue, const emgpu_command_buffer* command_buf) {
-    return emgpu_device_submit_raw(device, queue, command_buf->commands_buf, command_buf->current_resource_idx);
+    return emgpu_device_submit_raw(device, queue, command_buf->commands_buf, command_buf->buffer_size, command_buf->current_resource_idx);
 }
 
 void emgpu_cmd_begin_computepass(emgpu_command_buffer* command_buf, const emgpu_computepass_config* config) {
