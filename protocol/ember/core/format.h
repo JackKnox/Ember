@@ -27,6 +27,8 @@ typedef enum ember_data_type {
 /** @brief Format flag indicating stencil component. */
 #define EMBER_FORMAT_FLAG_STENCIL    (1 << 4)
 
+#ifndef EMBER_PURE_PROTOCOL
+ 
 /**
  * @brief Packs a format description into a 32-bit integer.
  *
@@ -56,3 +58,5 @@ typedef enum ember_data_type {
 
 /** @brief Computes total size in bits for the format. */
 #define EMBER_FORMAT_SIZE(format) (EMBER_FORMAT_BYTES(format) * EMBER_FORMAT_CHANNELS(format))
+
+#endif

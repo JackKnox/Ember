@@ -26,6 +26,8 @@ typedef enum em_result {
     EMBER_RESULT_UNKNOWN             /**< An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred */
 } em_result;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -36,5 +38,7 @@ typedef enum em_result {
  * @return Null-terminated string describing the result.
  */
 const char* em_result_string(em_result result, b8 get_extended);
+
+#endif
 
 #endif

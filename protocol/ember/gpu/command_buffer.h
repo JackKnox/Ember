@@ -2,6 +2,7 @@
 
 #include "ember/core.h"
 
+#include "ember/core/result.h"
 #include "ember/gpu/device.h"
 
 /*
@@ -23,11 +24,23 @@ typedef u32 emgpu_local_resource;
 typedef u32 emgpu_local_framebuffer;
 
 /**
- * @brief Represents a linear sequance of commands relevent to the current GPU device.
+ * @brief Submits a unmarked Ember GPU command buffer for GPU execution.
+ * Not recommended for direct use.
+ * 
+ * @param device Pointer to the device instance.
+ * @param queue Queue of execution to submit command buffer.
+ * @param command_buf Raw pointer to command buffer.
+ * @param resource_count Number of virtual resources allocated in command buffer, passing benifits performance.
+ * @return Ember result code; returns `EMBER_RESULT_OK` if succeds.
  *
- * An emgpu_commandbuffer acts as a transient container for all GPU commands
- * required to render or dispatch work for a single frame. It provides
- * a linear command recording model and manages frame-local resources.
+ * @note The memory buffer given must be 16-byte aligned and must match edianness of the Drvier
+ */
+em_result emgpu_device_submit_raw(emgpu_device* device, emgpu_queue queue, const void* command_buf, u32 resource_count);
+
+#ifndef EMBER_PURE_PROTOCOL
+
+/**
+ * @brief The C implementation for a GPU command buffer, providied by ember-shared.
  */
 typedef struct emgpu_command_buffer {
     /** @brief Indicates whether the frame was successfully initialized. */
@@ -35,9 +48,6 @@ typedef struct emgpu_command_buffer {
 
     /** @brief Index used for allocating frame-local resources. */
     u32 current_resource_idx;
-    
-    /** @brief A reference to the allocator used to manage command buffer memory. */
-    em_allocator* allocator;
 
     /**
      * @brief Linear command buffer storing recorded GPU commands.
@@ -77,3 +87,5 @@ em_result emgpu_command_buffer_create(emgpu_device* device, emgpu_command_buffer
  * @return Empty resource handle.
  */
 emgpu_local_framebuffer emgpu_cmd_empty_resource(emgpu_command_buffer* command_buf);
+
+#endif

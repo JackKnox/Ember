@@ -1,6 +1,8 @@
+#include "ember/gpu/command_buffer.h"
 #include "ember/core.h"
 #include "commands_internal.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "ember/gpu/compute.h"
@@ -19,7 +21,7 @@ void* cmdalloc(emgpu_command_buffer* command_buf, cmd_payload_type type, u64 pay
         u64 new_capacity = (command_buf->buffer_capacity == 0 ? 4 : command_buf->buffer_capacity);
         while (new_capacity < offset + total_size) new_capacity *= 2;
         
-        command_buf->commands_buf = mem_reallocate(command_buf->allocator, command_buf->commands_buf, command_buf->buffer_capacity, new_capacity);
+        command_buf->commands_buf = realloc(command_buf->commands_buf, new_capacity);
         command_buf->buffer_capacity = new_capacity;
     }
 
@@ -33,8 +35,11 @@ void* cmdalloc(emgpu_command_buffer* command_buf, cmd_payload_type type, u64 pay
 
 em_result emgpu_command_buffer_create(emgpu_device* device, emgpu_command_buffer* out_command_buffer) {
     out_command_buffer->initialized = EMTRUE;
-    out_command_buffer->allocator = &device->frame_allocator;
     return EMBER_RESULT_OK;
+}
+
+em_result emgpu_device_submit(emgpu_device* device, emgpu_queue queue, const emgpu_command_buffer* command_buf) {
+    return emgpu_device_submit_raw(device, queue, command_buf->commands_buf, command_buf->current_resource_idx);
 }
 
 void emgpu_cmd_begin_computepass(emgpu_command_buffer* command_buf, const emgpu_computepass_config* config) {

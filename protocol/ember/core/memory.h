@@ -69,6 +69,8 @@ typedef struct em_allocator {
     u8 magic;
 } em_allocator;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -112,5 +114,7 @@ void mem_free(em_allocator* allocator, void* block, u64 size);
  * @return Pointer to reallocated memory, or NULL on failure.
  */
 void* mem_reallocate(em_allocator* allocator, void* block, u64 old_size, u64 new_size);
+
+#endif
 
 #endif

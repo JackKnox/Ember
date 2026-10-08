@@ -4,6 +4,8 @@
 
 typedef u32 em_version;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #define EMBER_MAKE_VERSION(major, minor, patch) \
     ((((u32)(major)) << 22U) | (((u32)(minor)) << 12U) | ((u32)(patch)))
 
@@ -12,3 +14,5 @@ typedef u32 em_version;
 #define EMBER_VERSION_PATCH(version) ((u32)(version) & 0xFFFU)
 
 #define EMBER_VERSIONS_COMPLIANT(version1, version2) (EMBER_VERSION_MAJOR(version1) == EMBER_VERSION_MAJOR(version2))
+
+#endif
