@@ -30,12 +30,13 @@ typedef u32 emgpu_local_framebuffer;
  * @param device Pointer to the device instance.
  * @param queue Queue of execution to submit command buffer.
  * @param command_buf Raw pointer to command buffer.
+ * @param buffer_size Size in bytes of raw command buffer.
  * @param resource_count Number of virtual resources allocated in command buffer, passing benifits performance.
  * @return Ember result code; returns `EMBER_RESULT_OK` if succeds.
  *
  * @note The memory buffer given must be 16-byte aligned and must match edianness of the Drvier
  */
-em_result emgpu_device_submit_raw(emgpu_device* device, emgpu_queue queue, const void* command_buf, u32 resource_count);
+em_result emgpu_device_submit_raw(emgpu_device* device, emgpu_queue queue, const void* command_buf, u64 buffer_size, u32 resource_count);
 
 #ifndef EMBER_PURE_PROTOCOL
 
