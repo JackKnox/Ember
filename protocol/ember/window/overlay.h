@@ -5,13 +5,40 @@
 #include "ember/window/desktop.h"
 #include "ember/window/shm.h"
 
+/**
+ * @brief Defines the rendering layers available for an overlay.
+ */
+typedef enum emwin_overlay_layer {
+    EMBER_OVERLAY_LAYER_BACKGROUND, /**< < Background layer */
+    EMBER_OVERLAY_LAYER_BOTTOM,    /**< < Bottom layer */
+    EMBER_OVERLAY_LAYER_TOP,       /**< < Top layer */
+    EMBER_OVERLAY_LAYER_OVERLAY,   /**< < Overlay layer */
+} emwin_overlay_layer;
+
+/**
+ * @brief Defines the anchor positions for an overlay.
+ */
+typedef enum emwin_overlay_anchor {
+    EMBER_OVERLAY_ANCHOR_TOP,    /**< < Top edge */
+    EMBER_OVERLAY_ANCHOR_BOTTOM, /**< < Bottom edge */
+    EMBER_OVERLAY_ANCHOR_LEFT,   /**< < Left edge */
+    EMBER_OVERLAY_ANCHOR_RIGHT,  /**< < Right edge */
+} emwin_overlay_anchor;
+
+/**
+ * @brief Defines flags that control overlay behavior.
+ */
+typedef enum emwin_overlay_flags {
+    EMBER_OVERLAY_FLAGS_NONE = 0, /**< < No flags enabled */
+} emwin_overlay_flags;
+
 /*
  * @brief Configuration used when creating an overlay.
  *
  * This structure define all parameters required to initialise a platform overlay,
  * including size, anchor, layering, exclusive zones and behavioral flags.
  */
-typedef enum emwin_overlay_config {
+typedef struct emwin_overlay_config {
     /* @brief Debug name used for the overlay. */
     const char* debug_name;
 
@@ -27,8 +54,8 @@ typedef enum emwin_overlay_config {
     /**
      * @brief Exclusive zone in surface-local coordinates.
      *
-     * Positive values reserve space; 0 allows the surface to be moved around
-     * exclusive zones; -1 prevents the surface from being moved to accommodate them.
+     * Positive values reserve space perpendicular to its anchor; 0 allows the surface to be moved around
+     * exclusive zones; -1 prevents the overlay from being moved to accommodate other elements.
      */
     u32 exclusive_zone;
 
