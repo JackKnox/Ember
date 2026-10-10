@@ -51,6 +51,8 @@ void emgpu_surface_destroy(
     em_allocator* allocator, 
     emgpu_surface* surface);
 
+#ifndef EMBER_PURE_PROTOCOL
+
 /**
  * @brief Acquires the next available surface texture for rendering.
  *
@@ -63,3 +65,5 @@ void emgpu_surface_destroy(
  * @return A local framebuffer handle valid for the duration of the command buffer recording.
  */
 emgpu_local_framebuffer emgpu_cmd_acquire_surface(emgpu_command_buffer* command_buf, emgpu_surface* surface);
+
+#endif

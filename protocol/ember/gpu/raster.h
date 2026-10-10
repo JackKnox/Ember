@@ -50,6 +50,8 @@ typedef struct emgpu_renderpass_config {
     u32 colour_attachment_count;
 } emgpu_renderpass_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -102,6 +104,8 @@ void emgpu_cmd_set_viewport(emgpu_command_buffer* command_buf, uvec2 origin, uve
  */
 void emgpu_cmd_set_scissor(emgpu_command_buffer* command_buf, uvec2 origin, uvec2 size);
 
+#endif
+
 /** 
  * @brief Configures depth and stencil testing for a raster pipeline. 
  */
@@ -140,6 +144,8 @@ typedef struct emgpu_raster_depth_stencil_config {
     f32 max_depth_bounds;
 } emgpu_raster_depth_stencil_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -148,6 +154,8 @@ typedef struct emgpu_raster_depth_stencil_config {
  * @return A default-initialized emgpu_raster_depth_stencil_config.
  */
 emgpu_raster_depth_stencil_config emgpu_raster_depth_stencil_default();
+
+#endif
 
 #endif
 
@@ -167,6 +175,8 @@ typedef struct emgpu_raster_vertex_config {
     emgpu_format* attributes;
 } emgpu_raster_vertex_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -175,6 +185,8 @@ typedef struct emgpu_raster_vertex_config {
  * @return A default-initialized emgpu_raster_vertex_config.
  */
 emgpu_raster_vertex_config emgpu_raster_vertex_default();
+
+#endif
 
 #endif
 
@@ -259,6 +271,8 @@ typedef struct emgpu_raster_bind_info {
     u32 import_resource_count;
 } emgpu_raster_bind_info;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -267,6 +281,8 @@ typedef struct emgpu_raster_bind_info {
  * @return A default-initialized emgpu_raster_pipeline_config.
  */
 emgpu_raster_pipeline_config emgpu_pipeline_default_raster();
+
+#endif
 
 #endif
 
@@ -284,6 +300,8 @@ em_result emgpu_raster_pipeline_create(
     em_allocator* allocator, 
     const emgpu_raster_pipeline_config* config, 
     emgpu_pipeline* out_pipeline);
+
+#ifndef EMBER_PURE_PROTOCOL
 
 /**
  * @brief Binds a raster pipeline.
@@ -322,3 +340,4 @@ void emgpu_cmd_bind_index_buffer(emgpu_command_buffer* command_buf, emgpu_buffer
  */
 void emgpu_cmd_draw(emgpu_command_buffer* command_buf, u32 vertex_count, u32 instance_count);
 
+#endif

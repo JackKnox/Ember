@@ -15,6 +15,8 @@ typedef enum emgpu_device_type {
     EMBER_DEVICE_TYPE_CPU,             /**< CPU-based rendering device */
 } emgpu_device_type;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -23,6 +25,8 @@ typedef enum emgpu_device_type {
  * @param device_type Enum type to convert.
  */
 const char* emgpu_device_type_string(emgpu_device_type device_type);
+
+#endif
 
 #endif
 

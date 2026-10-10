@@ -24,6 +24,8 @@ typedef struct emgpu_compute_pipeline_config {
     emgpu_descriptor_desc* descriptors;
 } emgpu_compute_pipeline_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -32,6 +34,8 @@ typedef struct emgpu_compute_pipeline_config {
  * @return A default-initialized emgpu_compute_pipeline_config.
  */
 emgpu_compute_pipeline_config emgpu_pipeline_default_compute();
+
+#endif
 
 #endif
 
@@ -59,6 +63,8 @@ typedef struct emgpu_computepass_config {
     u32 import_resource_count;
 } emgpu_computepass_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -67,6 +73,8 @@ typedef struct emgpu_computepass_config {
  * @return A default-initialized emgpu_computepass_config.
  */
 emgpu_computepass_config emgpu_computepass_default();
+
+#endif
 
 #endif
 
@@ -84,6 +92,8 @@ em_result emgpu_compute_pipeline_create(
     em_allocator* allocator, 
     const emgpu_compute_pipeline_config* config, 
     emgpu_pipeline* out_compute_pipeline);
+
+#ifndef EMBER_PURE_PROTOCOL
 
 /**
  * @brief Begins a compute pass.
@@ -107,3 +117,5 @@ void emgpu_cmd_dispatch(emgpu_command_buffer* command_buf, uvec3 group_size);
  * @param command_buf Pointer to the command buffer.
  */
 void emgpu_cmd_end_computepass(emgpu_command_buffer* command_buf);
+
+#endif

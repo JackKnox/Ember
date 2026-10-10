@@ -40,6 +40,8 @@ typedef struct emgpu_buffer {
     u64 buffer_size;
 } emgpu_buffer;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -48,6 +50,8 @@ typedef struct emgpu_buffer {
  * @return A default-initialized emgpu_buffer_config.
  */
 emgpu_buffer_config emgpu_buffer_default();
+
+#endif
 
 #endif
 
@@ -127,6 +131,8 @@ typedef struct emgpu_texture {
     emgpu_format image_format;
 } emgpu_texture;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -142,6 +148,8 @@ emgpu_texture_config emgpu_texture_default();
  * @return The total size of the texture in bytes.
  */
 u64 emgpu_texture_get_size_in_bytes(emgpu_texture* texture);
+
+#endif
 
 #endif
 
@@ -172,6 +180,8 @@ void emgpu_texture_destroy(
     em_allocator* allocator,
     emgpu_texture* texture);
 
+#ifndef EMBER_PURE_PROTOCOL
+
 /**
  * @brief Imports a persistent texture into the command buffer.
  *
@@ -184,6 +194,8 @@ void emgpu_texture_destroy(
  * @return A local framebuffer handle.
  */
 emgpu_local_framebuffer emgpu_cmd_import_texture(emgpu_command_buffer* command_buf, emgpu_texture* texture);
+
+#endif
 
 /**
  * @brief Describes a single descriptor update for a pipeline.
@@ -284,4 +296,3 @@ void emgpu_pipeline_destroy(
     emgpu_device* device, 
     em_allocator* allocator, 
     emgpu_pipeline* pipeline);
-

@@ -132,6 +132,8 @@ typedef struct emgpu_device_config {
     u32 extension_count;
 } emgpu_device_config;
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -140,6 +142,8 @@ typedef struct emgpu_device_config {
  * @return A default-initialized emgpu_device_config.
  */
 emgpu_device_config emgpu_device_default();
+
+#endif
 
 #endif
 
@@ -209,6 +213,8 @@ em_result emgpu_device_open_queue(emgpu_device* device, emgpu_queue* out_queue);
  */
 em_result emgpu_queue_wait_idle(emgpu_device* device, emgpu_queue queue);
 
+#ifndef EMBER_PURE_PROTOCOL
+
 #ifdef EMBER_DEFINE_HELPERS
 
 /**
@@ -219,5 +225,7 @@ em_result emgpu_queue_wait_idle(emgpu_device* device, emgpu_queue queue);
  * @return Human-readable string.
  */
 const char* emgpu_vendor_signiture_string(u32 vendor_id);
+
+#endif
 
 #endif
